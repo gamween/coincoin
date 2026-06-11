@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import {GuardianModule} from "../src/GuardianModule.sol";
+import {MockERC20} from "./mocks/MockERC20.sol";
 
 contract GuardianModuleConfigureTest is Test {
     GuardianModule guardian;
@@ -50,5 +51,54 @@ contract GuardianModuleConfigureTest is Test {
         vm.prank(address(guardian));
         vm.expectRevert(GuardianModule.ZeroAddress.selector);
         guardian.configure(vault, address(0));
+    }
+}
+
+contract GuardianModuleEvacuateTest is Test {
+    GuardianModule guardian;
+    MockERC20 tokenA;
+    MockERC20 tokenB;
+    address vault = address(0xFA17);
+    address keeper = address(0xCEEE);
+    address attacker = address(0xBAD);
+
+    function setUp() public {
+        guardian = new GuardianModule();
+        tokenA = new MockERC20("A", "A");
+        tokenB = new MockERC20("B", "B");
+        // Le compte (== address(guardian) en 7702) détient les fonds.
+        tokenA.mint(address(guardian), 100e18);
+        tokenB.mint(address(guardian), 50e18);
+        vm.prank(address(guardian));
+        guardian.configure(vault, keeper);
+    }
+
+    function test_KeeperCanEvacuateAllTokens() public {
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenA);
+        tokens[1] = address(tokenB);
+
+        vm.prank(keeper);
+        guardian.evacuateERC20(tokens);
+
+        assertEq(tokenA.balanceOf(vault), 100e18);
+        assertEq(tokenB.balanceOf(vault), 50e18);
+        assertEq(tokenA.balanceOf(address(guardian)), 0);
+    }
+
+    function test_SelfCanEvacuate() public {
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(tokenA);
+        vm.prank(address(guardian));
+        guardian.evacuateERC20(tokens);
+        assertEq(tokenA.balanceOf(vault), 100e18);
+    }
+
+    function test_AttackerCannotEvacuate() public {
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(tokenA);
+        vm.prank(attacker);
+        vm.expectRevert(GuardianModule.NotAuthorized.selector);
+        guardian.evacuateERC20(tokens);
     }
 }

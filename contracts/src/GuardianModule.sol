@@ -37,4 +37,25 @@ contract GuardianModule {
         configured = true;
         emit Configured(safeVault_, keeper_);
     }
+
+    event Evacuated(address indexed token, uint256 amount);
+
+    error NotConfigured();
+
+    modifier onlySelfOrKeeper() {
+        if (msg.sender != address(this) && msg.sender != keeper) revert NotAuthorized();
+        _;
+    }
+
+    /// @notice Balaie la totalité du solde de chaque token vers le safeVault.
+    function evacuateERC20(address[] calldata tokens) external onlySelfOrKeeper {
+        if (!configured) revert NotConfigured();
+        for (uint256 i; i < tokens.length; ++i) {
+            uint256 bal = IERC20(tokens[i]).balanceOf(address(this));
+            if (bal > 0) {
+                IERC20(tokens[i]).safeTransfer(safeVault, bal);
+                emit Evacuated(tokens[i], bal);
+            }
+        }
+    }
 }
