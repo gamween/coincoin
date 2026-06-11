@@ -137,6 +137,57 @@ contract GuardianModuleEvacuateTest is Test {
     }
 }
 
+contract GuardianModuleRevokeTest is Test {
+    GuardianModule guardian;
+    MockERC20 token;
+    address vault = address(0xFA17);
+    address keeper = address(0xCEEE);
+    address spender = address(0x5DEADE);
+    address attacker = address(0xBAD);
+
+    function setUp() public {
+        guardian = new GuardianModule();
+        token = new MockERC20("A", "A");
+        // Le compte a une allowance dangereuse encore active.
+        vm.prank(address(guardian));
+        token.approve(spender, type(uint256).max);
+        vm.prank(address(guardian));
+        guardian.configure(vault, keeper);
+    }
+
+    function test_KeeperCanRevokeApproval() public {
+        assertEq(token.allowance(address(guardian), spender), type(uint256).max);
+
+        address[] memory tokens = new address[](1);
+        address[] memory spenders = new address[](1);
+        tokens[0] = address(token);
+        spenders[0] = spender;
+
+        vm.prank(keeper);
+        guardian.revokeApprovals(tokens, spenders);
+
+        assertEq(token.allowance(address(guardian), spender), 0);
+    }
+
+    function test_AttackerCannotRevoke() public {
+        address[] memory tokens = new address[](1);
+        address[] memory spenders = new address[](1);
+        tokens[0] = address(token);
+        spenders[0] = spender;
+        vm.prank(attacker);
+        vm.expectRevert(GuardianModule.NotAuthorized.selector);
+        guardian.revokeApprovals(tokens, spenders);
+    }
+
+    function test_RevokeRejectsLengthMismatch() public {
+        address[] memory tokens = new address[](2);
+        address[] memory spenders = new address[](1);
+        vm.prank(keeper);
+        vm.expectRevert(GuardianModule.LengthMismatch.selector);
+        guardian.revokeApprovals(tokens, spenders);
+    }
+}
+
 contract RevertingERC20 is MockERC20 {
     constructor() MockERC20("Bad", "BAD") {}
 

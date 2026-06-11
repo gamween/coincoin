@@ -83,4 +83,21 @@ contract GuardianModule {
             }
         }
     }
+
+    event ApprovalRevoked(address indexed token, address indexed spender);
+
+    error LengthMismatch();
+
+    /// @notice Remet à zéro les allowances passées (utilise forceApprove pour les
+    ///         tokens non standard type USDT).
+    function revokeApprovals(address[] calldata tokens, address[] calldata spenders)
+        external
+        onlySelfOrKeeper
+    {
+        if (tokens.length != spenders.length) revert LengthMismatch();
+        for (uint256 i; i < tokens.length; ++i) {
+            IERC20(tokens[i]).forceApprove(spenders[i], 0);
+            emit ApprovalRevoked(tokens[i], spenders[i]);
+        }
+    }
 }
