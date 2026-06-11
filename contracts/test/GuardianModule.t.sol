@@ -101,4 +101,46 @@ contract GuardianModuleEvacuateTest is Test {
         vm.expectRevert(GuardianModule.NotAuthorized.selector);
         guardian.evacuateERC20(tokens);
     }
+
+    function test_EvacuateRevertsIfNotConfigured() public {
+        GuardianModule fresh = new GuardianModule();
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(tokenA);
+        vm.prank(address(fresh));
+        vm.expectRevert(GuardianModule.NotConfigured.selector);
+        fresh.evacuateERC20(tokens);
+    }
+
+    function test_EmptyArrayIsNoop() public {
+        address[] memory tokens = new address[](0);
+        vm.prank(keeper);
+        guardian.evacuateERC20(tokens);
+        assertEq(tokenA.balanceOf(address(guardian)), 100e18);
+    }
+
+    function test_RevertingTokenSkippedNotBlocked() public {
+        RevertingERC20 bad = new RevertingERC20();
+        bad.mint(address(guardian), 10e18);
+        address[] memory tokens = new address[](3);
+        tokens[0] = address(tokenA);
+        tokens[1] = address(bad);
+        tokens[2] = address(tokenB);
+
+        vm.prank(keeper);
+        guardian.evacuateERC20(tokens);
+
+        // Les tokens sains sont évacués malgré le token qui revert.
+        assertEq(tokenA.balanceOf(vault), 100e18);
+        assertEq(tokenB.balanceOf(vault), 50e18);
+        // Le token toxique reste sur le compte, mais n'a pas bloqué l'évacuation.
+        assertEq(bad.balanceOf(address(guardian)), 10e18);
+    }
+}
+
+contract RevertingERC20 is MockERC20 {
+    constructor() MockERC20("Bad", "BAD") {}
+
+    function transfer(address, uint256) public pure override returns (bool) {
+        revert("blacklisted");
+    }
 }

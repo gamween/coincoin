@@ -16,6 +16,7 @@ contract GuardianModule {
     address public safeVault;
     address public keeper;
     bool public configured;
+    uint256 private _locked; // guard de réentrance (0 = libre, 1 = occupé)
 
     event Configured(address indexed safeVault, address indexed keeper);
 
@@ -39,8 +40,17 @@ contract GuardianModule {
     }
 
     event Evacuated(address indexed token, uint256 amount);
+    event EvacuationFailed(address indexed token);
 
     error NotConfigured();
+    error Reentrancy();
+
+    modifier nonReentrant() {
+        if (_locked != 0) revert Reentrancy();
+        _locked = 1;
+        _;
+        _locked = 0;
+    }
 
     modifier onlySelfOrKeeper() {
         if (msg.sender != address(this) && msg.sender != keeper) revert NotAuthorized();
@@ -48,13 +58,28 @@ contract GuardianModule {
     }
 
     /// @notice Balaie la totalité du solde de chaque token vers le safeVault.
-    function evacuateERC20(address[] calldata tokens) external onlySelfOrKeeper {
+    /// @dev Chemin d'URGENCE : un token qui revert (blacklist, pause, token malveillant)
+    ///      est SAUTÉ (event EvacuationFailed) au lieu de bloquer toute l'évacuation.
+    ///      Un keeper qui rappelle après coup est un no-op (soldes à zéro) : intentionnel.
+    function evacuateERC20(address[] calldata tokens) external onlySelfOrKeeper nonReentrant {
         if (!configured) revert NotConfigured();
+        address vault_ = safeVault; // cache : une seule SLOAD, immuable pendant la boucle
         for (uint256 i; i < tokens.length; ++i) {
-            uint256 bal = IERC20(tokens[i]).balanceOf(address(this));
-            if (bal > 0) {
-                IERC20(tokens[i]).safeTransfer(safeVault, bal);
+            uint256 bal;
+            try IERC20(tokens[i]).balanceOf(address(this)) returns (uint256 b) {
+                bal = b;
+            } catch {
+                emit EvacuationFailed(tokens[i]);
+                continue;
+            }
+            if (bal == 0) continue;
+            (bool ok, bytes memory ret) =
+                tokens[i].call(abi.encodeCall(IERC20.transfer, (vault_, bal)));
+            // Sémantique SafeERC20 : succès si call ok ET (pas de retour [USDT] OU retour true).
+            if (ok && (ret.length == 0 || (ret.length >= 32 && abi.decode(ret, (bool))))) {
                 emit Evacuated(tokens[i], bal);
+            } else {
+                emit EvacuationFailed(tokens[i]);
             }
         }
     }
