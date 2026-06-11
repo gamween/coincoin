@@ -33,6 +33,11 @@ contract Guardian7702Test is Test {
         vm.prank(user);
         GuardianModule(user).configure(vault, keeper);
 
+        // 2b) Le storage délégué vit bien à l'adresse de l'EOA (pas chez impl).
+        assertEq(GuardianModule(user).safeVault(), vault);
+        assertEq(GuardianModule(user).keeper(), keeper);
+        assertTrue(GuardianModule(user).configured());
+
         // 3) Le keeper déclenche l'évacuation de l'EOA.
         address[] memory tokens = new address[](1);
         tokens[0] = address(token);
