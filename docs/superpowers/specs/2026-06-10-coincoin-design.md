@@ -227,7 +227,10 @@ Métrique d'accroche : *« fonds sauvés vs perdus »*, chrono de la fenêtre de
 - **ZeroDev** : un projet / API key (bundler + paymaster) pour les tx sponsorisées et session keys.
 - **Alchemy** : une app sur Arbitrum Sepolia + Robinhood testnet (RPC).
 - **Comptes faucet** : Arbitrum Sepolia ETH + Robinhood testnet (Stock Tokens).
-- Confirmer si tu veux **EIP-7702** comme chemin principal (le plus « 2026 ») ou **ERC-7579/Safe** (plus de tooling éprouvé).
+
+**✅ Décidé (11 juin 2026)** : **EIP-7702 = chemin principal** (le plus « 2026 », retourne l'arme des attaquants, supporté par ZeroDev sur Arbitrum Sepolia chain 421614). ERC-7579/Safe = fallback documenté. ZeroDev Kernel est compatible 4337 **et** 7702 → c'est notre base de compte.
+
+> 💡 Validation externe : Decurity expose une page de recherche [rescue-window.decurity.io](https://rescue-window.decurity.io/) sur les fenêtres de drain, et **un hedge fund 9 chiffres utilise déjà leur WebSocket pour sortir ses positions automatiquement dès le début d'une attaque** — exactement notre mécanisme, mais fait pour un fonds (B2B), pas pour les particuliers. coincoin = ce mécanisme, démocratisé.
 
 ---
 
