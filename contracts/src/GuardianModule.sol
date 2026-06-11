@@ -85,19 +85,35 @@ contract GuardianModule {
     }
 
     event ApprovalRevoked(address indexed token, address indexed spender);
+    event ApprovalRevokeFailed(address indexed token, address indexed spender);
 
     error LengthMismatch();
 
-    /// @notice Remet à zéro les allowances passées (utilise forceApprove pour les
-    ///         tokens non standard type USDT).
+    /// @notice Remet à zéro les allowances passées.
+    /// @dev Chemin d'URGENCE, symétrique d'evacuateERC20 : une paire qui échoue
+    ///      (token toxique, adresse sans code) est SAUTÉE (event ApprovalRevokeFailed)
+    ///      au lieu de bloquer le lot. Volontairement PAS de garde `configured` :
+    ///      couper une allowance est une action défensive sans mouvement de fonds,
+    ///      utile même avant la configuration du vault.
     function revokeApprovals(address[] calldata tokens, address[] calldata spenders)
         external
         onlySelfOrKeeper
+        nonReentrant
     {
         if (tokens.length != spenders.length) revert LengthMismatch();
         for (uint256 i; i < tokens.length; ++i) {
-            IERC20(tokens[i]).forceApprove(spenders[i], 0);
-            emit ApprovalRevoked(tokens[i], spenders[i]);
+            if (tokens[i].code.length == 0) {
+                emit ApprovalRevokeFailed(tokens[i], spenders[i]);
+                continue;
+            }
+            (bool ok, bytes memory ret) =
+                tokens[i].call(abi.encodeCall(IERC20.approve, (spenders[i], 0)));
+            // Sémantique SafeERC20 : succès si call ok ET (pas de retour [USDT] OU retour true).
+            if (ok && (ret.length == 0 || (ret.length >= 32 && abi.decode(ret, (bool))))) {
+                emit ApprovalRevoked(tokens[i], spenders[i]);
+            } else {
+                emit ApprovalRevokeFailed(tokens[i], spenders[i]);
+            }
         }
     }
 }

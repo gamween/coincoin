@@ -186,6 +186,40 @@ contract GuardianModuleRevokeTest is Test {
         vm.expectRevert(GuardianModule.LengthMismatch.selector);
         guardian.revokeApprovals(tokens, spenders);
     }
+
+    function test_SelfCanRevokeApproval() public {
+        address[] memory tokens = new address[](1);
+        address[] memory spenders = new address[](1);
+        tokens[0] = address(token);
+        spenders[0] = spender;
+        vm.prank(address(guardian));
+        guardian.revokeApprovals(tokens, spenders);
+        assertEq(token.allowance(address(guardian), spender), 0);
+    }
+
+    function test_EmptyArraysAreNoop() public {
+        address[] memory tokens = new address[](0);
+        address[] memory spenders = new address[](0);
+        vm.prank(keeper);
+        guardian.revokeApprovals(tokens, spenders);
+        assertEq(token.allowance(address(guardian), spender), type(uint256).max);
+    }
+
+    function test_RevertingTokenSkippedInRevoke() public {
+        RevertingApproveERC20 bad = new RevertingApproveERC20();
+        address[] memory tokens = new address[](2);
+        address[] memory spenders = new address[](2);
+        tokens[0] = address(bad);     // toxique en position 0
+        spenders[0] = spender;
+        tokens[1] = address(token);   // sain ensuite
+        spenders[1] = spender;
+
+        vm.prank(keeper);
+        guardian.revokeApprovals(tokens, spenders);
+
+        // Le sain est révoqué malgré le toxique devant lui.
+        assertEq(token.allowance(address(guardian), spender), 0);
+    }
 }
 
 contract RevertingERC20 is MockERC20 {
@@ -193,5 +227,13 @@ contract RevertingERC20 is MockERC20 {
 
     function transfer(address, uint256) public pure override returns (bool) {
         revert("blacklisted");
+    }
+}
+
+contract RevertingApproveERC20 is MockERC20 {
+    constructor() MockERC20("BadApprove", "BADA") {}
+
+    function approve(address, uint256) public pure override returns (bool) {
+        revert("no approve");
     }
 }
