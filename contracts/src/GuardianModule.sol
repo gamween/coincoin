@@ -11,7 +11,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 ///         d'urgence sont ouvertes au compte ou au keeper borné. Les fonds ne partent
 ///         QUE vers le `safeVault` enregistré.
 contract GuardianModule {
-    using SafeERC20 for IERC20;
+    using SafeERC20 for IERC20; // utilisé par evacuateERC20 (Task 5)
 
     address public safeVault;
     address public keeper;
@@ -28,6 +28,8 @@ contract GuardianModule {
         _;
     }
 
+    /// @dev La reconfiguration par le compte lui-même est intentionnelle (le compte est
+    ///      l'autorité suprême) ; la vérification d'intention revient à la couche signing/UX.
     function configure(address safeVault_, address keeper_) external onlySelf {
         if (safeVault_ == address(0) || keeper_ == address(0)) revert ZeroAddress();
         safeVault = safeVault_;

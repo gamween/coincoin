@@ -34,4 +34,21 @@ contract GuardianModuleConfigureTest is Test {
         vm.expectRevert(GuardianModule.ZeroAddress.selector);
         guardian.configure(address(0), keeper);
     }
+
+    function test_SelfCanReconfigure() public {
+        vm.prank(address(guardian));
+        guardian.configure(vault, keeper);
+        address newVault = address(0xBEEF);
+        address newKeeper = address(0xCAFE);
+        vm.prank(address(guardian));
+        guardian.configure(newVault, newKeeper);
+        assertEq(guardian.safeVault(), newVault);
+        assertEq(guardian.keeper(), newKeeper);
+    }
+
+    function test_ConfigureRejectsZeroKeeper() public {
+        vm.prank(address(guardian));
+        vm.expectRevert(GuardianModule.ZeroAddress.selector);
+        guardian.configure(vault, address(0));
+    }
 }
