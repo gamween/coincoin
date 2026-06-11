@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title GuardianModule
 /// @notice Logique guardian déléguée à un compte via EIP-7702. Exécutée dans le
@@ -11,8 +10,6 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 ///         d'urgence sont ouvertes au compte ou au keeper borné. Les fonds ne partent
 ///         QUE vers le `safeVault` enregistré.
 contract GuardianModule {
-    using SafeERC20 for IERC20; // utilisé par evacuateERC20 (Task 5)
-
     address public safeVault;
     address public keeper;
     bool public configured;
