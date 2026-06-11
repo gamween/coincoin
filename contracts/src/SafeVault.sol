@@ -22,5 +22,10 @@ contract SafeVault is Ownable {
         require(ok, "ETH transfer failed");
     }
 
+    /// @dev Désactivé : renoncer à l'ownership briquerait le coffre (fonds perdus).
+    function renounceOwnership() public view override onlyOwner {
+        revert("SafeVault: renounce disabled");
+    }
+
     receive() external payable {}
 }

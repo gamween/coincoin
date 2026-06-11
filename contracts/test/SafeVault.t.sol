@@ -37,4 +37,26 @@ contract SafeVaultTest is Test {
         assertTrue(ok);
         assertEq(address(vault).balance, 1 ether);
     }
+
+    function test_OwnerCanWithdrawEth() public {
+        vm.deal(address(vault), 2 ether);
+        address payable dest = payable(address(0xDE57));
+        vm.prank(owner);
+        vault.withdrawETH(dest, 1.5 ether);
+        assertEq(dest.balance, 1.5 ether);
+        assertEq(address(vault).balance, 0.5 ether);
+    }
+
+    function test_NonOwnerCannotWithdrawEth() public {
+        vm.deal(address(vault), 1 ether);
+        vm.prank(attacker);
+        vm.expectRevert();
+        vault.withdrawETH(payable(attacker), 1 ether);
+    }
+
+    function test_RenounceOwnershipDisabled() public {
+        vm.prank(owner);
+        vm.expectRevert(bytes("SafeVault: renounce disabled"));
+        vault.renounceOwnership();
+    }
 }
