@@ -18,6 +18,9 @@ target/
 cache/
 broadcast/
 
+# Worktrees locaux
+.worktrees/
+
 # Divers
 .DS_Store
 *.log
