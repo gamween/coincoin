@@ -1,0 +1,23 @@
+# Secrets — JAMAIS commité
+.env
+.env.local
+.env.*.local
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+
+# Rust / Stylus
+target/
+
+# Foundry
+cache/
+broadcast/
+
+# Divers
+.DS_Store
+*.log
