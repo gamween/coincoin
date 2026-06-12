@@ -31,6 +31,8 @@ Solidity + OpenZeppelin · **Stylus** (Rust/WASM) pour le moteur de règles · *
 
 Spec & design complets : [`docs/superpowers/specs/2026-06-10-coincoin-design.md`](docs/superpowers/specs/2026-06-10-coincoin-design.md)
 
+Brand kit (DA en tokens UI : palette, fonts, composants, mascotte) : [`docs/brand/BRAND.md`](docs/brand/BRAND.md)
+
 ## Statut
 
 🚧 En développement — design validé, implémentation à venir.
