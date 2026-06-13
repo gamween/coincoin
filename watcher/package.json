@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "demo": "tsx scripts/demo.ts"
+    "onboard": "tsx scripts/onboard.ts",
+    "watch": "tsx scripts/watch.ts",
+    "exploit": "tsx scripts/exploit.ts"
   },
   "dependencies": {
     "viem": "^2.21.0",
