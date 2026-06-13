@@ -1,0 +1,161 @@
+/* React Bits CardNav reskinned to the coincoin comic/brutalist brand.
+   Pinned top-left, hard bevel shadow, 3px near-black borders, Bungee labels. */
+
+.card-nav-container {
+  position: fixed;
+  top: 1.1rem;
+  left: 1.1rem;
+  right: 1.1rem;
+  width: auto;
+  max-width: 520px;
+  z-index: 60;
+  box-sizing: border-box;
+}
+
+.card-nav {
+  display: block;
+  position: relative;
+  height: 60px;
+  padding: 0;
+  background-color: #032b73;
+  border: 3px solid #040607;
+  border-radius: 14px;
+  box-shadow: 6px 6px 0 #040607;
+  overflow: hidden;
+  will-change: height;
+}
+
+.card-nav-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 0 1rem;
+  z-index: 2;
+}
+
+.hamburger-menu {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  height: 100%;
+  cursor: pointer;
+  outline: none;
+}
+.hamburger-line {
+  width: 28px;
+  height: 3px;
+  background-color: #f5d90a;
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+  transform-origin: 50% 50%;
+}
+.hamburger-menu:hover .hamburger-line {
+  opacity: 0.8;
+}
+.hamburger-menu.open .hamburger-line:first-child {
+  transform: translateY(4.5px) rotate(45deg);
+}
+.hamburger-menu.open .hamburger-line:last-child {
+  transform: translateY(-4.5px) rotate(-45deg);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.card-nav-content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 60px;
+  bottom: 0;
+  padding: 0.55rem;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+.card-nav.open .card-nav-content {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.nav-card {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 3px solid #040607;
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 #040607;
+  color: #f3f5f3;
+  text-decoration: none;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.nav-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 #040607;
+}
+.nav-card-label {
+  font-family: "Bungee", "Rubik Mono One", system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  font-size: 20px;
+}
+.nav-card-links {
+  margin-top: auto;
+}
+.nav-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.nav-card-link-icon {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .card-nav-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .nav-card {
+    min-height: 64px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-card-links {
+    margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hamburger-line,
+  .nav-card {
+    transition-duration: 0.001ms !important;
+  }
+}

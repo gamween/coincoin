@@ -1,4 +1,5 @@
-import { Nav } from "./sections/Nav";
+import CardNav from "./components/CardNav";
+import FlowingMenu from "./components/FlowingMenu";
 import { Hero } from "./sections/Hero";
 import { Problem } from "./sections/Problem";
 import { Flip } from "./sections/Flip";
@@ -8,6 +9,7 @@ import { Architecture } from "./sections/Architecture";
 import { Stack } from "./sections/Stack";
 import { Footer } from "./sections/Footer";
 import { Marquee } from "./components/Marquee";
+import { NAV_PAGES, FLOW_MENU } from "./data";
 
 function App() {
   return (
@@ -18,10 +20,22 @@ function App() {
       >
         Skip to content
       </a>
-      <Nav />
+      <CardNav items={[...NAV_PAGES]} />
       <main className="relative z-10">
         <Hero />
-        <Marquee />
+
+        {/* on-page section index — replaces the old top nav row */}
+        <section id="explore" className="relative px-5 pb-8 sm:px-8">
+          <div className="mx-auto w-full max-w-[1180px]">
+            <p className="mb-4 font-body text-caption uppercase tracking-[0.14em] text-text-muted">
+              Explore — hover a row
+            </p>
+            <div className="comic-card h-[clamp(420px,62vh,560px)] overflow-hidden !rounded-xl shadow-bevel-lg">
+              <FlowingMenu items={FLOW_MENU.map((m) => ({ link: m.href, text: m.label, image: m.image }))} />
+            </div>
+          </div>
+        </section>
+
         <Problem />
         <Flip />
         <Marquee />

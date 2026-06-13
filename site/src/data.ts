@@ -4,6 +4,7 @@
 export const GITHUB_URL = "https://github.com/gamween/coincoin";
 export const DOCS_URL = "/docs.html";
 export const CONTACT_URL = "/contact.html";
+export const LICENSE_URL = "/license.html";
 export const LICENSE = "MIT";
 
 // On-chain proof. The GuardianModule is verifiable on a public explorer; the live demo
@@ -23,13 +24,22 @@ export const CONTACTS = {
 };
 export const OWNER_NAME = "Sofiane";
 
-export const NAV_LINKS = [
-  { label: "The problem", href: "#problem" },
-  { label: "The flip", href: "#flip" },
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Live demo", href: "#demo" },
-  { label: "Architecture", href: "#architecture" },
-  { label: "Stack", href: "#stack" },
+// The three standalone pages — shown in the top-left CardNav dropdown and the footer.
+export const NAV_PAGES = [
+  { label: "Docs", href: DOCS_URL, blurb: "Read the docs ↗", bg: "#032b73" },
+  { label: "Contact", href: CONTACT_URL, blurb: "Get in touch ↗", bg: "#0351a6" },
+  { label: "License", href: LICENSE_URL, blurb: "MIT terms ↗", bg: "#036bc8" },
+] as const;
+
+// The on-page section index, shown as a FlowingMenu on the landing (replaces the top nav row).
+// Each row reveals one of the extracted cutouts on hover. Order is intentional (story flow).
+export const FLOW_MENU = [
+  { label: "The flip", href: "#flip", image: "/hero-duck.png" },
+  { label: "How it works", href: "#how-it-works", image: "/duck-calm.png" },
+  { label: "Live demo", href: "#demo", image: "/duck-hero.png" },
+  { label: "Architecture", href: "#architecture", image: "/hero-chest.png" },
+  { label: "Stack", href: "#stack", image: "/hero-sparks.png" },
+  { label: "The problem", href: "#problem", image: "/hero-thief.png" },
 ] as const;
 
 // Problem stats are rendered with animated CountUp in Problem.tsx (numeric values live there).

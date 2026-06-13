@@ -1,6 +1,11 @@
 import { ShieldLogo, Wordmark } from "../components/ui";
-import { SocialLink } from "../components/social";
-import { GITHUB_URL, DOCS_URL, CONTACT_URL, CONTACTS, LICENSE } from "../data";
+import { DOCS_URL, CONTACT_URL, LICENSE_URL, LICENSE } from "../data";
+
+const FOOTER_PAGES = [
+  { label: "Docs", href: DOCS_URL },
+  { label: "Contact", href: CONTACT_URL },
+  { label: "License", href: LICENSE_URL },
+];
 
 export function Footer() {
   return (
@@ -33,30 +38,20 @@ export function Footer() {
             </div>
           </a>
 
-          <div className="flex flex-col items-center gap-5 md:items-end">
-            <nav aria-label="Footer" className="flex items-center gap-5 font-body text-body-sm font-semibold">
-              <a href={DOCS_URL} className="text-text-primary transition-colors hover:text-info">Docs</a>
-              <a href={CONTACT_URL} className="text-text-primary transition-colors hover:text-info">Contact</a>
-              <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="text-text-primary transition-colors hover:text-info">GitHub</a>
-            </nav>
-            <div className="flex flex-wrap justify-center gap-2.5">
-              <SocialLink net="x" href={CONTACTS.x} />
-              <SocialLink net="telegram" href={CONTACTS.telegram} />
-              <SocialLink net="github" href={CONTACTS.github} />
-            </div>
-          </div>
+          <nav aria-label="Footer" className="flex items-center gap-7 font-body text-body font-semibold">
+            {FOOTER_PAGES.map((p) => (
+              <a key={p.href} href={p.href} className="text-text-primary transition-colors hover:text-info">
+                {p.label}
+              </a>
+            ))}
+          </nav>
         </div>
 
         {/* license / copyright */}
         <div className="mt-10 flex flex-col gap-1 border-t-[3px] border-surface pt-8 text-center sm:text-left">
           <p className="font-body text-caption uppercase tracking-wide text-text-muted">
             © 2026 coincoin ·{" "}
-            <a
-              href={`${GITHUB_URL}/blob/main/LICENSE`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-text-primary underline-offset-2 hover:text-info hover:underline"
-            >
+            <a href={LICENSE_URL} className="text-text-primary underline-offset-2 hover:text-info hover:underline">
               {LICENSE} License
             </a>{" "}
             · Built for the Arbitrum Open House London buildathon.
