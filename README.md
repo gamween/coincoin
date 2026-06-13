@@ -35,4 +35,11 @@ Brand kit (design system in UI tokens: palette, fonts, components, mascot): [`do
 
 ## Status
 
-🚧 In development — design validated, implementation to come.
+**Live, end-to-end** on Arbitrum Sepolia + Robinhood Chain testnet:
+
+- ✅ `GuardianModule` (EIP-7702 delegate) — bounded keeper, **frozen vault** (a leaked key can't redirect funds), ERC-20 sweep + approval revocation.
+- ✅ **DeFi position auto-exit (Aave V3)** — `exitAaveV3` pulls funds *deposited in a protocol* back to the account, then sweeps to your vault. **Harpie's blind spot, covered.**
+- ✅ `SafeVault` (owner-only withdrawal) + watcher with **real on-chain threat detection** → exit + evacuate, no human in the loop.
+- 🔭 Roadmap: signed `PreAuthRegistry` policy · local `RulesEngine` (Solidity now, Stylus-ready) · GMX V2 exit.
+
+Run it: see [`docs/superpowers/specs`](docs/superpowers/specs) and `watcher/` (`pnpm onboard` → `pnpm watch`). Tests: `forge test` (contracts) · `pnpm test` (watcher).

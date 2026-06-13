@@ -22,12 +22,13 @@ Prerequisites: deployer + victim + keeper funded with Robinhood gas; `../.env` f
 cd ../contracts && set -a && source ../.env && set +a
 # 1) shared GuardianModule impl
 forge script script/Deploy.s.sol:DeployGuardian --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast
-# 2) demo setup (token + vulnerable protocol + victim's SafeVault)
+# 2) demo setup (token + vulnerable protocol + victim's SafeVault + MockAavePool position)
 forge script script/SetupDemo.s.sol:SetupDemo --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast
 ```
 
 Record in `../.env`: `GUARDIAN_IMPL` (impl from step 1), then `DEMO_TOKEN`,
-`DEMO_PROTO`, `DEMO_VAULT` (step 2).
+`DEMO_PROTO`, `DEMO_VAULT`, and `DEMO_AAVE_POOL` (step 2). With `DEMO_AAVE_POOL`
+set, the watcher exits the victim's deposited Aave position before sweeping.
 
 ## End-to-end demo (multi-terminal)
 

@@ -30,6 +30,9 @@ export interface ResolvedConfig {
   token: `0x${string}`;
   proto: `0x${string}`;
   vault: `0x${string}`;
+  /// Optional Aave-V3-shaped pool holding a deposited position to exit on threat
+  /// (DEMO_AAVE_POOL). When set, the watcher unwinds it before sweeping.
+  aavePool?: `0x${string}`;
 }
 
 const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
@@ -63,5 +66,9 @@ export function resolveChainConfig(env: NodeJS.ProcessEnv = process.env): Resolv
     token: requireAddressEnv(env, "DEMO_TOKEN"),
     proto: requireAddressEnv(env, "DEMO_PROTO"),
     vault: requireAddressEnv(env, "DEMO_VAULT"),
+    aavePool:
+      env.DEMO_AAVE_POOL && ADDRESS_RE.test(env.DEMO_AAVE_POOL)
+        ? (env.DEMO_AAVE_POOL as `0x${string}`)
+        : undefined,
   };
 }

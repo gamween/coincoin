@@ -55,6 +55,8 @@ async function main() {
     safeVault: cfg.vault,
     watchedProtocols: [cfg.proto],
     tokens: [cfg.token],
+    // If a DeFi position is configured, unwind it back to the account before sweeping.
+    ...(cfg.aavePool ? { aavePositions: [{ pool: cfg.aavePool, underlyings: [cfg.token] }] } : {}),
   };
 
   const controller = new AbortController();
