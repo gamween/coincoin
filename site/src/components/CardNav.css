@@ -88,6 +88,12 @@
   text-transform: uppercase;
   color: #3eb5f3;
   white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.card-nav-live:hover {
+  background: #0b1b3a;
+  color: #ffe84a;
 }
 .card-nav-live .dot {
   width: 8px;

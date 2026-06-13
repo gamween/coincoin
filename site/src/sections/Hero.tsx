@@ -28,11 +28,6 @@ export function Hero() {
 
   return (
     <section id="hero" className="relative overflow-hidden px-5 pb-20 pt-32 sm:px-8 md:pb-24 md:pt-36">
-      <div aria-hidden="true" className="bg-bricks pointer-events-none absolute inset-0 opacity-[0.18]" />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[url('/overlay-halftone.png')] bg-repeat opacity-[0.05] mix-blend-screen"
-      />
       <div className="relative mx-auto grid w-full max-w-[1180px] items-center gap-12 lg:grid-cols-[1.05fr_1fr]">
         {/* copy */}
         <motion.div
@@ -57,8 +52,8 @@ export function Hero() {
             <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="btn-comic">
               View on GitHub
             </a>
-            <a href="#demo" className="btn-ghost">
-              Run the demo
+            <a href="#run" className="btn-ghost">
+              Get started
             </a>
           </div>
           <div className="mt-8 flex flex-wrap gap-2.5">

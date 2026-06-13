@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ShieldLogo, Wordmark } from "./ui";
+import { ROBINHOOD_EXPLORER } from "../data";
 import "./CardNav.css";
 
 // React Bits "CardNav" — typed and reskinned to the coincoin comic/brutalist brand.
@@ -112,10 +113,16 @@ export default function CardNav({ items, ease = "power3.out" }: { items: NavPage
             <Wordmark className="text-[19px]" />
           </a>
 
-          <span className="card-nav-live" aria-hidden="true">
+          <a
+            href={ROBINHOOD_EXPLORER}
+            target="_blank"
+            rel="noreferrer"
+            className="card-nav-live"
+            aria-label="Live on Robinhood Chain — open the explorer"
+          >
             <span className="dot" />
             Live · Robinhood Chain
-          </span>
+          </a>
         </div>
 
         <div className="card-nav-content" aria-hidden={!isExpanded}>

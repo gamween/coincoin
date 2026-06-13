@@ -55,7 +55,7 @@ export function Docs() {
               ["Overview", "#overview"],
               ["The problem", "#problem"],
               ["How it works", "#how"],
-              ["Run the demo", "#run"],
+              ["Run it", "#run"],
               ["Architecture", "#arch"],
               ["Deployment", "#deploy"],
             ].map(([label, href]) => (
@@ -122,20 +122,20 @@ export function Docs() {
           </div>
         </Section>
 
-        {/* Run the demo */}
+        {/* Run it */}
         <Section id="run" className="!py-12">
           <SectionHeading
-            eyebrow="RUN THE DEMO"
+            eyebrow="RUN IT"
             eyebrowTone="safe"
-            title="End-to-end on Robinhood Chain"
-            subtitle="The TypeScript watcher in watcher/, run with pnpm. A real on-chain exploit, detected and rescued by the daemon — live on Robinhood Chain Testnet (chain 46630, Arbitrum Orbit, EIP-7702 confirmed)."
+            title="Run the guardian on Robinhood Chain"
+            subtitle="The TypeScript watcher in watcher/, run with pnpm. Connect your wallet, run the guardian — live on Robinhood Chain Testnet (chain 46630, Arbitrum Orbit, EIP-7702 confirmed)."
           />
 
           <H3>1 · Prerequisites</H3>
           <P>
-            Fund the deployer, victim, and keeper wallets with gas on Robinhood Chain, and fill
+            Fund your deployer, wallet, and keeper accounts with gas on Robinhood Chain, and fill
             <code className="mx-1 rounded bg-near-black px-1.5 py-0.5 font-mono text-body-sm text-primary">.env</code>
-            (RPC + the three private keys + <code className="font-mono text-primary">VICTIM_ADDRESS</code>).
+            (RPC + the three private keys + <code className="font-mono text-primary">VICTIM_ADDRESS</code>, your protected wallet).
           </P>
 
           <H3>2 · Deploy the contracts</H3>
@@ -143,7 +143,7 @@ export function Docs() {
 # shared GuardianModule implementation
 forge script script/Deploy.s.sol:DeployGuardian \\
   --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast --gas-estimate-multiplier 800 --slow
-# demo set: token + vulnerable protocol + the victim's SafeVault
+# your set: token + SafeVault (+ a throwaway protocol for local testing)
 forge script script/SetupDemo.s.sol:SetupDemo \\
   --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast --gas-estimate-multiplier 800 --slow`}</Code>
           <P>
@@ -154,7 +154,7 @@ forge script script/SetupDemo.s.sol:SetupDemo \\
             <code className="ml-1 font-mono text-primary">DEMO_VAULT</code>.
           </P>
 
-          <H3>3 · The three commands</H3>
+          <H3>3 · Connect and run</H3>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             {COMMANDS.map((c, i) => (
               <div key={c.cmd} className="comic-card h-full p-5">
@@ -168,18 +168,18 @@ forge script script/SetupDemo.s.sol:SetupDemo \\
             ))}
           </div>
           <P>
-            Onboard once, then run <code className="font-mono text-primary">pnpm watch</code> in one
-            terminal and <code className="font-mono text-primary">pnpm exploit</code> in another. The
-            daemon catches the real <code className="font-mono text-primary">Drained</code> log and
-            evacuates on its own:
+            Run <code className="font-mono text-primary">pnpm onboard</code> once to connect, then
+            leave <code className="font-mono text-primary">pnpm watch</code> running. The guardian
+            catches a real on-chain <code className="font-mono text-primary">Drained</code> log itself
+            and evacuates to your vault — no human in the loop:
           </P>
           <Code>{`🦆 COIN COIN ! threat detected → evacuating 0xFD0A…Ea89
-→ evacuated to 0xF60c…Fe7A (7702 guardian context)
-✓ done. Funds safe. The duck did its job.`}</Code>
+→ evacuated to your SafeVault 0xF60c…Fe7A (EIP-7702 guardian context)
+✓ funds safe in your own vault. Daemon still watching.`}</Code>
           <P>
-            Result, onchain: the victim wallet goes <span className="font-bold text-danger">500 dUSD → 0</span>{" "}
-            and the safe vault goes <span className="font-bold text-success">0 → 500 dUSD</span> — detected and
-            executed by the daemon alone, no human in the loop.
+            Want to see it react on your own machine? <code className="font-mono text-primary">pnpm exploit</code>{" "}
+            is an optional dev tool that fires a test threat at a throwaway protocol — it's for local
+            testing, not part of using coincoin.
           </P>
         </Section>
 

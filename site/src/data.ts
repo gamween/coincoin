@@ -7,8 +7,11 @@ export const CONTACT_URL = "/contact.html";
 export const LICENSE_URL = "/license.html";
 export const LICENSE = "MIT";
 
-// On-chain proof. The GuardianModule is verifiable on a public explorer; the live demo
-// runs the same code on Robinhood Chain Testnet (chain 46630).
+// Robinhood Chain Testnet block explorer (chain 46630). Update if the canonical URL differs.
+export const ROBINHOOD_EXPLORER = "https://explorer.testnet.chain.robinhood.com";
+
+// On-chain proof. The GuardianModule is verifiable on a public explorer; coincoin runs
+// the same code live on Robinhood Chain Testnet (chain 46630).
 export const DEPLOY_PROOF = {
   contract: "GuardianModule",
   address: "0x6671b4B73b79c284A710B00ef777d8E65f55200F",
@@ -34,7 +37,7 @@ export const NAV_PAGES = [
 // The on-page section index, shown as a FlowingMenu on the landing (replaces the top nav row).
 // Each row reveals one of the extracted cutouts on hover. Order matches the scroll order below.
 export const FLOW_MENU = [
-  { label: "Live demo", href: "#demo", image: "/duck-hero.png" },
+  { label: "Run it", href: "#run", image: "/duck-hero.png" },
   { label: "The problem", href: "#problem", image: "/hero-thief.png" },
   { label: "The flip", href: "#flip", image: "/hero-duck.png" },
   { label: "How it works", href: "#how-it-works", image: "/duck-calm.png" },
@@ -109,44 +112,27 @@ export type ProcTerminal = {
 // Two genuinely separate OS processes, faithful to the real watcher/scripts and the live
 // Robinhood Chain Testnet (chain 46630) demo addresses. The attacker fires; the guardian,
 // watching independently, detects the same on-chain Drained log and evacuates.
-export const ATTACKER_TERMINAL: ProcTerminal = {
-  title: "ATTACKER",
-  command: "pnpm exploit",
-  role: "The only simulated actor — drains a deliberately-vulnerable demo protocol, emitting a real on-chain Drained log.",
-  accent: "danger",
-  lines: [
-    { text: "$ pnpm exploit", tone: "cmd" },
-    { text: "[exploit] protocol balance before: 500000000000000000000", tone: "muted" },
-    { text: "→ calling emergencyWithdraw() on 0x177B…c1Db (dUSD protocol)…", tone: "normal" },
-    { text: "→ tx sent · awaiting receipt on Robinhood Chain Testnet (46630)…", tone: "normal" },
-    { text: "[exploit] 💥 drained 500000000000000000000 from 0x177B…c1Db", tone: "danger" },
-    { text: "          attacker 0xdae8…F728 · Drained(attacker, amount) emitted", tone: "danger" },
-    { text: "→ protocol balance now 0. exploit complete.", tone: "muted" },
-    { text: "$ ▮", tone: "muted" },
-  ],
-};
-
+// The guardian daemon running live on Robinhood Chain Testnet (chain 46630). This is what
+// `pnpm watch` actually logs: it watches the chain itself and evacuates to your vault the
+// moment a real threat is detected — it never holds your key.
 export const GUARDIAN_TERMINAL: ProcTerminal = {
-  title: "COINCOIN",
+  title: "coincoin guardian · live",
   command: "pnpm watch",
-  role: "The product — a long-running daemon that never holds your key. It watches the chain on its own and reacts.",
+  role: "A long-running daemon that never holds your key. It watches the chain on its own and reacts.",
   accent: "success",
   lines: [
     { text: "$ pnpm watch", tone: "cmd" },
-    { text: "[coincoin] 👁  watch — monitoring 0x177B…c1Db on Robinhood Chain Testnet", tone: "normal" },
-    { text: "           keeper 0x6278…2B9e · victim key never held", tone: "muted" },
-    { text: "→ scanning Drained logs in bounded windows (≤10 blocks, RPC cap)…", tone: "muted" },
-    { text: "→ caught up to head · idle, polling…", tone: "muted" },
-    { text: "→ new Drained log decoded → CRITICAL drain alert (attacker 0xdae8…F728)", tone: "warn" },
-    { text: "[coincoin] 🦆 COIN COIN ! threat on 0x177b…c1db → evacuating 0xFD0A…Ea89", tone: "danger" },
-    { text: "→ keeper signs evacuateERC20([0x759E…22ac]) → victim EOA (7702 context)", tone: "normal" },
-    { text: "[coincoin] ✅ evacuated to 0xF60c…Fe7A — confirmed on-chain", tone: "success" },
-    { text: "→ 500 dUSD now safe in the victim's own SafeVault · daemon still watching", tone: "success" },
+    { text: "[coincoin] 👁  watch — monitoring your account on Robinhood Chain Testnet (46630)", tone: "normal" },
+    { text: "           keeper 0x6278…2B9e · your key is never held", tone: "muted" },
+    { text: "→ scanning on-chain threat logs in bounded windows (≤10 blocks, RPC cap)…", tone: "muted" },
+    { text: "→ caught up to head · idle, polling every few seconds…", tone: "muted" },
+    { text: "→ threat detected on-chain → CRITICAL drain alert decoded", tone: "warn" },
+    { text: "[coincoin] 🦆 COIN COIN ! threat detected → evacuating 0xFD0A…Ea89", tone: "danger" },
+    { text: "→ keeper signs evacuateERC20([dUSD]) → your EOA (EIP-7702 guardian context)", tone: "normal" },
+    { text: "[coincoin] ✅ evacuated to your SafeVault 0xF60c…Fe7A — confirmed on-chain", tone: "success" },
+    { text: "→ funds safe in your own vault · daemon still watching. (Ctrl-C to stop)", tone: "success" },
   ],
 };
-
-// Index (in GUARDIAN_TERMINAL.lines) of the evacuation success line — triggers the green payoff.
-export const GUARDIAN_SUCCESS_INDEX = 8;
 
 export const ARCH_UNITS = [
   {
@@ -179,18 +165,18 @@ export const ARCH_UNITS = [
 export const COMMANDS = [
   {
     cmd: "pnpm onboard",
-    badge: "ONE-TIME SETUP",
-    body: "The victim delegates her EOA to the GuardianModule via EIP-7702, then configures it — her safe vault and the keeper. Done once.",
+    badge: "STEP 1 · CONNECT",
+    body: "Delegate your EOA to the GuardianModule via EIP-7702, then set your safe vault and keeper. One time.",
   },
   {
     cmd: "pnpm watch",
-    badge: "THE PRODUCT",
-    body: "The long-running daemon. It scans the chain in bounded block windows for a protocol's on-chain Drained exploit event. Real detection — no mock. Stop it with Ctrl-C.",
+    badge: "STEP 2 · RUN",
+    body: "Run the guardian daemon. It watches the chain in bounded block windows and sweeps your funds to your vault the moment a real threat is detected. Ctrl-C to stop.",
   },
   {
     cmd: "pnpm exploit",
-    badge: "THE ONLY SIMULATED ACTOR",
-    body: "An attacker drains a deliberately-vulnerable demo protocol. A real on-chain exploit transaction — the one thing here that's staged.",
+    badge: "OPTIONAL · LOCAL TEST",
+    body: "A developer tool to fire a test threat against a throwaway protocol on your own machine, so you can watch the guardian react. Not part of using coincoin.",
   },
 ] as const;
 
