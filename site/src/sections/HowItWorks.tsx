@@ -1,13 +1,7 @@
-import { Section, SectionHeading, Pill, Chevron } from "../components/ui";
+import { Section, SectionHeading, Pill } from "../components/ui";
 import { Reveal } from "../components/Reveal";
-import { PIPELINE, GUARANTEES } from "../data";
-
-const ICON: Record<string, string> = {
-  alerts: "/icons/alerts.png",
-  keeper: "/icons/keeper.png",
-  guardian: "/icons/eoa.png",
-  vault: "/icons/vault.png",
-};
+import Stepper, { Step } from "../components/Stepper";
+import { STEPPER_STEPS, GUARANTEES } from "../data";
 
 const STATUS = [
   { tone: "info", dot: "bg-info", text: "All quiet. coincoin is watching your wallets." },
@@ -17,7 +11,7 @@ const STATUS = [
 
 export function HowItWorks() {
   return (
-    <Section id="how-it-works">
+    <Section id="how-it-works" tone="panel">
       <SectionHeading
         eyebrow="HOW IT WORKS"
         eyebrowTone="info"
@@ -38,21 +32,23 @@ export function HowItWorks() {
         </div>
       </Reveal>
 
-      {/* step nodes */}
-      <div className="mt-10 flex flex-col items-stretch gap-3 lg:flex-row lg:items-center">
-        {PIPELINE.map((step, i) => (
-          <div key={step.key} className="flex flex-1 items-center gap-3">
-            <Reveal delay={i * 0.08} className="flex-1">
-              <div className="comic-card h-full p-5">
-                <img src={ICON[step.key]} alt="" aria-hidden="true" className="mb-3 h-16 w-16 object-contain" />
-                <div className="display text-[15px] text-primary">{step.label}</div>
-                <p className="mt-2 font-body text-body-sm text-text-muted">{step.body}</p>
+      {/* interactive step-through */}
+      <Reveal delay={0.06}>
+        <p className="mt-12 text-center font-body text-caption uppercase tracking-[0.12em] text-text-muted">
+          Step through it →
+        </p>
+        <Stepper initialStep={1} backButtonText="Back" nextButtonText="Next">
+          {STEPPER_STEPS.map((s) => (
+            <Step key={s.key}>
+              <div className="step-head">
+                <img src={s.icon} alt="" aria-hidden="true" className="step-icon" />
+                <span className="step-title">{s.title}</span>
               </div>
-            </Reveal>
-            {i < PIPELINE.length - 1 && <Chevron className="hidden shrink-0 lg:block" />}
-          </div>
-        ))}
-      </div>
+              <p className="step-body">{s.body}</p>
+            </Step>
+          ))}
+        </Stepper>
+      </Reveal>
 
       {/* guarantees */}
       <div className="mt-8 grid gap-4 md:grid-cols-2">

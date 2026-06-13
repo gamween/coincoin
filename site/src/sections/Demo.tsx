@@ -2,15 +2,21 @@ import { useState } from "react";
 import { Section, SectionHeading, Pill } from "../components/ui";
 import { Reveal } from "../components/Reveal";
 import { CountUp } from "../components/CountUp";
-import { Terminal } from "../components/Terminal";
+import { DualTerminal } from "../components/DualTerminal";
 import { Duck } from "../components/Duck";
-import { COMMANDS, TERMINAL_LINES, TERMINAL_SUCCESS_INDEX, GITHUB_URL } from "../data";
+import {
+  COMMANDS,
+  ATTACKER_TERMINAL,
+  GUARDIAN_TERMINAL,
+  GUARDIAN_SUCCESS_INDEX,
+  GITHUB_URL,
+} from "../data";
 
 export function Demo() {
   const [safe, setSafe] = useState(false);
 
   return (
-    <Section id="demo">
+    <Section id="demo" tone="dark">
       <SectionHeading
         eyebrow="LIVE DEMO · NOT A MOCKUP"
         eyebrowTone="safe"
@@ -40,17 +46,18 @@ export function Demo() {
         ))}
       </div>
 
-      {/* terminal */}
+      {/* two distinct terminals */}
       <Reveal delay={0.1} className="mt-8">
-        <Terminal
-          lines={TERMINAL_LINES}
-          successIndex={TERMINAL_SUCCESS_INDEX}
+        <DualTerminal
+          attacker={ATTACKER_TERMINAL}
+          guardian={GUARDIAN_TERMINAL}
+          guardianSuccessIndex={GUARDIAN_SUCCESS_INDEX}
           onSuccess={() => setSafe(true)}
           onReplay={() => setSafe(false)}
         />
         <p className="mt-3 font-body text-caption text-text-muted">
-          The daemon independently detected the real Drained log and triggered the evacuation. No
-          human in the loop.
+          Two separate processes. Nothing tells the guardian the exploit happened — it catches the
+          real Drained log on its own and evacuates. No human in the loop.
         </p>
       </Reveal>
 
@@ -69,11 +76,19 @@ export function Demo() {
                 {safe ? <CountUp from={500} to={0} suffix=" dUSD" /> : <span className="numeric">500 dUSD</span>}
               </div>
             </div>
-            <div>
+            <div className="relative">
               <div className="font-body text-caption uppercase tracking-wide text-text-muted">Safe vault</div>
               <div className="mt-1 text-numeric-lg text-success">
                 {safe ? <CountUp from={0} to={500} suffix=" dUSD" /> : <span className="numeric">0 dUSD</span>}
               </div>
+              {safe && (
+                <img
+                  src="/hero-coins.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="mt-2 h-12 object-contain drop-shadow-[3px_4px_0_rgba(4,6,7,0.85)]"
+                />
+              )}
             </div>
           </div>
           <p

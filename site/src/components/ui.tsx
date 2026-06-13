@@ -47,11 +47,35 @@ export function Pill({ tone = "brand", children, className = "" }: { tone?: Tone
   return <span className={`pill ${pillTone[tone]} ${className}`}>{children}</span>;
 }
 
-/* ── Section shell ── */
-export function Section({ id, children, className = "" }: { id?: string; children: ReactNode; className?: string }) {
+/* ── Section shell ──
+   `tone` paints alternating bands down the page (scroll rhythm + depth) with a faint
+   halftone texture so adjacent sections stop melting into one flat blue field. */
+export function Section({
+  id,
+  children,
+  className = "",
+  tone = "default",
+}: {
+  id?: string;
+  children: ReactNode;
+  className?: string;
+  tone?: "default" | "panel" | "dark";
+}) {
+  const band =
+    tone === "dark"
+      ? "border-y-[3px] border-border/70 bg-near-black/40"
+      : tone === "panel"
+        ? "border-y-[3px] border-border/40 bg-surface/30"
+        : "";
   return (
-    <section id={id} className={`relative scroll-mt-24 px-5 py-20 sm:px-8 md:py-24 ${className}`}>
-      <div className="mx-auto w-full max-w-[1180px]">{children}</div>
+    <section id={id} className={`relative scroll-mt-24 px-5 py-20 sm:px-8 md:py-24 ${band} ${className}`}>
+      {tone !== "default" && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[url('/overlay-halftone.png')] bg-repeat opacity-[0.04] mix-blend-screen"
+        />
+      )}
+      <div className="relative mx-auto w-full max-w-[1180px]">{children}</div>
     </section>
   );
 }
@@ -78,7 +102,7 @@ export function SectionHeading({
         </Pill>
       )}
       <h2 className="display text-[clamp(30px,5.5vw,46px)] leading-[0.95] text-text-primary">
-        <span className="inline-block border-b-[5px] border-primary pb-1">{title}</span>
+        <span className="text-stroke inline-block border-b-[5px] border-primary pb-1">{title}</span>
       </h2>
       {subtitle && <p className="mt-6 font-body text-body-lg text-text-muted">{subtitle}</p>}
     </div>

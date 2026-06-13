@@ -10,16 +10,18 @@ function StatCard({
   source,
   delay,
   stamp,
+  glow = false,
 }: {
   children: React.ReactNode;
   label: string;
   source: string;
   delay: number;
   stamp?: string;
+  glow?: boolean;
 }) {
   return (
     <Reveal delay={delay}>
-      <div className="comic-card glow-red relative h-full !border-danger p-7">
+      <div className={`comic-card relative h-full !border-danger p-7 ${glow ? "glow-red" : ""}`}>
         {stamp && (
           <img
             src={stamp}
@@ -38,7 +40,7 @@ function StatCard({
 
 export function Problem() {
   return (
-    <Section id="problem">
+    <Section id="problem" tone="dark">
       <Duck
         state="alert"
         className="pointer-events-none absolute right-3 top-10 z-10 hidden w-48 -rotate-2 lg:block"
@@ -51,7 +53,7 @@ export function Problem() {
       />
 
       <div className="mt-12 grid gap-6 md:grid-cols-3">
-        <StatCard label="stolen in 2025 via wallet drainers & phishing" source="Scam Sniffer" delay={0} stamp="/pow-stamp.png">
+        <StatCard label="stolen in 2025 via wallet drainers & phishing" source="Scam Sniffer" delay={0} stamp="/pow-stamp.png" glow>
           <CountUp to={83.85} decimals={2} prefix="$" suffix="M" />
         </StatCard>
         <StatCard label="victims in a single year" source="Scam Sniffer" delay={0.08}>

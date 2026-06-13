@@ -37,12 +37,31 @@ export function Stack() {
         <Reveal delay={0.1}>
           <div className="flex h-full flex-col gap-4">
             {CHAINS.map((c) => (
-              <div key={c.name} className="comic-card flex items-center gap-4 p-5">
-                <span className="display text-[24px] text-primary">▲</span>
-                <div>
-                  <div className="font-body text-body font-bold text-text-primary">{c.name}</div>
-                  <div className="font-body text-caption uppercase tracking-wide text-text-muted">{c.note}</div>
+              <div
+                key={c.name}
+                className={`comic-card p-5 ${c.primary ? "!border-success glow-green" : ""}`}
+              >
+                <div className="flex items-center gap-4">
+                  <span className="display text-[24px] text-primary">▲</span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-body text-body font-bold text-text-primary">{c.name}</span>
+                      {c.primary && <Pill tone="safe">TRACK</Pill>}
+                    </div>
+                    <div className="font-body text-caption uppercase tracking-wide text-text-muted">{c.note}</div>
+                  </div>
                 </div>
+                {c.address && c.explorer && (
+                  <a
+                    href={c.explorer}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 flex items-center gap-2 font-mono text-caption text-info underline-offset-2 hover:underline"
+                  >
+                    <span className="truncate">{c.address}</span>
+                    <span aria-hidden="true" className="shrink-0">↗ Arbiscan</span>
+                  </a>
+                )}
               </div>
             ))}
             <div className="comic-card !shadow-bevel-sm grid gap-4 p-5 sm:grid-cols-2">

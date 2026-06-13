@@ -9,7 +9,7 @@ function Tag({ kind }: { kind: string }) {
 
 export function Architecture() {
   return (
-    <Section id="architecture">
+    <Section id="architecture" tone="panel">
       <SectionHeading
         eyebrow="ARCHITECTURE"
         eyebrowTone="info"

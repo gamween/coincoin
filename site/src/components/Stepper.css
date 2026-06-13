@@ -1,0 +1,209 @@
+/* React Bits Stepper reskinned to the coincoin comic/brutalist brand (docs/brand/BRAND.md).
+   Brand tokens: yellow #F5D90A, surface #032B73, near-black #040607, off-white #F3F5F3,
+   success #27C93F, info #3EB5F3. Hard offset shadows only — no soft/blur, no glassmorphism. */
+
+.outer-container {
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.step-circle-container {
+  width: 100%;
+  background: #032b73;
+  border: 3px solid #040607;
+  border-radius: 16px;
+  box-shadow: 8px 8px 0 #040607;
+}
+
+/* ── Step indicator row ── */
+.step-indicator-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 24px 28px 10px;
+}
+
+.step-indicator {
+  position: relative;
+  cursor: pointer;
+  outline: none;
+}
+.step-indicator[data-status="active"] {
+  cursor: default;
+}
+
+.step-indicator-inner {
+  display: flex;
+  height: 40px;
+  width: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 3px solid #040607;
+  font-family: "Bungee", "Rubik Mono One", system-ui, sans-serif;
+  font-size: 14px;
+  transition: background-color 150ms, color 150ms, box-shadow 150ms;
+}
+.step-indicator-inner[data-status="inactive"] {
+  background: #0b1b3a;
+  color: #afd0c7;
+}
+.step-indicator-inner[data-status="active"] {
+  background: #f5d90a;
+  color: #040607;
+  box-shadow: 4px 4px 0 #040607;
+}
+.step-indicator-inner[data-status="complete"] {
+  background: #27c93f;
+  color: #040607;
+}
+
+.active-dot {
+  height: 11px;
+  width: 11px;
+  border-radius: 999px;
+  background: #040607;
+}
+.step-number {
+  line-height: 1;
+}
+.check-icon {
+  height: 18px;
+  width: 18px;
+  color: #040607;
+}
+
+/* ── Connector ── */
+.step-connector {
+  position: relative;
+  margin: 0 8px;
+  height: 3px;
+  flex: 1;
+  overflow: hidden;
+  background: #040607;
+}
+.step-connector-inner {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: #f5d90a;
+}
+
+/* ── Content surface (the off-white speech-bubble card) ── */
+.step-content-default {
+  margin: 16px 28px 4px;
+}
+.step-default {
+  background: #f3f5f3;
+  color: #040607;
+  border: 3px solid #040607;
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 #040607;
+  padding: 24px;
+}
+.step-default .step-title {
+  display: inline-block;
+  margin: 0 0 12px;
+  font-family: "Bungee", "Rubik Mono One", system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+  font-size: 22px;
+  color: #040607;
+  border-bottom: 5px solid #f5d90a;
+  padding-bottom: 2px;
+}
+.step-default .step-body {
+  margin: 0;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #1a1a1a;
+}
+.step-default .step-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.step-default .step-icon {
+  height: 56px;
+  width: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* ── Footer / nav buttons ── */
+.footer-container {
+  padding: 6px 28px 24px;
+}
+.footer-nav {
+  display: flex;
+  align-items: center;
+}
+.footer-nav.spread {
+  justify-content: space-between;
+}
+.footer-nav.end {
+  justify-content: flex-end;
+}
+
+.next-button,
+.back-button {
+  border: 3px solid #040607;
+  border-radius: 999px;
+  box-shadow: 4px 4px 0 #040607;
+  padding: 12px 24px;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 150ms, box-shadow 150ms, background-color 150ms;
+}
+.next-button {
+  background: #f5d90a;
+  color: #040607;
+}
+.next-button:hover {
+  background: #ffe84a;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #040607;
+}
+.next-button:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+.next-button.complete {
+  background: #27c93f;
+  color: #040607;
+}
+.next-button.complete:hover {
+  background: #43e05b;
+}
+.back-button {
+  background: #032b73;
+  color: #f3f5f3;
+  border-color: #3eb5f3;
+}
+.back-button:hover {
+  background: #0351a6;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #040607;
+}
+.back-button:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-circle-container,
+  .next-button,
+  .back-button,
+  .step-indicator-inner {
+    transition-duration: 0.001ms !important;
+  }
+}
