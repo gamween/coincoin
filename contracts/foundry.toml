@@ -11,3 +11,4 @@ fs_permissions = [{ access = "read", path = "./"}]
 [rpc_endpoints]
 arbitrum_sepolia = "${ARBITRUM_SEPOLIA_RPC}"
 robinhood_testnet = "${ROBINHOOD_TESTNET_RPC}"
+arbitrum_one = "${ARBITRUM_ONE_RPC}"

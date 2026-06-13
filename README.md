@@ -39,7 +39,7 @@ Brand kit (design system in UI tokens: palette, fonts, components, mascot): [`do
 
 - ✅ `GuardianModule` (EIP-7702 delegate) — bounded keeper, **frozen vault** (a leaked key can't redirect funds), ERC-20 sweep + approval revocation.
 - ✅ `SafeVault` (owner-only withdrawal) + watcher with **real on-chain threat detection** → exit + evacuate, no human in the loop.
-- ✅ **DeFi position auto-exit** — `exitAaveV3` pulls funds *deposited in a protocol* back to the account, then sweeps to your vault (**Harpie's blind spot, covered**). The code targets the real Aave V3 `withdraw` ABI and is fully tested; the Robinhood demo runs it against a `MockAavePool` because **Aave V3 is not deployed on Robinhood Chain** — the mechanism is identical against real Aave.
+- ✅ **DeFi position auto-exit** — `exitAaveV3` pulls funds *deposited in a protocol* back to the account, then sweeps to your vault (**Harpie's blind spot, covered**). It's **fork-verified against the live Aave V3 Pool on Arbitrum One** (`test/AaveForkReal.t.sol`); the Robinhood demo runs the identical code against a `MockAavePool` because **Aave V3 isn't deployed on Robinhood Chain**.
 - 🔭 Roadmap: signed `PreAuthRegistry` policy · local `RulesEngine` (Solidity now, Stylus-ready) · GMX V2 exit.
 
 Run it: see [`docs/superpowers/specs`](docs/superpowers/specs) and `watcher/` (`pnpm onboard` → `pnpm watch`). Tests: `forge test` (contracts) · `pnpm test` (watcher).
