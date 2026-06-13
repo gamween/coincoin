@@ -1,0 +1,19 @@
+{
+  "chainId": 46630,
+  "network": "robinhood-chain-testnet",
+  "rpc": "https://rpc.testnet.chain.robinhood.com/rpc",
+  "contracts": {
+    "GuardianModule": "0x6671b4B73b79c284A710B00ef777d8E65f55200F"
+  },
+  "demo": {
+    "_comment": "Live end-to-end detection->evacuation scenario (pnpm onboard/watch/exploit).",
+    "SafeVault": "0xF60c3Dc4557ff81C68605Cdf9A9b23d31e38Fe7A",
+    "MockERC20": "0x759E3Febe2F4034cBfA61A70A4349a1C201c22ac",
+    "MockVulnerableProtocol": "0x177B7B97f1bF4aaDEF8a0aEF4145CCDC1408c1Db",
+    "victim": "0xFD0AFe0E91CBb9EBEB181060441a54E19300Ea89"
+  },
+  "deployedAt": "2026-06-12",
+  "deployer": "0xdae8992a9b5Fe850bE63781d1c2e65a3e496F728",
+  "explorer": null,
+  "note": "Robinhood Chain testnet (Arbitrum Orbit L2). No public block explorer at submission time. GuardianModule shares its address with the Arbitrum Sepolia deployment (same deployer + nonce)."
+}
