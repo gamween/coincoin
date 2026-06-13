@@ -9,8 +9,12 @@ import { resolveChainConfig } from "../src/config";
 /// et la config de chaîne (CHAIN, RPC, GUARDIAN_IMPL, DEMO_VAULT).
 async function main() {
   const cfg = resolveChainConfig();
-  const victim = privateKeyToAccount(process.env.VICTIM_PRIVATE_KEY as `0x${string}`);
-  const keeper = privateKeyToAccount(process.env.KEEPER_PRIVATE_KEY as `0x${string}`);
+  const victimKey = process.env.VICTIM_PRIVATE_KEY;
+  if (!victimKey) throw new Error("onboard: VICTIM_PRIVATE_KEY manquant");
+  const keeperKey = process.env.KEEPER_PRIVATE_KEY;
+  if (!keeperKey) throw new Error("onboard: KEEPER_PRIVATE_KEY manquant");
+  const victim = privateKeyToAccount(victimKey as `0x${string}`);
+  const keeper = privateKeyToAccount(keeperKey as `0x${string}`);
 
   const transport = http(cfg.rpcUrl);
   const pub = createPublicClient({ chain: cfg.chain, transport });

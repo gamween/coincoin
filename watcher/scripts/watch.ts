@@ -16,7 +16,9 @@ async function main() {
   const cfg = resolveChainConfig();
   const victimAddress = process.env.VICTIM_ADDRESS as `0x${string}` | undefined;
   if (!victimAddress) throw new Error("watch: VICTIM_ADDRESS manquant");
-  const keeper = privateKeyToAccount(process.env.KEEPER_PRIVATE_KEY as `0x${string}`);
+  const keeperKey = process.env.KEEPER_PRIVATE_KEY;
+  if (!keeperKey) throw new Error("watch: KEEPER_PRIVATE_KEY manquant");
+  const keeper = privateKeyToAccount(keeperKey as `0x${string}`);
 
   const transport = http(cfg.rpcUrl);
   const pub = createPublicClient({ chain: cfg.chain, transport });
