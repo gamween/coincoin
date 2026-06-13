@@ -6,10 +6,11 @@ import {SafeVault} from "../src/SafeVault.sol";
 import {MockERC20} from "../test/mocks/MockERC20.sol";
 import {MockVulnerableProtocol} from "../src/demo/MockVulnerableProtocol.sol";
 
-/// @notice Déploie le décor de la démo end-to-end sur Arbitrum Sepolia :
-///         un token de test, le protocole vulnérable, et le SafeVault de la victime.
-///         La victime (VICTIM_ADDRESS) reçoit des tokens au repos ; la délégation 7702
-///         et le `configure` sont faits côté script TS (demo.ts).
+/// @notice Déploie le décor de la démo end-to-end sur la chaîne cible (Robinhood
+///         Chain Testnet par défaut, ou Arbitrum Sepolia) : un token de test, le
+///         protocole vulnérable, et le SafeVault de la victime. La victime
+///         (VICTIM_ADDRESS) reçoit des tokens au repos ; la délégation 7702 et le
+///         `configure` sont faits côté script TS (onboard.ts).
 contract SetupDemo is Script {
     function run() external {
         uint256 pk = vm.envUint("DEPLOYER_PRIVATE_KEY");
