@@ -1,4 +1,5 @@
-import "dotenv/config";
+import { config } from "dotenv";
+config({ path: "../.env" });
 import { createWalletClient, createPublicClient, http, encodeFunctionData } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { resolveChainConfig } from "../src/config";
