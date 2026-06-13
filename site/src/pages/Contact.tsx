@@ -3,30 +3,6 @@ import { SocialLink, Avatar } from "../components/social";
 import { Footer } from "../sections/Footer";
 import { GITHUB_URL, DOCS_URL, CONTACTS, OWNER_NAME } from "../data";
 
-const CHANNELS = [
-  {
-    net: "x" as const,
-    href: CONTACTS.x,
-    label: "X / Twitter",
-    handle: "@gamween",
-    note: "DMs open — fastest for a quick question.",
-  },
-  {
-    net: "telegram" as const,
-    href: CONTACTS.telegram,
-    label: "Telegram",
-    handle: "@dvb_fianso",
-    note: "DMs open — good for a longer thread.",
-  },
-  {
-    net: "github" as const,
-    href: CONTACTS.github,
-    label: "GitHub",
-    handle: "gamween",
-    note: "Issues & PRs on the coincoin repo.",
-  },
-];
-
 export function Contact() {
   return (
     <>
@@ -79,23 +55,6 @@ export function Contact() {
                 <SocialLink net="github" href={CONTACTS.github} />
               </div>
             </div>
-          </div>
-
-          {/* channels */}
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {CHANNELS.map((c) => (
-              <a
-                key={c.label}
-                href={c.href}
-                target="_blank"
-                rel="noreferrer"
-                className="comic-card group h-full p-6 transition-all duration-150 hover:-translate-x-[2px] hover:-translate-y-[2px] hover:!shadow-bevel-lg"
-              >
-                <div className="display text-[15px] text-primary">{c.label}</div>
-                <div className="mt-1 font-mono text-body-sm text-text-primary group-hover:text-info">{c.handle}</div>
-                <p className="mt-3 font-body text-body-sm text-text-muted">{c.note}</p>
-              </a>
-            ))}
           </div>
 
           <div className="mt-10 flex flex-wrap gap-4">

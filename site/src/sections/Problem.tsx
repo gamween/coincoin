@@ -2,7 +2,6 @@ import { Section, SectionHeading, Pill } from "../components/ui";
 import { Reveal } from "../components/Reveal";
 import { CountUp } from "../components/CountUp";
 import { Duck } from "../components/Duck";
-import { PROBLEM_BULLETS } from "../data";
 
 function StatCard({
   children,
@@ -40,7 +39,7 @@ function StatCard({
 
 export function Problem() {
   return (
-    <Section id="problem" tone="dark">
+    <Section id="problem">
       <Duck
         state="alert"
         className="pointer-events-none absolute right-3 top-10 z-10 hidden w-48 -rotate-2 lg:block"
@@ -64,31 +63,14 @@ export function Problem() {
         </StatCard>
       </div>
 
-      <div className="mt-12 grid gap-8 lg:grid-cols-[1.2fr_1fr]">
-        <Reveal>
-          <p className="font-body text-body-lg text-text-primary">
-            Protocol exploits aren't instant. They leave a window — anywhere from four minutes to
-            five days — between the first malicious move and the final drain. That's reaction time.
-            Until now, nobody tooled it for the person whose funds are on the line.
-          </p>
-          <p className="mt-6 font-body text-body-sm uppercase tracking-wide text-text-muted">
-            The gap isn't detection. It's response — at the account level, in time.
-          </p>
-        </Reveal>
-        <Reveal delay={0.1}>
-          <ul className="flex flex-col gap-3">
-            {PROBLEM_BULLETS.map((b) => (
-              <li key={b} className="comic-card !shadow-bevel-sm flex gap-3 p-4">
-                <span className="mt-0.5 text-danger" aria-hidden="true">✕</span>
-                <span className="font-body text-body-sm text-text-primary">{b}</span>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-      </div>
-
-      <div className="mt-10">
-        <Pill tone="threat">90%+ of EIP-7702 delegations are sweepers →</Pill>
+      <div className="mt-8 flex flex-wrap items-center gap-4">
+        <Pill tone="threat">90%+ of EIP-7702 delegations are sweepers</Pill>
+        <a
+          href="/docs.html#problem"
+          className="font-body text-body-sm font-semibold text-info underline-offset-2 hover:underline"
+        >
+          The full breakdown →
+        </a>
       </div>
     </Section>
   );

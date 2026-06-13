@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Section, SectionHeading, Pill, ShieldLogo, Wordmark } from "../components/ui";
 import { Footer } from "../sections/Footer";
-import { PIPELINE, GUARANTEES, COMMANDS, ARCH_UNITS, CHAINS, GITHUB_URL } from "../data";
+import { PIPELINE, GUARANTEES, COMMANDS, ARCH_UNITS, CHAINS, PROBLEM_BULLETS, GITHUB_URL } from "../data";
 
 function Code({ children }: { children: ReactNode }) {
   return (
@@ -33,7 +33,7 @@ export function Docs() {
             <a href="/" className="font-body text-body-sm font-medium text-text-primary hover:text-info">
               ← Back to site
             </a>
-            <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="btn-comic !px-5 !py-2.5">
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5">
               GitHub
             </a>
           </div>
@@ -53,6 +53,7 @@ export function Docs() {
           <nav aria-label="On this page" className="mt-8 flex flex-wrap gap-2.5">
             {[
               ["Overview", "#overview"],
+              ["The problem", "#problem"],
               ["How it works", "#how"],
               ["Run the demo", "#run"],
               ["Architecture", "#arch"],
@@ -78,6 +79,26 @@ export function Docs() {
             It turns the attacker's own primitive against them: 90%+ of EIP-7702 delegations today are
             drainers — coincoin points the same mechanism at safety instead of theft.
           </P>
+        </Section>
+
+        {/* The problem */}
+        <Section id="problem" className="!py-12">
+          <SectionHeading eyebrow="THE PROBLEM" eyebrowTone="threat" title="Drained, with no way to react" />
+          <P>
+            $83.85M was stolen via wallet drainers and phishing in 2025, across 106,106 victims
+            (Scam Sniffer). Protocol exploits aren't instant — they leave a window, anywhere from
+            four minutes to five days, between the first malicious move and the final drain. That's
+            reaction time, and until now nobody tooled it for the person whose funds are on the line.
+            The gap isn't detection — it's response, at the account level, in time.
+          </P>
+          <ul className="mt-4 flex flex-col gap-3">
+            {PROBLEM_BULLETS.map((b) => (
+              <li key={b} className="comic-card !shadow-bevel-sm flex gap-3 p-4">
+                <span className="mt-0.5 text-danger" aria-hidden="true">✕</span>
+                <span className="font-body text-body-sm text-text-primary">{b}</span>
+              </li>
+            ))}
+          </ul>
         </Section>
 
         {/* How it works */}

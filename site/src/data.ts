@@ -32,14 +32,14 @@ export const NAV_PAGES = [
 ] as const;
 
 // The on-page section index, shown as a FlowingMenu on the landing (replaces the top nav row).
-// Each row reveals one of the extracted cutouts on hover. Order is intentional (story flow).
+// Each row reveals one of the extracted cutouts on hover. Order matches the scroll order below.
 export const FLOW_MENU = [
+  { label: "Live demo", href: "#demo", image: "/duck-hero.png" },
+  { label: "The problem", href: "#problem", image: "/hero-thief.png" },
   { label: "The flip", href: "#flip", image: "/hero-duck.png" },
   { label: "How it works", href: "#how-it-works", image: "/duck-calm.png" },
-  { label: "Live demo", href: "#demo", image: "/duck-hero.png" },
   { label: "Architecture", href: "#architecture", image: "/hero-chest.png" },
   { label: "Stack", href: "#stack", image: "/hero-sparks.png" },
-  { label: "The problem", href: "#problem", image: "/hero-thief.png" },
 ] as const;
 
 // Problem stats are rendered with animated CountUp in Problem.tsx (numeric values live there).

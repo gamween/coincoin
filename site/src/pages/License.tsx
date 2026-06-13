@@ -63,9 +63,15 @@ export function License() {
             <Pill tone="brand">Attribution required</Pill>
           </div>
 
-          <pre className="comic-card !bg-near-black mt-10 overflow-x-auto !rounded-md p-6 font-mono text-body-sm leading-relaxed text-text-primary">
-            {MIT_TEXT}
-          </pre>
+          <div className="comic-card !shadow-bevel-lg mt-10 overflow-hidden">
+            <div className="flex items-center gap-2 border-b-[3px] border-border bg-card px-5 py-2.5">
+              <span className="h-3 w-3 rounded-full border-2 border-border bg-primary" />
+              <span className="font-mono text-caption uppercase tracking-wide text-text-muted">LICENSE · MIT</span>
+            </div>
+            <pre className="m-0 overflow-x-auto whitespace-pre-wrap break-words p-6 font-mono text-body-sm leading-relaxed text-text-primary">
+              {MIT_TEXT}
+            </pre>
+          </div>
 
           <p className="mt-6 font-body text-caption text-text-muted">
             Not legal advice. Testnet software, not audited.

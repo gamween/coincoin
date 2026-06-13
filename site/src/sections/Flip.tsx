@@ -79,22 +79,9 @@ export function Flip() {
       </div>
 
       <Reveal delay={0.08}>
-        <div className="comic-card mx-auto mt-8 max-w-4xl overflow-hidden !rounded-xl !shadow-bevel-lg">
-          <img
-            src="/eip-7702-flip.png"
-            alt="EIP-7702 flip: a drainer routes an EOA to a SWEEPER (90%+ are sweepers), while coincoin routes the EOA through a GUARDIAN to your VAULT"
-            className="block w-full"
-            width={1200}
-            height={675}
-          />
-        </div>
-      </Reveal>
-
-      <Reveal delay={0.1}>
-        <p className="mx-auto mt-10 max-w-3xl text-center font-body text-body-lg text-text-primary">
-          EIP-7702 lets an EOA temporarily run a contract's code. A drainer points that code at
-          theft. coincoin points it at safety — bounded so it can never send anywhere but your
-          vault.
+        <p className="mx-auto mt-8 max-w-2xl text-center font-body text-body-lg text-text-primary">
+          EIP-7702 lets your wallet run a contract's code. A drainer points it at theft — coincoin
+          points it at safety, bounded so it can never send anywhere but your vault.
         </p>
       </Reveal>
     </Section>

@@ -16,17 +16,13 @@ export function Demo() {
   const [safe, setSafe] = useState(false);
 
   return (
-    <Section id="demo" tone="dark">
+    <Section id="demo">
       <SectionHeading
         eyebrow="LIVE DEMO · NOT A MOCKUP"
         eyebrowTone="safe"
         title="Watch the duck work"
-        subtitle="Three commands. One real on-chain exploit. The daemon detects it and rescues the funds on its own — run live on Robinhood Chain Testnet."
+        subtitle="This is the product. Three commands, one real on-chain exploit — the daemon detects it and rescues the funds on its own, live on Robinhood Chain Testnet."
       />
-      <p className="mt-4 font-body text-caption uppercase tracking-wide text-text-muted">
-        TypeScript watcher, run with pnpm. EIP-7702 confirmed on Robinhood Chain Testnet (chain
-        46630, Arbitrum Orbit).
-      </p>
 
       {/* command cards */}
       <div className="mt-10 grid gap-4 md:grid-cols-3">

@@ -111,6 +111,11 @@ export default function CardNav({ items, ease = "power3.out" }: { items: NavPage
             <ShieldLogo size={30} />
             <Wordmark className="text-[19px]" />
           </a>
+
+          <span className="card-nav-live" aria-hidden="true">
+            <span className="dot" />
+            Live · Robinhood Chain
+          </span>
         </div>
 
         <div className="card-nav-content" aria-hidden={!isExpanded}>
