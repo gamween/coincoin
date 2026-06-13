@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- coincoin placeholder favicon: the blue shield medal. Replace with AI-generated art. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3EB5F3"/>
+      <stop offset="0.5" stop-color="#036BC8"/>
+      <stop offset="1" stop-color="#0351A6"/>
+    </linearGradient>
+  </defs>
+  <path d="M32 4 L56 12 V30 C56 46 45 56 32 61 C19 56 8 46 8 30 V12 Z"
+        fill="url(#g)" stroke="#040607" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M32 13 L48 19 V31 C48 42 41 49 32 53 C23 49 16 42 16 31 V19 Z"
+        fill="none" stroke="#AFD0C7" stroke-width="2.5" opacity="0.7"/>
+  <path d="M34 19 L21 37 H31 L29 47 L43 27 H33 Z"
+        fill="#F5D90A" stroke="#040607" stroke-width="2.5" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* coincoin brand tokens — docs/brand/BRAND.md */
+:root {
+  --color-background: #0b1b3a;
+  --color-surface: #032b73;
+  --color-card: #0351a6;
+  --color-card-strong: #036bc8;
+  --color-border: #040607;
+  --color-border-soft: #3eb5f3;
+  --color-text-primary: #f3f5f3;
+  --color-text-muted: #afd0c7;
+  --color-text-inverse: #040607;
+  --color-primary: #f5d90a;
+  --color-primary-hover: #ffe84a;
+  --color-danger: #ff3b3b;
+  --color-success: #27c93f;
+  --color-info: #3eb5f3;
+  --color-warning: #e59010;
+  --color-near-black: #040607;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-background);
+    /* Stays dark top-to-bottom so muted/body text keeps WCAG-AA contrast on the bare gradient. */
+    background-image: linear-gradient(180deg, #0b1b3a 0%, #07204a 52%, #032b73 100%);
+    background-attachment: fixed;
+    color: var(--color-text-primary);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+  /* Film-grain overlay for the whole page — subtle, behind interaction. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.045;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  ::selection {
+    background: var(--color-primary);
+    color: var(--color-near-black);
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 3px;
+  }
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #061230;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border-soft);
+    border: 3px solid #061230;
+    border-radius: 999px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .display {
+    font-family: "Bungee", "Rubik Mono One", system-ui, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+  }
+  .numeric {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1, "zero" 1;
+  }
+  /* Comic primary CTA */
+  .btn-comic {
+    @apply inline-flex items-center justify-center gap-2 rounded-pill border-[3px] border-border bg-primary px-6 py-3 font-body text-[15px] font-bold uppercase tracking-wide text-text-inverse shadow-bevel-sm transition-all duration-150;
+  }
+  .btn-comic:hover {
+    @apply -translate-x-[2px] -translate-y-[2px] bg-primary-hover shadow-bevel;
+  }
+  .btn-comic:active {
+    @apply translate-x-[2px] translate-y-[2px] shadow-none;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-pill border-[3px] border-border-soft bg-surface px-6 py-3 font-body text-[15px] font-bold uppercase tracking-wide text-text-primary shadow-bevel-sm transition-all duration-150;
+  }
+  .btn-ghost:hover {
+    @apply -translate-x-[2px] -translate-y-[2px] bg-card shadow-bevel;
+  }
+  .comic-card {
+    @apply rounded-lg border-[3px] border-border bg-surface shadow-bevel;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-pill border-[2px] border-border px-3 py-1 font-body text-caption font-semibold uppercase tracking-[0.06em];
+  }
+}
+
+@layer utilities {
+  .text-stroke {
+    -webkit-text-stroke: 2px var(--color-near-black);
+    paint-order: stroke fill;
+  }
+  .text-stroke-thick {
+    -webkit-text-stroke: 3px var(--color-near-black);
+    paint-order: stroke fill;
+  }
+  /* Pixel-brick wall texture fallback (until brick image art is dropped in). */
+  .bg-bricks {
+    background-color: #07142e;
+    background-image:
+      linear-gradient(rgba(62, 181, 243, 0.06) 2px, transparent 2px),
+      linear-gradient(90deg, rgba(4, 6, 7, 0.5) 2px, transparent 2px),
+      linear-gradient(90deg, rgba(4, 6, 7, 0.5) 2px, transparent 2px);
+    background-size: 100% 40px, 80px 40px, 80px 40px;
+    background-position: 0 0, 0 0, 40px 20px;
+  }
+  .glow-green {
+    box-shadow: 0 0 24px rgba(39, 201, 63, 0.65);
+  }
+  .glow-red {
+    box-shadow: 0 0 24px rgba(255, 59, 59, 0.55);
+  }
+  .glow-blue {
+    box-shadow: 0 0 18px rgba(62, 181, 243, 0.45);
+  }
+}
