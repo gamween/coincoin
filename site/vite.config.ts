@@ -1,7 +1,17 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { resolve } from "node:path";
 
-// https://vite.dev/config/
+// Two static entry points: the landing (index.html) and the docs page (docs.html).
+// Real files → robust on any static host, no SPA fallback needed.
 export default defineConfig({
   plugins: [react()],
-})
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(import.meta.dirname, "index.html"),
+        docs: resolve(import.meta.dirname, "docs.html"),
+      },
+    },
+  },
+});

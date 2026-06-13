@@ -2,6 +2,15 @@
 // Copy is locked to the brand voice (English UI; "COIN COIN !" is verbatim).
 
 export const GITHUB_URL = "https://github.com/gamween/coincoin";
+export const DOCS_URL = "/docs.html";
+
+// Contacts (footer). X handle pending confirmation from the owner.
+export const CONTACTS = {
+  github: "https://github.com/gamween",
+  x: "https://x.com/gamween",
+  telegram: "https://t.me/dvb_fianso",
+};
+export const OWNER_NAME = "Sofiane";
 
 export const NAV_LINKS = [
   { label: "The problem", href: "#problem" },
