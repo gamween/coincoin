@@ -89,4 +89,33 @@ describe("ChainThreatSource", () => {
     await src.start(onAlert);
     expect(onAlert).not.toHaveBeenCalled();
   });
+
+  it("scans forward in bounded block windows (respects RPC getLogs range caps)", async () => {
+    const controller = new AbortController();
+    const ranges: Array<{ fromBlock: bigint; toBlock: bigint }> = [];
+    const fetcher: DrainedLogFetcher = {
+      currentBlock: async () => 25n,
+      getDrainedLogs: async ({ fromBlock, toBlock }) => {
+        ranges.push({ fromBlock, toBlock });
+        return [];
+      },
+    };
+    const src = new ChainThreatSource({
+      fetcher,
+      protocols: ["0xaaaa000000000000000000000000000000000000"],
+      fromBlock: 0n,
+      maxBlockRange: 10,
+      pollIntervalMs: 10_000,
+      signal: controller.signal,
+    });
+    setTimeout(() => controller.abort(), 30);
+    await src.start(vi.fn());
+    // Un seul cycle de poll rattrape 0→25 en fenêtres de ≤10 blocs.
+    expect(ranges.slice(0, 3)).toEqual([
+      { fromBlock: 0n, toBlock: 9n },
+      { fromBlock: 10n, toBlock: 19n },
+      { fromBlock: 20n, toBlock: 25n },
+    ]);
+    for (const r of ranges) expect(r.toBlock - r.fromBlock).toBeLessThanOrEqual(9n);
+  });
 });

@@ -2,7 +2,7 @@ import { config } from "dotenv";
 config({ path: "../.env" });
 import { createWalletClient, createPublicClient, http, encodeFunctionData } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { resolveChainConfig } from "../src/config";
+import { resolveChainConfig, ORBIT_TX_GAS } from "../src/config";
 
 /// One-time : la victime délègue (EIP-7702) vers GuardianModule et s'auto-configure
 /// (safeVault + keeper). `executor:"self"` car la victime signe ET envoie la tx.
@@ -47,6 +47,7 @@ async function main() {
     to: victim.address,
     data: configureData,
     authorizationList: [auth],
+    gas: ORBIT_TX_GAS,
   } as any);
   await pub.waitForTransactionReceipt({ hash: tx });
   console.log(`[onboard] ✅ délégué + configuré (vault=${cfg.vault}, keeper=${keeper.address}) tx=${tx}`);

@@ -2,7 +2,7 @@ import { config } from "dotenv";
 config({ path: "../.env" });
 import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { resolveChainConfig } from "../src/config";
+import { resolveChainConfig, ORBIT_TX_GAS } from "../src/config";
 import { exploitEventAbi } from "../src/abi";
 import { ChainThreatSource, type DrainedLog, type DrainedLogFetcher } from "../src/sources";
 import { KeeperClient } from "../src/keeper";
@@ -27,12 +27,12 @@ async function main() {
 
   const fetcher: DrainedLogFetcher = {
     currentBlock: () => pub.getBlockNumber(),
-    getDrainedLogs: async ({ protocols, fromBlock }) => {
+    getDrainedLogs: async ({ protocols, fromBlock, toBlock }) => {
       const logs = await pub.getLogs({
         address: protocols,
         event: exploitEventAbi[0],
         fromBlock,
-        toBlock: "latest",
+        toBlock,
       });
       return logs
         .filter((l) => l.blockNumber !== null && l.transactionHash !== null)
@@ -69,7 +69,7 @@ async function main() {
   await runWatcher({
     source: new ChainThreatSource({ fetcher, protocols: [cfg.proto], signal: controller.signal }),
     accounts: [account],
-    keeper: new KeeperClient(keeperWallet),
+    keeper: new KeeperClient(keeperWallet, ORBIT_TX_GAS),
   });
   console.log("[coincoin] watcher arrêté.");
 }

@@ -37,8 +37,8 @@ export function decodeExploitLog(log: DrainedLog): ThreatAlert {
 }
 
 export interface DrainedLogFetcher {
-  /// Logs `Drained` émis par l'un des `protocols` depuis `fromBlock` (inclus).
-  getDrainedLogs(args: { protocols: `0x${string}`[]; fromBlock: bigint }): Promise<DrainedLog[]>;
+  /// Logs `Drained` émis par l'un des `protocols` dans la fenêtre [`fromBlock`, `toBlock`] (inclus).
+  getDrainedLogs(args: { protocols: `0x${string}`[]; fromBlock: bigint; toBlock: bigint }): Promise<DrainedLog[]>;
   /// Numéro du dernier bloc connu.
   currentBlock(): Promise<bigint>;
 }
@@ -48,6 +48,9 @@ export interface ChainThreatSourceOpts {
   protocols: `0x${string}`[];
   fromBlock?: bigint;
   pollIntervalMs?: number;
+  /// Taille max d'une fenêtre `getLogs` (en blocs, inclus). Les RPC plafonnent ce
+  /// range (Alchemy free = 10) ; on rattrape jusqu'à la tête par fenêtres ≤ cette taille.
+  maxBlockRange?: number;
   signal?: AbortSignal;
 }
 
@@ -69,13 +72,16 @@ function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
 
 /// Source de menace RÉELLE : surveille en continu les logs `Drained` on-chain et
 /// émet une alerte (schéma Defimon) pour chaque exploit détecté. Daemon : ne se
-/// résout qu'à l'`AbortSignal`. Sémantique at-least-once (curseur = dernier bloc
-/// vu + 1) ; les logs sans `blockNumber` sont filtrés en amont par le fetcher.
+/// résout qu'à l'`AbortSignal`. À chaque tick, rattrape du curseur jusqu'à la tête
+/// par fenêtres bornées (≤ `maxBlockRange`, pour respecter les plafonds RPC sur
+/// `getLogs`), puis avance le curseur — sémantique at-least-once ; les logs sans
+/// `blockNumber` sont filtrés en amont par le fetcher.
 export class ChainThreatSource implements ThreatSource {
   private readonly fetcher: DrainedLogFetcher;
   private readonly protocols: `0x${string}`[];
   private readonly fromBlock?: bigint;
   private readonly pollIntervalMs: number;
+  private readonly maxBlockRange: number;
   private readonly signal?: AbortSignal;
 
   constructor(opts: ChainThreatSourceOpts) {
@@ -83,22 +89,28 @@ export class ChainThreatSource implements ThreatSource {
     this.protocols = opts.protocols;
     this.fromBlock = opts.fromBlock;
     this.pollIntervalMs = opts.pollIntervalMs ?? 4000;
+    this.maxBlockRange = opts.maxBlockRange ?? 10;
     this.signal = opts.signal;
   }
 
   async start(onAlert: AlertHandler): Promise<void> {
     let cursor = this.fromBlock ?? (await this.fetcher.currentBlock());
+    const span = BigInt(this.maxBlockRange);
     while (!this.signal?.aborted) {
       try {
-        const logs = await this.fetcher.getDrainedLogs({ protocols: this.protocols, fromBlock: cursor });
-        const sorted = [...logs].sort((a, b) =>
-          a.blockNumber < b.blockNumber ? -1 : a.blockNumber > b.blockNumber ? 1 : 0,
-        );
-        for (const log of sorted) {
-          await onAlert(decodeExploitLog(log));
-        }
-        if (sorted.length > 0) {
-          cursor = sorted[sorted.length - 1].blockNumber + 1n;
+        const head = await this.fetcher.currentBlock();
+        // Rattrape jusqu'à la tête par fenêtres ≤ maxBlockRange (plafond getLogs des RPC).
+        while (cursor <= head && !this.signal?.aborted) {
+          const windowEnd = cursor + span - 1n;
+          const toBlock = windowEnd < head ? windowEnd : head;
+          const logs = await this.fetcher.getDrainedLogs({ protocols: this.protocols, fromBlock: cursor, toBlock });
+          const sorted = [...logs].sort((a, b) =>
+            a.blockNumber < b.blockNumber ? -1 : a.blockNumber > b.blockNumber ? 1 : 0,
+          );
+          for (const log of sorted) {
+            await onAlert(decodeExploitLog(log));
+          }
+          cursor = toBlock + 1n;
         }
       } catch (err) {
         console.warn("[coincoin] ⚠️ getLogs a échoué, nouvelle tentative au prochain tick:", err);
