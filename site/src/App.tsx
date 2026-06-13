@@ -7,7 +7,7 @@ import { Demo } from "./sections/Demo";
 import { Architecture } from "./sections/Architecture";
 import { Stack } from "./sections/Stack";
 import { Footer } from "./sections/Footer";
-import { BrickDivider } from "./components/ui";
+import { Marquee } from "./components/Marquee";
 
 function App() {
   return (
@@ -21,13 +21,13 @@ function App() {
       <Nav />
       <main className="relative z-10">
         <Hero />
-        <BrickDivider />
+        <Marquee />
         <Problem />
         <Flip />
-        <BrickDivider />
+        <Marquee />
         <HowItWorks />
         <Demo />
-        <BrickDivider />
+        <Marquee />
         <Architecture />
         <Stack />
       </main>
