@@ -16,16 +16,16 @@ A project for the **[Arbitrum Open House London](https://arbitrum-london.hackque
 
 Where **Harpie** (shut down in 2025, for business reasons) had to run a fragile *front-run racing*, coincoin:
 
-- **enforces at the account level** via **EIP-7702** / **ERC-7579** hooks (the 7702 primitive arrived *after* Harpie);
-- **reacts to a live threat feed** (Defimon) coupled with a **Stylus rules engine**;
-- **covers DeFi positions** (auto-exit Aave V3 / GMX) — the blind spot Harpie could never address;
+- **enforces at the account level** via **EIP-7702** (the primitive arrived *after* Harpie);
+- **reacts to a real on-chain threat signal** within the non-atomic response window;
+- **covers DeFi positions** (**auto-exit Aave V3**, live) — the blind spot Harpie could never address;
 - stays **100% non-custodial**: you keep your keys, the keeper can only evacuate to **your own** Safe Vault.
 
 We turn the attackers' weapon against them: the same EIP-7702 delegation they use to drain, we use to protect.
 
 ## Stack
 
-Solidity + OpenZeppelin · **Stylus** (Rust/WASM) for the rules engine · **ZeroDev** (ERC-4337 / session keys) · EIP-7702 / ERC-7579 · Next.js + wagmi/viem · deployed on **Arbitrum Sepolia** + **Robinhood Chain testnet**.
+Solidity + OpenZeppelin + Foundry · EIP-7702 guardian + Aave V3 exit · TypeScript watcher (viem) · live on **Robinhood Chain testnet** (Arbitrum Orbit, chain 46630).
 
 ## Docs
 
@@ -35,7 +35,7 @@ Brand kit (design system in UI tokens: palette, fonts, components, mascot): [`do
 
 ## Status
 
-**Live, end-to-end** on Arbitrum Sepolia + Robinhood Chain testnet:
+**Live, end-to-end** on Robinhood Chain testnet (chain 46630, Arbitrum Orbit):
 
 - ✅ `GuardianModule` (EIP-7702 delegate) — bounded keeper, **frozen vault** (a leaked key can't redirect funds), ERC-20 sweep + approval revocation.
 - ✅ **DeFi position auto-exit (Aave V3)** — `exitAaveV3` pulls funds *deposited in a protocol* back to the account, then sweeps to your vault. **Harpie's blind spot, covered.**

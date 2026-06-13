@@ -28,7 +28,7 @@ export function Stack() {
               href={`${DOCS_URL}#deploy`}
               className="mt-5 inline-block font-body text-body-sm font-semibold text-info underline-offset-2 hover:underline"
             >
-              Roadmap: Stylus · ZeroDev · Aave/GMX auto-exit →
+              Roadmap: local rules engine · GMX exit →
             </a>
           </div>
         </Reveal>
@@ -59,7 +59,7 @@ export function Stack() {
                     className="mt-3 flex items-center gap-2 font-mono text-caption text-info underline-offset-2 hover:underline"
                   >
                     <span className="truncate">{c.address}</span>
-                    <span aria-hidden="true" className="shrink-0">↗ Arbiscan</span>
+                    <span aria-hidden="true" className="shrink-0">↗ Verified contract</span>
                   </a>
                 )}
               </div>

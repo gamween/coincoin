@@ -7,16 +7,15 @@ export const CONTACT_URL = "/contact.html";
 export const LICENSE_URL = "/license.html";
 export const LICENSE = "MIT";
 
-// Robinhood Chain Testnet block explorer (chain 46630). Update if the canonical URL differs.
-export const ROBINHOOD_EXPLORER = "https://explorer.testnet.chain.robinhood.com";
-
-// On-chain proof. The GuardianModule is verifiable on a public explorer; coincoin runs
-// the same code live on Robinhood Chain Testnet (chain 46630).
+// On-chain proof. coincoin runs live on Robinhood Chain Testnet (chain 46630), which has
+// no public explorer yet — but the GuardianModule shares its address (same deployer +
+// nonce) with the Arbiscan-verified deployment, so the source is one click away there.
 export const DEPLOY_PROOF = {
   contract: "GuardianModule",
   address: "0x6671b4B73b79c284A710B00ef777d8E65f55200F",
-  network: "Arbitrum Sepolia",
+  network: "Robinhood Chain Testnet",
   explorer: "https://sepolia.arbiscan.io/address/0x6671b4B73b79c284A710B00ef777d8E65f55200F",
+  explorerLabel: "Verified contract ↗",
 };
 
 // Contacts (footer). X handle pending confirmation from the owner.
@@ -138,7 +137,7 @@ export const ARCH_UNITS = [
   {
     name: "GuardianModule.sol",
     tag: "Solidity",
-    body: "The EIP-7702 delegate target. Callable only by you or the keeper (onlySelfOrKeeper). Its evacuateERC20(tokens) sweeps your balances to the safe vault you set. Revocable anytime.",
+    body: "The EIP-7702 delegate target, callable only by you or the keeper (onlySelfOrKeeper). evacuateERC20 sweeps at-rest balances; exitAaveV3 unwinds deposited DeFi positions back to you first; revokeApprovals kills dangerous allowances. The vault is frozen on first config — a leaked key can't redirect funds. Revocable anytime.",
   },
   {
     name: "SafeVault.sol",
@@ -180,11 +179,19 @@ export const COMMANDS = [
   },
 ] as const;
 
-export const STACK_LIVE = ["Solidity", "OpenZeppelin", "Foundry", "TypeScript", "viem (EIP-7702 + tx)", "vitest"];
+export const STACK_LIVE = [
+  "Solidity",
+  "OpenZeppelin",
+  "Foundry",
+  "EIP-7702 guardian",
+  "Aave V3 exit",
+  "TypeScript",
+  "viem",
+  "vitest",
+];
 export const STACK_PLANNED = [
-  "Stylus (Rust/WASM) rules engine — planned",
-  "ZeroDev (ERC-4337 / ERC-7579) — planned",
-  "Aave V3 / GMX auto-exit — roadmap",
+  "Local rules engine (Solidity → Stylus) — next",
+  "GMX V2 position exit — roadmap",
 ];
 export const CHAINS: {
   name: string;
@@ -195,12 +202,8 @@ export const CHAINS: {
 }[] = [
   {
     name: "Robinhood Chain Testnet",
-    note: "live demo · chain 46630 · Arbitrum Orbit · EIP-7702 confirmed",
+    note: "live · chain 46630 · Arbitrum Orbit · EIP-7702 confirmed",
     primary: true,
-  },
-  {
-    name: "Arbitrum Sepolia",
-    note: "GuardianModule deployed · verifiable on Arbiscan",
     address: DEPLOY_PROOF.address,
     explorer: DEPLOY_PROOF.explorer,
   },
