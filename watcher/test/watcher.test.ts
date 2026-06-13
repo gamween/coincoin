@@ -62,4 +62,48 @@ describe("runWatcher", () => {
     expect(evacuate).toHaveBeenNthCalledWith(1, exposed.address, exposed.tokens);
     expect(evacuate).toHaveBeenNthCalledWith(2, exposed2.address, exposed2.tokens);
   });
+
+  it("exits a deposited Aave position BEFORE sweeping when the exposed account has one", async () => {
+    const calls: string[] = [];
+    const exitAaveV3 = vi.fn().mockImplementation(async () => {
+      calls.push("exit");
+      return "0xexit";
+    });
+    const evacuate = vi.fn().mockImplementation(async () => {
+      calls.push("evac");
+      return "0xevac";
+    });
+    const pool = "0xaaaa0000000000000000000000000000000000a7" as `0x${string}`;
+    const withPosition: ProtectedAccount = {
+      ...exposed,
+      aavePositions: [{ pool, underlyings: exposed.tokens }],
+    };
+
+    await runWatcher({
+      source: new MockThreatSource([alert]),
+      accounts: [withPosition],
+      keeper: { evacuate, exitAaveV3 },
+    });
+
+    expect(exitAaveV3).toHaveBeenCalledWith(exposed.address, pool, exposed.tokens);
+    expect(evacuate).toHaveBeenCalledWith(exposed.address, exposed.tokens);
+    // The position must be unwound before the sweep, or the freed funds wouldn't move.
+    expect(calls).toEqual(["exit", "evac"]);
+  });
+
+  it("still sweeps even if the Aave exit fails (daemon-safe)", async () => {
+    const exitAaveV3 = vi.fn().mockRejectedValue(new Error("pool down"));
+    const evacuate = vi.fn().mockResolvedValue("0xevac");
+    const withPosition: ProtectedAccount = {
+      ...exposed,
+      aavePositions: [{ pool: "0xaaaa0000000000000000000000000000000000a7", underlyings: exposed.tokens }],
+    };
+    await runWatcher({
+      source: new MockThreatSource([alert]),
+      accounts: [withPosition],
+      keeper: { evacuate, exitAaveV3 },
+    });
+    expect(exitAaveV3).toHaveBeenCalledTimes(1);
+    expect(evacuate).toHaveBeenCalledTimes(1); // sweep still runs
+  });
 });

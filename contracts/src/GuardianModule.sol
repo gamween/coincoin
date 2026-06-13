@@ -3,6 +3,13 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+/// @dev Minimal Aave V3 Pool surface used by the DeFi-position exit. The real Pool
+///      (mainnet 0x794a61358D6845594F94dc1DB02A252b5b4814aD) matches this ABI;
+///      `amount == type(uint256).max` withdraws the full position.
+interface IAaveV3Pool {
+    function withdraw(address asset, uint256 amount, address to) external returns (uint256);
+}
+
 /// @title GuardianModule
 /// @notice Guardian logic delegated to an account via EIP-7702. Executed in the
 ///         account's context: `address(this)` == the protected account, which holds
@@ -19,6 +26,7 @@ contract GuardianModule {
 
     error NotAuthorized();
     error ZeroAddress();
+    error VaultLocked();
 
     /// @dev Only the account itself (self-call, including via a 7702 UserOp) can configure.
     modifier onlySelf() {
@@ -26,13 +34,21 @@ contract GuardianModule {
         _;
     }
 
-    /// @dev Reconfiguration by the account itself is intentional (the account is
-    ///      the ultimate authority); intent verification is left to the signing/UX layer.
+    /// @notice First call sets the safe vault (the trust anchor) and the keeper.
+    /// @dev The destination vault is FROZEN on first configure: under EIP-7702 "self" is
+    ///      the very EOA whose key the firewall exists to defend, so allowing a later
+    ///      self-call to re-point the vault would let a leaked key redirect funds to an
+    ///      attacker (turning "worst case = annoyance" into theft). Keeper rotation stays
+    ///      open (pass the same safeVault with a new keeper); a different vault reverts.
     function configure(address safeVault_, address keeper_) external onlySelf {
         if (safeVault_ == address(0) || keeper_ == address(0)) revert ZeroAddress();
-        safeVault = safeVault_;
+        if (configured) {
+            if (safeVault_ != safeVault) revert VaultLocked();
+        } else {
+            safeVault = safeVault_;
+            configured = true;
+        }
         keeper = keeper_;
-        configured = true;
         emit Configured(safeVault_, keeper_);
     }
 
@@ -77,6 +93,38 @@ contract GuardianModule {
                 emit Evacuated(tokens[i], bal);
             } else {
                 emit EvacuationFailed(tokens[i]);
+            }
+        }
+    }
+
+    event Exited(address indexed pool, address indexed asset, uint256 amount);
+    event ExitFailed(address indexed pool, address indexed asset);
+
+    /// @notice Pulls the account's full deposited position for each underlying out of an
+    ///         Aave V3 pool, back into the account. The freed underlying then sits at rest
+    ///         on the account and is swept to the safeVault by evacuateERC20 — the
+    ///         "Harpie blind spot": funds DEPOSITED in a protocol, not just at rest.
+    /// @dev BOUNDED surface: the only effect is `Pool.withdraw(asset, max, address(this))`,
+    ///      so the keeper can only un-deposit your own funds back to your own account —
+    ///      never to an arbitrary address. The pool is a plain external callee (CALL, not
+    ///      delegatecall) and is granted no allowance, so passing a hostile pool address is
+    ///      inert. EMERGENCY path: a pool/asset that reverts is SKIPPED (ExitFailed) instead
+    ///      of blocking the batch.
+    function exitAaveV3(address pool, address[] calldata underlyings)
+        external
+        onlySelfOrKeeper
+        nonReentrant
+    {
+        if (!configured) revert NotConfigured();
+        for (uint256 i; i < underlyings.length; ++i) {
+            (bool ok, bytes memory ret) = pool.call(
+                abi.encodeCall(IAaveV3Pool.withdraw, (underlyings[i], type(uint256).max, address(this)))
+            );
+            if (ok) {
+                uint256 amount = ret.length >= 32 ? abi.decode(ret, (uint256)) : 0;
+                emit Exited(pool, underlyings[i], amount);
+            } else {
+                emit ExitFailed(pool, underlyings[i]);
             }
         }
     }

@@ -36,15 +36,22 @@ contract GuardianModuleConfigureTest is Test {
         guardian.configure(address(0), keeper);
     }
 
-    function test_SelfCanReconfigure() public {
+    function test_SelfCanRotateKeeperButVaultIsFrozen() public {
         vm.prank(address(guardian));
         guardian.configure(vault, keeper);
-        address newVault = address(0xBEEF);
+
+        // Keeper rotation (same vault) is allowed.
         address newKeeper = address(0xCAFE);
         vm.prank(address(guardian));
-        guardian.configure(newVault, newKeeper);
-        assertEq(guardian.safeVault(), newVault);
+        guardian.configure(vault, newKeeper);
         assertEq(guardian.keeper(), newKeeper);
+        assertEq(guardian.safeVault(), vault);
+
+        // Re-pointing the vault is rejected — a leaked key cannot redirect funds.
+        vm.prank(address(guardian));
+        vm.expectRevert(GuardianModule.VaultLocked.selector);
+        guardian.configure(address(0xBEEF), newKeeper);
+        assertEq(guardian.safeVault(), vault);
     }
 
     function test_ConfigureRejectsZeroKeeper() public {

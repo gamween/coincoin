@@ -16,6 +16,16 @@ export const guardianAbi = [
     ],
     outputs: [],
   },
+  {
+    type: "function",
+    name: "exitAaveV3",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "pool", type: "address" },
+      { name: "underlyings", type: "address[]" },
+    ],
+    outputs: [],
+  },
 ] as const;
 
 /// Event emitted by the vulnerable demo protocol on drain (see contracts/src/demo).
