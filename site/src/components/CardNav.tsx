@@ -118,8 +118,8 @@ export default function CardNav({ items, ease = "power3.out" }: { items: NavPage
             target="_blank"
             rel="noreferrer"
             className="card-nav-live"
-            aria-label="Live on Robinhood Chain — view the verified GuardianModule contract"
-            title="GuardianModule — verified contract"
+            aria-label="Live on Robinhood Chain — view the GuardianModule on the explorer"
+            title="GuardianModule on the Robinhood Chain explorer"
           >
             <span className="dot" />
             Live · Robinhood Chain

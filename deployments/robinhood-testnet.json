@@ -14,6 +14,6 @@
   },
   "deployedAt": "2026-06-12",
   "deployer": "0xdae8992a9b5Fe850bE63781d1c2e65a3e496F728",
-  "explorer": null,
-  "note": "Robinhood Chain testnet (Arbitrum Orbit L2). No public block explorer at submission time. GuardianModule shares its address with the Arbitrum Sepolia deployment (same deployer + nonce)."
+  "explorer": "https://explorer.testnet.chain.robinhood.com/address/0x6671b4B73b79c284A710B00ef777d8E65f55200F",
+  "note": "Robinhood Chain testnet (Arbitrum Orbit). Detection -> exit -> evacuation runs live here. The DeFi exit uses MockAavePool (Aave V3 is not deployed on this chain); exitAaveV3 targets the real Aave V3 withdraw ABI."
 }

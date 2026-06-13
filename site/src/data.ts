@@ -7,15 +7,14 @@ export const CONTACT_URL = "/contact.html";
 export const LICENSE_URL = "/license.html";
 export const LICENSE = "MIT";
 
-// On-chain proof. coincoin runs live on Robinhood Chain Testnet (chain 46630), which has
-// no public explorer yet — but the GuardianModule shares its address (same deployer +
-// nonce) with the Arbiscan-verified deployment, so the source is one click away there.
+// On-chain proof: the GuardianModule deployed on Robinhood Chain Testnet (chain 46630),
+// on the chain's own block explorer.
 export const DEPLOY_PROOF = {
   contract: "GuardianModule",
   address: "0x6671b4B73b79c284A710B00ef777d8E65f55200F",
   network: "Robinhood Chain Testnet",
-  explorer: "https://sepolia.arbiscan.io/address/0x6671b4B73b79c284A710B00ef777d8E65f55200F",
-  explorerLabel: "Verified contract ↗",
+  explorer: "https://explorer.testnet.chain.robinhood.com/address/0x6671b4B73b79c284A710B00ef777d8E65f55200F",
+  explorerLabel: "View on explorer ↗",
 };
 
 // Contacts (footer). X handle pending confirmation from the owner.
@@ -184,7 +183,7 @@ export const STACK_LIVE = [
   "OpenZeppelin",
   "Foundry",
   "EIP-7702 guardian",
-  "Aave V3 exit",
+  "DeFi position exit",
   "TypeScript",
   "viem",
   "vitest",

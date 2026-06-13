@@ -59,7 +59,7 @@ export function Stack() {
                     className="mt-3 flex items-center gap-2 font-mono text-caption text-info underline-offset-2 hover:underline"
                   >
                     <span className="truncate">{c.address}</span>
-                    <span aria-hidden="true" className="shrink-0">↗ Verified contract</span>
+                    <span aria-hidden="true" className="shrink-0">↗ View on explorer</span>
                   </a>
                 )}
               </div>
