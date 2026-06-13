@@ -1,55 +1,55 @@
-# coincoin — Phase 1 : Fondation contrats Implementation Plan
+# coincoin — Phase 1: Contracts Foundation Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Construire le cœur on-chain de coincoin : un `GuardianModule` qui, exécuté dans le contexte d'un compte (via EIP-7702 ou self-call), peut — sur déclenchement par le compte lui-même ou un keeper borné — évacuer ses ERC-20 et révoquer ses approvals vers un `SafeVault` que seul le propriétaire contrôle.
+**Goal:** Build coincoin's on-chain core: a `GuardianModule` that, executed in the context of an account (via EIP-7702 or a self-call), can — when triggered by the account itself or a bounded keeper — evacuate its ERC-20s and revoke its approvals to a `SafeVault` that only the owner controls.
 
-**Architecture:** Projet Foundry (Solidity + OpenZeppelin) à la racine sous `contracts/`. Deux contrats : `SafeVault` (coffre `Ownable`, push-in / owner-only-out) et `GuardianModule` (logique déléguée 7702 : `configure` réservé au compte lui-même, `evacuateERC20` / `revokeApprovals` réservés au compte ou au keeper). Tests TDD avec `forge test`, dont un test d'intégration EIP-7702 via les cheatcodes Foundry. Déploiement sur Arbitrum Sepolia via `forge script`.
+**Architecture:** Foundry project (Solidity + OpenZeppelin) at the root under `contracts/`. Two contracts: `SafeVault` (an `Ownable` vault, push-in / owner-only-out) and `GuardianModule` (7702 delegated logic: `configure` reserved to the account itself, `evacuateERC20` / `revokeApprovals` reserved to the account or the keeper). TDD tests with `forge test`, including an EIP-7702 integration test via the Foundry cheatcodes. Deployment to Arbitrum Sepolia via `forge script`.
 
 **Tech Stack:** Foundry (forge 1.4.2), Solidity ^0.8.24, OpenZeppelin Contracts, EIP-7702, Arbitrum Sepolia (chain 421614).
 
 ---
 
-## Découpage en phases (vue d'ensemble)
+## Phase breakdown (overview)
 
-Ce plan = **Phase 1** uniquement. Chaque phase produit un livrable testable autonome. Les phases 2-5 auront leur propre plan (à étoffer le moment venu) :
+This plan = **Phase 1** only. Each phase produces a standalone testable deliverable. Phases 2-5 will have their own plan (to be fleshed out when the time comes):
 
-- **Phase 1 (ce plan)** — Fondation contrats : `SafeVault` + `GuardianModule` (configure / evacuate / revoke) + intégration 7702 + déploiement. *Livrable : un compte délégué peut s'auto-évacuer vers son vault, déclenché par lui-même ou un keeper borné.*
-- **Phase 2** — Moteur de règles Stylus (Rust) + hook ERC-7579 : blocage local automatique des tx de drain. *Livrable : une tx malveillante est revertée au niveau du compte.*
-- **Phase 3** — Exit adapters : `AaveV3ExitAdapter` + `GmxV2ExitAdapter` (réels sur Arbitrum Sepolia). *Livrable : sortie automatique d'une position Aave/GMX.*
-- **Phase 4** — Watcher TypeScript : émetteur de menaces au schéma Defimon (piloté par un vrai exploit rejoué sur testnet) → déclenche l'évacuation pré-autorisée via relayer ZeroDev. *Livrable : un exploit on-chain déclenche une évacuation de bout en bout.*
-- **Phase 5** — Dashboard Next.js : onboarding (délégation 7702), statut, bouton panique, journal, retrait du vault. *Livrable : le produit utilisable end-to-end + démo.*
+- **Phase 1 (this plan)** — Contracts foundation: `SafeVault` + `GuardianModule` (configure / evacuate / revoke) + 7702 integration + deployment. *Deliverable: a delegated account can self-evacuate to its vault, triggered by itself or a bounded keeper.*
+- **Phase 2** — Stylus rules engine (Rust) + ERC-7579 hook: automatic local blocking of drain txs. *Deliverable: a malicious tx is reverted at the account level.*
+- **Phase 3** — Exit adapters: `AaveV3ExitAdapter` + `GmxV2ExitAdapter` (real ones on Arbitrum Sepolia). *Deliverable: automatic exit of an Aave/GMX position.*
+- **Phase 4** — TypeScript watcher: a Defimon-schema threat emitter (driven by a real exploit replayed on testnet) → triggers the pre-authorized evacuation via the ZeroDev relayer. *Deliverable: an on-chain exploit triggers an end-to-end evacuation.*
+- **Phase 5** — Next.js dashboard: onboarding (7702 delegation), status, panic button, log, vault withdrawal. *Deliverable: the product usable end-to-end + demo.*
 
 ---
 
-## Structure de fichiers (Phase 1)
+## File structure (Phase 1)
 
 ```
 contracts/
-├── foundry.toml                  # config Foundry + remappings + profil arbitrum_sepolia
+├── foundry.toml                  # Foundry config + remappings + arbitrum_sepolia profile
 ├── remappings.txt                # @openzeppelin/ → lib/openzeppelin-contracts/
 ├── src/
-│   ├── SafeVault.sol             # coffre Ownable : reçoit des fonds, seul l'owner retire
-│   └── GuardianModule.sol        # logique guardian déléguée (7702) : configure/evacuate/revoke
+│   ├── SafeVault.sol             # Ownable vault: receives funds, only the owner withdraws
+│   └── GuardianModule.sol        # delegated guardian logic (7702): configure/evacuate/revoke
 ├── test/
-│   ├── mocks/MockERC20.sol       # ERC20 de test avec mint public
-│   ├── SafeVault.t.sol           # tests du coffre
-│   ├── GuardianModule.t.sol      # tests configure/evacuate/revoke + access control
-│   └── Guardian7702.t.sol        # test d'intégration délégation EIP-7702
+│   ├── mocks/MockERC20.sol       # test ERC20 with public mint
+│   ├── SafeVault.t.sol           # vault tests
+│   ├── GuardianModule.t.sol      # configure/evacuate/revoke tests + access control
+│   └── Guardian7702.t.sol        # EIP-7702 delegation integration test
 └── script/
-    └── Deploy.s.sol              # script de déploiement Arbitrum Sepolia
+    └── Deploy.s.sol              # Arbitrum Sepolia deployment script
 ```
 
 ---
 
-### Task 1 : Scaffolder le projet Foundry
+### Task 1: Scaffold the Foundry project
 
 **Files:**
 - Create: `contracts/foundry.toml`
 - Create: `contracts/remappings.txt`
 - Create: `contracts/.gitignore`
 
-- [ ] **Step 1 : Initialiser Foundry dans `contracts/`**
+- [ ] **Step 1: Initialize Foundry in `contracts/`**
 
 Run:
 ```bash
@@ -57,18 +57,18 @@ cd /Users/fianso/Development/hackathons/coincoin
 forge init contracts --no-git --no-commit
 rm -f contracts/src/Counter.sol contracts/test/Counter.t.sol contracts/script/Counter.s.sol
 ```
-Expected: arborescence `contracts/{src,test,script,lib}` créée, `lib/forge-std` présent.
+Expected: `contracts/{src,test,script,lib}` tree created, `lib/forge-std` present.
 
-- [ ] **Step 2 : Installer OpenZeppelin Contracts**
+- [ ] **Step 2: Install OpenZeppelin Contracts**
 
 Run:
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin/contracts
 forge install OpenZeppelin/openzeppelin-contracts --no-git --no-commit
 ```
-Expected: `lib/openzeppelin-contracts/` présent.
+Expected: `lib/openzeppelin-contracts/` present.
 
-- [ ] **Step 3 : Écrire `contracts/foundry.toml`**
+- [ ] **Step 3: Write `contracts/foundry.toml`**
 
 ```toml
 [profile.default]
@@ -86,14 +86,14 @@ arbitrum_sepolia = "${ARBITRUM_SEPOLIA_RPC}"
 robinhood_testnet = "${ROBINHOOD_TESTNET_RPC}"
 ```
 
-- [ ] **Step 4 : Écrire `contracts/remappings.txt`**
+- [ ] **Step 4: Write `contracts/remappings.txt`**
 
 ```text
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 forge-std/=lib/forge-std/src/
 ```
 
-- [ ] **Step 5 : Écrire `contracts/.gitignore`**
+- [ ] **Step 5: Write `contracts/.gitignore`**
 
 ```text
 out/
@@ -101,15 +101,15 @@ cache/
 broadcast/
 ```
 
-- [ ] **Step 6 : Vérifier que la compilation passe à vide**
+- [ ] **Step 6: Verify that compilation passes on an empty project**
 
 Run:
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin/contracts && forge build
 ```
-Expected: `Compiler run successful` (aucun contrat applicatif encore, mais lib OZ compile).
+Expected: `Compiler run successful` (no application contract yet, but the OZ lib compiles).
 
-- [ ] **Step 7 : Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -120,12 +120,12 @@ git commit -m "chore(contracts): scaffold Foundry + OpenZeppelin"
 
 ---
 
-### Task 2 : `MockERC20` (helper de test)
+### Task 2: `MockERC20` (test helper)
 
 **Files:**
 - Create: `contracts/test/mocks/MockERC20.sol`
 
-- [ ] **Step 1 : Écrire le mock ERC20 avec mint public**
+- [ ] **Step 1: Write the ERC20 mock with a public mint**
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -142,7 +142,7 @@ contract MockERC20 is ERC20 {
 }
 ```
 
-- [ ] **Step 2 : Vérifier la compilation**
+- [ ] **Step 2: Verify compilation**
 
 Run:
 ```bash
@@ -150,7 +150,7 @@ cd /Users/fianso/Development/hackathons/coincoin/contracts && forge build
 ```
 Expected: `Compiler run successful`.
 
-- [ ] **Step 3 : Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -160,13 +160,13 @@ git commit -m "test(contracts): add MockERC20 helper"
 
 ---
 
-### Task 3 : `SafeVault` — coffre push-in / owner-only-out
+### Task 3: `SafeVault` — push-in / owner-only-out vault
 
 **Files:**
 - Create: `contracts/src/SafeVault.sol`
 - Test: `contracts/test/SafeVault.t.sol`
 
-- [ ] **Step 1 : Écrire le test qui échoue**
+- [ ] **Step 1: Write the failing test**
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -211,15 +211,15 @@ contract SafeVaultTest is Test {
 }
 ```
 
-- [ ] **Step 2 : Lancer le test pour confirmer qu'il échoue**
+- [ ] **Step 2: Run the test to confirm it fails**
 
 Run:
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test --match-contract SafeVaultTest -vv
 ```
-Expected: FAIL — `SafeVault` introuvable (le fichier source n'existe pas).
+Expected: FAIL — `SafeVault` not found (the source file doesn't exist).
 
-- [ ] **Step 3 : Écrire l'implémentation minimale**
+- [ ] **Step 3: Write the minimal implementation**
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -230,8 +230,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title SafeVault
-/// @notice Coffre détenu par l'utilisateur. Le GuardianModule ne peut qu'y POUSSER
-///         des fonds (transferts entrants standards) ; seul l'owner peut en RETIRER.
+/// @notice Vault owned by the user. The GuardianModule can only PUSH funds into it
+///         (standard incoming transfers); only the owner can WITHDRAW from it.
 contract SafeVault is Ownable {
     using SafeERC20 for IERC20;
 
@@ -250,7 +250,7 @@ contract SafeVault is Ownable {
 }
 ```
 
-- [ ] **Step 4 : Lancer le test pour confirmer qu'il passe**
+- [ ] **Step 4: Run the test to confirm it passes**
 
 Run:
 ```bash
@@ -258,7 +258,7 @@ cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test --match
 ```
 Expected: PASS (3 tests).
 
-- [ ] **Step 5 : Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -268,13 +268,13 @@ git commit -m "feat(contracts): SafeVault (push-in, owner-only-out)"
 
 ---
 
-### Task 4 : `GuardianModule.configure` — réservé au compte lui-même
+### Task 4: `GuardianModule.configure` — reserved to the account itself
 
 **Files:**
 - Create: `contracts/src/GuardianModule.sol`
 - Test: `contracts/test/GuardianModule.t.sol`
 
-- [ ] **Step 1 : Écrire le test qui échoue**
+- [ ] **Step 1: Write the failing test**
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -294,7 +294,7 @@ contract GuardianModuleConfigureTest is Test {
     }
 
     function test_SelfCanConfigure() public {
-        // En 7702, le compte exécute son propre code : msg.sender == address(this).
+        // In 7702, the account runs its own code: msg.sender == address(this).
         vm.prank(address(guardian));
         guardian.configure(vault, keeper);
         assertEq(guardian.safeVault(), vault);
@@ -316,15 +316,15 @@ contract GuardianModuleConfigureTest is Test {
 }
 ```
 
-- [ ] **Step 2 : Lancer le test pour confirmer qu'il échoue**
+- [ ] **Step 2: Run the test to confirm it fails**
 
 Run:
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test --match-contract GuardianModuleConfigureTest -vv
 ```
-Expected: FAIL — `GuardianModule` introuvable.
+Expected: FAIL — `GuardianModule` not found.
 
-- [ ] **Step 3 : Écrire l'implémentation minimale**
+- [ ] **Step 3: Write the minimal implementation**
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -334,11 +334,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title GuardianModule
-/// @notice Logique guardian déléguée à un compte via EIP-7702. Exécutée dans le
-///         contexte du compte : `address(this)` == le compte protégé, qui détient
-///         les fonds. La configuration est réservée au compte lui-même ; les actions
-///         d'urgence sont ouvertes au compte ou au keeper borné. Les fonds ne partent
-///         QUE vers le `safeVault` enregistré.
+/// @notice Guardian logic delegated to an account via EIP-7702. Executed in the
+///         account's context: `address(this)` == the protected account, which holds
+///         the funds. Configuration is reserved to the account itself; the emergency
+///         actions are open to the account or the bounded keeper. Funds leave ONLY
+///         toward the registered `safeVault`.
 contract GuardianModule {
     using SafeERC20 for IERC20;
 
@@ -351,7 +351,7 @@ contract GuardianModule {
     error NotAuthorized();
     error ZeroAddress();
 
-    /// @dev Seul le compte lui-même (self-call, y compris via une UserOp 7702) peut configurer.
+    /// @dev Only the account itself (a self-call, including via a 7702 UserOp) can configure.
     modifier onlySelf() {
         if (msg.sender != address(this)) revert NotAuthorized();
         _;
@@ -367,7 +367,7 @@ contract GuardianModule {
 }
 ```
 
-- [ ] **Step 4 : Lancer le test pour confirmer qu'il passe**
+- [ ] **Step 4: Run the test to confirm it passes**
 
 Run:
 ```bash
@@ -375,7 +375,7 @@ cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test --match
 ```
 Expected: PASS (3 tests).
 
-- [ ] **Step 5 : Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -385,15 +385,15 @@ git commit -m "feat(contracts): GuardianModule.configure (self-only)"
 
 ---
 
-### Task 5 : `GuardianModule.evacuateERC20` — sweep vers le vault
+### Task 5: `GuardianModule.evacuateERC20` — sweep to the vault
 
 **Files:**
 - Modify: `contracts/src/GuardianModule.sol`
 - Modify: `contracts/test/GuardianModule.t.sol`
 
-- [ ] **Step 1 : Ajouter le test qui échoue**
+- [ ] **Step 1: Add the failing test**
 
-Ajouter ce contrat de test à la fin de `contracts/test/GuardianModule.t.sol` :
+Add this test contract at the end of `contracts/test/GuardianModule.t.sol`:
 
 ```solidity
 contract GuardianModuleEvacuateTest is Test {
@@ -408,7 +408,7 @@ contract GuardianModuleEvacuateTest is Test {
         guardian = new GuardianModule();
         tokenA = new MockERC20("A", "A");
         tokenB = new MockERC20("B", "B");
-        // Le compte (== address(guardian) en 7702) détient les fonds.
+        // The account (== address(guardian) under 7702) holds the funds.
         tokenA.mint(address(guardian), 100e18);
         tokenB.mint(address(guardian), 50e18);
         vm.prank(address(guardian));
@@ -446,23 +446,23 @@ contract GuardianModuleEvacuateTest is Test {
 }
 ```
 
-Et ajouter l'import du mock en haut du fichier (sous l'import de `GuardianModule`) :
+And add the mock import at the top of the file (below the `GuardianModule` import):
 
 ```solidity
 import {MockERC20} from "./mocks/MockERC20.sol";
 ```
 
-- [ ] **Step 2 : Lancer le test pour confirmer qu'il échoue**
+- [ ] **Step 2: Run the test to confirm it fails**
 
 Run:
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test --match-contract GuardianModuleEvacuateTest -vv
 ```
-Expected: FAIL — `evacuateERC20` n'existe pas (`Member "evacuateERC20" not found`).
+Expected: FAIL — `evacuateERC20` doesn't exist (`Member "evacuateERC20" not found`).
 
-- [ ] **Step 3 : Implémenter `evacuateERC20`**
+- [ ] **Step 3: Implement `evacuateERC20`**
 
-Ajouter dans `contracts/src/GuardianModule.sol` : (a) le modifier `onlySelfOrKeeper`, (b) l'erreur `NotConfigured`, (c) l'event `Evacuated`, (d) la fonction. Insérer après la fonction `configure` :
+Add to `contracts/src/GuardianModule.sol`: (a) the `onlySelfOrKeeper` modifier, (b) the `NotConfigured` error, (c) the `Evacuated` event, (d) the function. Insert after the `configure` function:
 
 ```solidity
     event Evacuated(address indexed token, uint256 amount);
@@ -474,7 +474,7 @@ Ajouter dans `contracts/src/GuardianModule.sol` : (a) le modifier `onlySelfOrKee
         _;
     }
 
-    /// @notice Balaie la totalité du solde de chaque token vers le safeVault.
+    /// @notice Sweeps the full balance of each token to the safeVault.
     function evacuateERC20(address[] calldata tokens) external onlySelfOrKeeper {
         if (!configured) revert NotConfigured();
         for (uint256 i; i < tokens.length; ++i) {
@@ -487,7 +487,7 @@ Ajouter dans `contracts/src/GuardianModule.sol` : (a) le modifier `onlySelfOrKee
     }
 ```
 
-- [ ] **Step 4 : Lancer le test pour confirmer qu'il passe**
+- [ ] **Step 4: Run the test to confirm it passes**
 
 Run:
 ```bash
@@ -495,7 +495,7 @@ cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test --match
 ```
 Expected: PASS (3 tests).
 
-- [ ] **Step 5 : Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -505,15 +505,15 @@ git commit -m "feat(contracts): GuardianModule.evacuateERC20 (sweep to vault, se
 
 ---
 
-### Task 6 : `GuardianModule.revokeApprovals` — couper les allowances dangereuses
+### Task 6: `GuardianModule.revokeApprovals` — cut off dangerous allowances
 
 **Files:**
 - Modify: `contracts/src/GuardianModule.sol`
 - Modify: `contracts/test/GuardianModule.t.sol`
 
-- [ ] **Step 1 : Ajouter le test qui échoue**
+- [ ] **Step 1: Add the failing test**
 
-Ajouter ce contrat de test à la fin de `contracts/test/GuardianModule.t.sol` :
+Add this test contract at the end of `contracts/test/GuardianModule.t.sol`:
 
 ```solidity
 contract GuardianModuleRevokeTest is Test {
@@ -527,7 +527,7 @@ contract GuardianModuleRevokeTest is Test {
     function setUp() public {
         guardian = new GuardianModule();
         token = new MockERC20("A", "A");
-        // Le compte a une allowance dangereuse encore active.
+        // The account has a dangerous allowance still active.
         vm.prank(address(guardian));
         token.approve(spender, type(uint256).max);
         vm.prank(address(guardian));
@@ -568,25 +568,25 @@ contract GuardianModuleRevokeTest is Test {
 }
 ```
 
-- [ ] **Step 2 : Lancer le test pour confirmer qu'il échoue**
+- [ ] **Step 2: Run the test to confirm it fails**
 
 Run:
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test --match-contract GuardianModuleRevokeTest -vv
 ```
-Expected: FAIL — `revokeApprovals` / `LengthMismatch` n'existent pas.
+Expected: FAIL — `revokeApprovals` / `LengthMismatch` don't exist.
 
-- [ ] **Step 3 : Implémenter `revokeApprovals`**
+- [ ] **Step 3: Implement `revokeApprovals`**
 
-Ajouter dans `contracts/src/GuardianModule.sol` : (a) l'erreur `LengthMismatch`, (b) l'event `ApprovalRevoked`, (c) la fonction. Insérer après `evacuateERC20` :
+Add to `contracts/src/GuardianModule.sol`: (a) the `LengthMismatch` error, (b) the `ApprovalRevoked` event, (c) the function. Insert after `evacuateERC20`:
 
 ```solidity
     event ApprovalRevoked(address indexed token, address indexed spender);
 
     error LengthMismatch();
 
-    /// @notice Remet à zéro les allowances passées (utilise forceApprove pour les
-    ///         tokens non standard type USDT).
+    /// @notice Resets the given allowances to zero (uses forceApprove for non-standard
+    ///         tokens such as USDT).
     function revokeApprovals(address[] calldata tokens, address[] calldata spenders)
         external
         onlySelfOrKeeper
@@ -599,7 +599,7 @@ Ajouter dans `contracts/src/GuardianModule.sol` : (a) l'erreur `LengthMismatch`,
     }
 ```
 
-- [ ] **Step 4 : Lancer le test pour confirmer qu'il passe**
+- [ ] **Step 4: Run the test to confirm it passes**
 
 Run:
 ```bash
@@ -607,15 +607,15 @@ cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test --match
 ```
 Expected: PASS (3 tests).
 
-- [ ] **Step 5 : Lancer toute la suite**
+- [ ] **Step 5: Run the whole suite**
 
 Run:
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test -vv
 ```
-Expected: PASS — tous les tests (SafeVault + Guardian configure/evacuate/revoke).
+Expected: PASS — all tests (SafeVault + Guardian configure/evacuate/revoke).
 
-- [ ] **Step 6 : Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -625,14 +625,14 @@ git commit -m "feat(contracts): GuardianModule.revokeApprovals (self/keeper)"
 
 ---
 
-### Task 7 : Test d'intégration EIP-7702 (cheatcode Foundry)
+### Task 7: EIP-7702 integration test (Foundry cheatcode)
 
-**But :** prouver que, délégué à un EOA réel via 7702, le `GuardianModule` s'exécute dans le contexte de cet EOA et peut l'évacuer. Utilise `vm.signAndAttachDelegation` (Foundry).
+**Purpose:** prove that, delegated to a real EOA via 7702, the `GuardianModule` executes in that EOA's context and can evacuate it. Uses `vm.signAndAttachDelegation` (Foundry).
 
 **Files:**
 - Create: `contracts/test/Guardian7702.t.sol`
 
-- [ ] **Step 1 : Écrire le test d'intégration qui échoue**
+- [ ] **Step 1: Write the failing integration test**
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -642,15 +642,15 @@ import {Test} from "forge-std/Test.sol";
 import {GuardianModule} from "../src/GuardianModule.sol";
 import {MockERC20} from "./mocks/MockERC20.sol";
 
-/// @notice Vérifie le flux EIP-7702 : un EOA délègue son code au GuardianModule,
-///         puis le keeper déclenche l'évacuation de l'EOA vers le vault.
+/// @notice Verifies the EIP-7702 flow: an EOA delegates its code to the GuardianModule,
+///         then the keeper triggers the evacuation of the EOA to the vault.
 contract Guardian7702Test is Test {
-    GuardianModule impl; // implémentation déléguée (code partagé)
+    GuardianModule impl; // delegated implementation (shared code)
     MockERC20 token;
     address vault = address(0xFA17);
     address keeper = address(0xCEEE);
 
-    // EOA utilisateur avec clé connue (pour signer la délégation 7702).
+    // User EOA with a known key (to sign the 7702 delegation).
     uint256 userPk = 0xA11CE;
     address user;
 
@@ -658,56 +658,56 @@ contract Guardian7702Test is Test {
         impl = new GuardianModule();
         token = new MockERC20("A", "A");
         user = vm.addr(userPk);
-        token.mint(user, 100e18); // l'utilisateur détient des fonds sur son EOA
+        token.mint(user, 100e18); // the user holds funds on their EOA
     }
 
     function test_DelegatedEoaCanBeEvacuatedByKeeper() public {
-        // 1) L'EOA délègue son code au GuardianModule via EIP-7702.
+        // 1) The EOA delegates its code to the GuardianModule via EIP-7702.
         vm.signAndAttachDelegation(address(impl), userPk);
 
-        // 2) L'EOA se configure lui-même (self-call) : depuis 7702, une UserOp du compte
-        //    a msg.sender == address(this) == user. On simule ce self-call avec prank(user).
+        // 2) The EOA configures itself (self-call): from 7702, a UserOp of the account
+        //    has msg.sender == address(this) == user. We simulate this self-call with prank(user).
         vm.prank(user);
         GuardianModule(user).configure(vault, keeper);
 
-        // 3) Le keeper déclenche l'évacuation de l'EOA.
+        // 3) The keeper triggers the EOA's evacuation.
         address[] memory tokens = new address[](1);
         tokens[0] = address(token);
         vm.prank(keeper);
         GuardianModule(user).evacuateERC20(tokens);
 
-        // 4) Les fonds de l'EOA sont au coffre.
+        // 4) The EOA's funds are in the vault.
         assertEq(token.balanceOf(vault), 100e18);
         assertEq(token.balanceOf(user), 0);
     }
 }
 ```
 
-- [ ] **Step 2 : Lancer le test pour confirmer qu'il échoue (ou révèle l'API exacte du cheatcode)**
+- [ ] **Step 2: Run the test to confirm it fails (or reveals the exact cheatcode API)**
 
 Run:
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test --match-contract Guardian7702Test -vvv
 ```
-Expected: soit PASS directement (le code applicatif existe déjà), soit une erreur de cheatcode si la signature de `signAndAttachDelegation` diffère sur forge 1.4.2.
+Expected: either PASS directly (the application code already exists), or a cheatcode error if the signature of `signAndAttachDelegation` differs on forge 1.4.2.
 
-- [ ] **Step 3 : Si le cheatcode diffère, corriger l'appel**
+- [ ] **Step 3: If the cheatcode differs, fix the call**
 
-Sur forge 1.4.2, l'API est `vm.signAndAttachDelegation(address implementation, uint256 privateKey)`. Si la version exige un nonce explicite, utiliser la variante :
+On forge 1.4.2, the API is `vm.signAndAttachDelegation(address implementation, uint256 privateKey)`. If the version requires an explicit nonce, use the variant:
 ```solidity
 vm.signAndAttachDelegation(address(impl), userPk, vm.getNonce(user));
 ```
-Garder uniquement la forme qui compile/passe ; supprimer l'autre.
+Keep only the form that compiles/passes; remove the other.
 
-- [ ] **Step 4 : Lancer le test pour confirmer qu'il passe**
+- [ ] **Step 4: Run the test to confirm it passes**
 
 Run:
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test --match-contract Guardian7702Test -vvv
 ```
-Expected: PASS (1 test) — l'EOA délégué a bien été évacué par le keeper.
+Expected: PASS (1 test) — the delegated EOA was successfully evacuated by the keeper.
 
-- [ ] **Step 5 : Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -717,12 +717,12 @@ git commit -m "test(contracts): EIP-7702 delegation integration (keeper evacuate
 
 ---
 
-### Task 8 : Script de déploiement Arbitrum Sepolia
+### Task 8: Arbitrum Sepolia deployment script
 
 **Files:**
 - Create: `contracts/script/Deploy.s.sol`
 
-- [ ] **Step 1 : Écrire le script de déploiement**
+- [ ] **Step 1: Write the deployment script**
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -731,8 +731,8 @@ pragma solidity ^0.8.24;
 import {Script, console2} from "forge-std/Script.sol";
 import {GuardianModule} from "../src/GuardianModule.sol";
 
-/// @notice Déploie l'implémentation partagée GuardianModule (cible de délégation 7702).
-///         Le SafeVault est déployé par utilisateur côté app, pas ici.
+/// @notice Deploys the shared GuardianModule implementation (the 7702 delegation target).
+///         The SafeVault is deployed per user on the app side, not here.
 contract DeployGuardian is Script {
     function run() external returns (GuardianModule impl) {
         uint256 pk = vm.envUint("DEPLOYER_PRIVATE_KEY");
@@ -744,7 +744,7 @@ contract DeployGuardian is Script {
 }
 ```
 
-- [ ] **Step 2 : Vérifier que le script compile (dry-run sans broadcast)**
+- [ ] **Step 2: Verify the script compiles (dry-run without broadcast)**
 
 Run:
 ```bash
@@ -752,9 +752,9 @@ cd /Users/fianso/Development/hackathons/coincoin/contracts && forge build
 ```
 Expected: `Compiler run successful`.
 
-- [ ] **Step 3 : (Manuel, nécessite `DEPLOYER_PRIVATE_KEY` dans `.env`) Déployer sur Arbitrum Sepolia**
+- [ ] **Step 3: (Manual, requires `DEPLOYER_PRIVATE_KEY` in `.env`) Deploy to Arbitrum Sepolia**
 
-Prérequis : remplir `DEPLOYER_PRIVATE_KEY` dans `/Users/fianso/Development/hackathons/coincoin/.env` (wallet de dev jetable financé via [faucet Arbitrum Sepolia](https://faucet.quicknode.com/arbitrum/sepolia)).
+Prerequisite: fill `DEPLOYER_PRIVATE_KEY` in `/Users/fianso/Development/hackathons/coincoin/.env` (a throwaway dev wallet funded via the [Arbitrum Sepolia faucet](https://faucet.quicknode.com/arbitrum/sepolia)).
 
 Run:
 ```bash
@@ -762,9 +762,9 @@ cd /Users/fianso/Development/hackathons/coincoin/contracts
 set -a && source ../.env && set +a
 forge script script/Deploy.s.sol:DeployGuardian --rpc-url "$ARBITRUM_SEPOLIA_RPC" --broadcast
 ```
-Expected: `GuardianModule impl deployed at: 0x...` — noter l'adresse pour les phases suivantes.
+Expected: `GuardianModule impl deployed at: 0x...` — note the address for the following phases.
 
-- [ ] **Step 4 : Commit du script**
+- [ ] **Step 4: Commit the script**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -776,9 +776,9 @@ git commit -m "chore(contracts): deploy script for GuardianModule (Arbitrum Sepo
 
 ## Definition of Done (Phase 1)
 
-- [ ] `forge test` : toute la suite passe (SafeVault, configure, evacuate, revoke, intégration 7702).
-- [ ] `GuardianModule` déployé sur Arbitrum Sepolia, adresse notée.
-- [ ] Trust model vérifié par les tests : seul le compte se configure ; seul le compte ou le keeper évacue ; les fonds ne vont QUE vers `safeVault` ; un attaquant est rejeté.
-- [ ] Aucun secret commité (`.env` gitignoré).
+- [ ] `forge test`: the whole suite passes (SafeVault, configure, evacuate, revoke, 7702 integration).
+- [ ] `GuardianModule` deployed on Arbitrum Sepolia, address noted.
+- [ ] Trust model verified by the tests: only the account configures itself; only the account or the keeper evacuates; funds go ONLY to `safeVault`; an attacker is rejected.
+- [ ] No secret committed (`.env` gitignored).
 
-**Next:** Phase 2 (moteur de règles Stylus + hook ERC-7579). À étoffer dans `docs/superpowers/plans/2026-06-1X-coincoin-phase2-stylus.md`.
+**Next:** Phase 2 (Stylus rules engine + ERC-7579 hook). To be fleshed out in `docs/superpowers/plans/2026-06-1X-coincoin-phase2-stylus.md`.

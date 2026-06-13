@@ -1,13 +1,13 @@
 import type { ThreatAlert } from "./threat";
 
 export interface ProtectedAccount {
-  address: `0x${string}`;       // l'EOA délégué (compte protégé)
-  safeVault: `0x${string}`;     // sa destination d'évacuation
-  watchedProtocols: `0x${string}`[]; // protocoles où il est exposé
-  tokens: `0x${string}`[];      // tokens à évacuer du compte
+  address: `0x${string}`;       // the delegated EOA (protected account)
+  safeVault: `0x${string}`;     // its evacuation destination
+  watchedProtocols: `0x${string}`[]; // protocols where it is exposed
+  tokens: `0x${string}`[];      // tokens to evacuate from the account
 }
 
-/// Comptes protégés exposés au protocole ciblé par l'alerte (comparaison insensible à la casse).
+/// Protected accounts exposed to the protocol targeted by the alert (case-insensitive comparison).
 export function findExposed(alert: ThreatAlert, accounts: ProtectedAccount[]): ProtectedAccount[] {
   const target = alert.exploit_address.toLowerCase();
   return accounts.filter((acc) =>

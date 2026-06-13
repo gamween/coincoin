@@ -5,15 +5,15 @@ import {Test} from "forge-std/Test.sol";
 import {GuardianModule} from "../src/GuardianModule.sol";
 import {MockERC20} from "./mocks/MockERC20.sol";
 
-/// @notice Vérifie le flux EIP-7702 : un EOA délègue son code au GuardianModule,
-///         puis le keeper déclenche l'évacuation de l'EOA vers le vault.
+/// @notice Verifies the EIP-7702 flow: an EOA delegates its code to the GuardianModule,
+///         then the keeper triggers the evacuation from the EOA to the vault.
 contract Guardian7702Test is Test {
-    GuardianModule impl; // implémentation déléguée (code partagé)
+    GuardianModule impl; // delegated implementation (shared code)
     MockERC20 token;
     address vault = address(0xFA17);
     address keeper = address(0xCEEE);
 
-    // EOA utilisateur avec clé connue (pour signer la délégation 7702).
+    // User EOA with a known key (to sign the 7702 delegation).
     uint256 userPk = 0xA11CE;
     address user;
 
@@ -21,30 +21,30 @@ contract Guardian7702Test is Test {
         impl = new GuardianModule();
         token = new MockERC20("A", "A");
         user = vm.addr(userPk);
-        token.mint(user, 100e18); // l'utilisateur détient des fonds sur son EOA
+        token.mint(user, 100e18); // the user holds funds on their EOA
     }
 
     function test_DelegatedEoaCanBeEvacuatedByKeeper() public {
-        // 1) L'EOA délègue son code au GuardianModule via EIP-7702.
+        // 1) The EOA delegates its code to the GuardianModule via EIP-7702.
         vm.signAndAttachDelegation(address(impl), userPk);
 
-        // 2) L'EOA se configure lui-même (self-call) : depuis 7702, une UserOp du compte
-        //    a msg.sender == address(this) == user. On simule ce self-call avec prank(user).
+        // 2) The EOA configures itself (self-call): under 7702, a UserOp from the account
+        //    has msg.sender == address(this) == user. We simulate this self-call with prank(user).
         vm.prank(user);
         GuardianModule(user).configure(vault, keeper);
 
-        // 2b) Le storage délégué vit bien à l'adresse de l'EOA (pas chez impl).
+        // 2b) The delegated storage indeed lives at the EOA's address (not at impl).
         assertEq(GuardianModule(user).safeVault(), vault);
         assertEq(GuardianModule(user).keeper(), keeper);
         assertTrue(GuardianModule(user).configured());
 
-        // 3) Le keeper déclenche l'évacuation de l'EOA.
+        // 3) The keeper triggers the evacuation from the EOA.
         address[] memory tokens = new address[](1);
         tokens[0] = address(token);
         vm.prank(keeper);
         GuardianModule(user).evacuateERC20(tokens);
 
-        // 4) Les fonds de l'EOA sont au coffre.
+        // 4) The EOA's funds are in the vault.
         assertEq(token.balanceOf(vault), 100e18);
         assertEq(token.balanceOf(user), 0);
     }

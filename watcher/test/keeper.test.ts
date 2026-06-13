@@ -17,7 +17,7 @@ describe("KeeperClient.evacuate", () => {
     expect(hash).toBe("0xhash");
     expect(sendTransaction).toHaveBeenCalledTimes(1);
     const arg = sendTransaction.mock.calls[0][0];
-    expect(arg.to).toBe(victim); // ⚠️ la cible est le compte délégué, PAS l'impl
+    expect(arg.to).toBe(victim); // ⚠️ the target is the delegated account, NOT the impl
     expect(arg.data).toBe(
       encodeFunctionData({ abi: guardianAbi, functionName: "evacuateERC20", args: [tokens] }),
     );

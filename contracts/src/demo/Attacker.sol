@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {MockVulnerableProtocol} from "./MockVulnerableProtocol.sol";
 
-/// @notice Exploite MockVulnerableProtocol via la fonction non protégée.
+/// @notice Exploits MockVulnerableProtocol through the unprotected function.
 contract Attacker {
     MockVulnerableProtocol public immutable target;
 

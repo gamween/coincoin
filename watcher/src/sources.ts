@@ -6,8 +6,8 @@ export interface ThreatSource {
   start(onAlert: AlertHandler): Promise<void>;
 }
 
-/// Source de transport au schéma Defimon : rejoue des alertes connues (démo / tests).
-/// C'est le SEUL élément simulé du système ; le contenu provient d'un vrai exploit on-chain.
+/// Defimon-shaped transport source: replays known alerts (demo / tests).
+/// It is the ONLY simulated element of the system; the content comes from a real on-chain exploit.
 export class MockThreatSource implements ThreatSource {
   constructor(private readonly alerts: ThreatAlert[]) {}
   async start(onAlert: AlertHandler): Promise<void> {
@@ -15,7 +15,7 @@ export class MockThreatSource implements ThreatSource {
   }
 }
 
-/// Forme minimale d'un log `Drained` décodé par viem.
+/// Minimal shape of a `Drained` log decoded by viem.
 export interface DrainedLog {
   address: string;
   transactionHash: string;
@@ -23,7 +23,7 @@ export interface DrainedLog {
   args: { attacker: string; amount: bigint };
 }
 
-/// Transforme un vrai log d'exploit on-chain en alerte au schéma Defimon.
+/// Transforms a real on-chain exploit log into a Defimon-shaped alert.
 export function decodeExploitLog(log: DrainedLog): ThreatAlert {
   return parseThreatAlert({
     network: "arbitrum",
@@ -37,9 +37,9 @@ export function decodeExploitLog(log: DrainedLog): ThreatAlert {
 }
 
 export interface DrainedLogFetcher {
-  /// Logs `Drained` émis par l'un des `protocols` dans la fenêtre [`fromBlock`, `toBlock`] (inclus).
+  /// `Drained` logs emitted by one of the `protocols` in the window [`fromBlock`, `toBlock`] (inclusive).
   getDrainedLogs(args: { protocols: `0x${string}`[]; fromBlock: bigint; toBlock: bigint }): Promise<DrainedLog[]>;
-  /// Numéro du dernier bloc connu.
+  /// Number of the latest known block.
   currentBlock(): Promise<bigint>;
 }
 
@@ -48,13 +48,13 @@ export interface ChainThreatSourceOpts {
   protocols: `0x${string}`[];
   fromBlock?: bigint;
   pollIntervalMs?: number;
-  /// Taille max d'une fenêtre `getLogs` (en blocs, inclus). Les RPC plafonnent ce
-  /// range (Alchemy free = 10) ; on rattrape jusqu'à la tête par fenêtres ≤ cette taille.
+  /// Max size of a `getLogs` window (in blocks, inclusive). RPCs cap this
+  /// range (Alchemy free = 10); we catch up to the head in windows ≤ this size.
   maxBlockRange?: number;
   signal?: AbortSignal;
 }
 
-/// Attend `ms`, ou se résout immédiatement si `signal` est (ou devient) aborté.
+/// Waits `ms`, or resolves immediately if `signal` is (or becomes) aborted.
 function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
   if (signal?.aborted) return Promise.resolve();
   return new Promise((resolve) => {
@@ -70,12 +70,12 @@ function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
-/// Source de menace RÉELLE : surveille en continu les logs `Drained` on-chain et
-/// émet une alerte (schéma Defimon) pour chaque exploit détecté. Daemon : ne se
-/// résout qu'à l'`AbortSignal`. À chaque tick, rattrape du curseur jusqu'à la tête
-/// par fenêtres bornées (≤ `maxBlockRange`, pour respecter les plafonds RPC sur
-/// `getLogs`), puis avance le curseur — sémantique at-least-once ; les logs sans
-/// `blockNumber` sont filtrés en amont par le fetcher.
+/// REAL threat source: continuously watches the on-chain `Drained` logs and
+/// emits an alert (Defimon shape) for each detected exploit. Daemon: only resolves
+/// on the `AbortSignal`. On each tick, catches up from the cursor to the head in
+/// bounded windows (≤ `maxBlockRange`, to respect the RPC caps on `getLogs`), then
+/// advances the cursor — at-least-once semantics; logs without a `blockNumber` are
+/// filtered out upstream by the fetcher.
 export class ChainThreatSource implements ThreatSource {
   private readonly fetcher: DrainedLogFetcher;
   private readonly protocols: `0x${string}`[];
@@ -99,7 +99,7 @@ export class ChainThreatSource implements ThreatSource {
     while (!this.signal?.aborted) {
       try {
         const head = await this.fetcher.currentBlock();
-        // Rattrape jusqu'à la tête par fenêtres ≤ maxBlockRange (plafond getLogs des RPC).
+        // Catch up to the head in windows ≤ maxBlockRange (RPC getLogs cap).
         while (cursor <= head && !this.signal?.aborted) {
           const windowEnd = cursor + span - 1n;
           const toBlock = windowEnd < head ? windowEnd : head;
@@ -113,7 +113,7 @@ export class ChainThreatSource implements ThreatSource {
           cursor = toBlock + 1n;
         }
       } catch (err) {
-        console.warn("[coincoin] ⚠️ getLogs a échoué, nouvelle tentative au prochain tick:", err);
+        console.warn("[coincoin] ⚠️ getLogs failed, retrying on the next tick:", err);
       }
       await abortableSleep(this.pollIntervalMs, this.signal);
     }

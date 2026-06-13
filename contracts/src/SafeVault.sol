@@ -6,8 +6,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title SafeVault
-/// @notice Coffre détenu par l'utilisateur. Le GuardianModule ne peut qu'y POUSSER
-///         des fonds (transferts entrants standards) ; seul l'owner peut en RETIRER.
+/// @notice Vault owned by the user. The GuardianModule can only PUSH funds into it
+///         (standard incoming transfers); only the owner can WITHDRAW from it.
 contract SafeVault is Ownable {
     using SafeERC20 for IERC20;
 
@@ -22,7 +22,7 @@ contract SafeVault is Ownable {
         require(ok, "ETH transfer failed");
     }
 
-    /// @dev Désactivé : renoncer à l'ownership briquerait le coffre (fonds perdus).
+    /// @dev Disabled: renouncing ownership would brick the vault (funds lost).
     function renounceOwnership() public view override onlyOwner {
         revert("SafeVault: renounce disabled");
     }

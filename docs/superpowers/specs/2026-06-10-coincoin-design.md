@@ -1,89 +1,89 @@
 # coincoin — Design & Spec
 
-- **Date** : 2026-06-10
-- **Auteur** : Sofiane (+ Claude)
-- **Événement** : Arbitrum Open House London — Buildathon online (soumission **14 juin 2026**), Founder House IRL Londres 10-12 juillet
-- **Tracks visés** : Open / General · Sécurité · (bonus) Robinhood Chain
-- **Statut** : design validé, spec en cours → plan d'implémentation
-- **Repo** : https://github.com/gamween/coincoin
+- **Date**: 2026-06-10
+- **Author**: Sofiane (+ Claude)
+- **Event**: Arbitrum Open House London — Buildathon online (submission **June 14, 2026**), Founder House IRL London July 10-12
+- **Targeted tracks**: Open / General · Security · (bonus) Robinhood Chain
+- **Status**: design validated, spec in progress → implementation plan
+- **Repo**: https://github.com/gamween/coincoin
 
-> 🦆 **coincoin** — le pare-feu onchain qui crie « coin coin ! » quand on essaie de te vider, et qui met tes fonds à l'abri tout seul. Le canari dans la mine, version self-custody, sur Arbitrum.
+> 🦆 **coincoin** — the onchain firewall that shouts "coin coin !" when someone tries to drain you, and moves your funds to safety on its own. The canary in the coal mine, self-custody edition, on Arbitrum.
 
 ---
 
 ## 0. TL;DR
 
-**coincoin** est un pare-feu onchain **self-custodial** pour particuliers, sur Arbitrum. Il protège **à la fois tes actifs au repos dans le wallet ET tes fonds déposés dans des protocoles DeFi**, en **évacuant / sortant automatiquement** tes fonds dès qu'une menace vérifiable est détectée — dans la fenêtre de réaction que laissent les hacks non-atomiques.
+**coincoin** is a **self-custodial** onchain firewall for individuals, on Arbitrum. It protects **both your assets at rest in the wallet AND your funds deposited in DeFi protocols**, by **automatically evacuating / exiting** your funds as soon as a verifiable threat is detected — within the reaction window left by non-atomic hacks.
 
-La différence clé avec ce qui a existé (Harpie, fermé en 2025) : on **enforce au niveau du compte** via EIP-7702 / hooks ERC-7579 (pas un fragile front-run racing), on **réagit à un flux de menaces live** (Defimon) couplé à un **moteur de règles Stylus**, et on **couvre les positions DeFi** — l'angle mort que Harpie n'a jamais pu adresser.
-
----
-
-## 1. Le problème (récurrent, sourcé)
-
-Deux familles de pertes, toutes deux **récurrentes et documentées** (web + channels Telegram Defendor/Defimon lus le 10 juin 2026).
-
-### 1.1 Compromission de wallets individuels
-- **$83,85M volés à 106 106 victimes** en 2025 par wallet drainers / phishing (Scam Sniffer). En *baisse* de 83% mais loin d'être réglé : perte moyenne **$790/victime**, et les campagnes se multiplient en volume.
-- **Permit-based attacks** = 38% des pertes >$1M. **EIP-7702 malveillant** : nouveau vecteur post-Pectra (2 cas en août 2025 = $2,54M ; **>90% des délégations 7702 onchain sont des sweepers**).
-- Vus dans Telegram : **297 wallets vidés / $500K** (fuite de clé), **fake Axiom app → 207 users / $147K**, **fake Uniswap Google ad / $400K**.
-
-### 1.2 Fonds déposés dans des protocoles exploités
-- **Renegade.fi** ($209K, mai 2026, **Arbitrum + Stylus**, `initialize()` pendant exploitable 354 jours), **StakeDAO** (clé deployer, Arbitrum), **Sharwa.finance** ($33K, Arbitrum, oracle spot sans TWAP). Tous dans Telegram.
-- **Insight Defimon** (déterminant) : *« beaucoup de hacks ne sont pas atomiques ; en reconstruisant 10 timelines, les fenêtres entre la 1ʳᵉ tx malveillante et le drain total vont de 4 minutes à 5 jours. »* → **il existe une fenêtre de réponse** que personne n'outille côté utilisateur.
-
-### 1.3 Le constat
-Une fois ta clé/approval compromise **ou** un protocole où tu es déposé attaqué, **aucun outil grand public n'agit pour toi automatiquement** dans cette fenêtre. La prévention pré-signature (Blockaid, Kerberus, Revoke.cash) bloque une *mauvaise signature* mais ne fait rien **après** la compromission ni pour tes **positions**.
+The key difference from what has existed before (Harpie, shut down in 2025): we **enforce at the account level** via EIP-7702 / ERC-7579 hooks (not a fragile front-run race), we **react to a live threat feed** (Defimon) coupled with a **Stylus rules engine**, and we **cover DeFi positions** — the blind spot Harpie was never able to address.
 
 ---
 
-## 2. Pourquoi maintenant (et pourquoi ça n'existe pas)
+## 1. The problem (recurring, sourced)
 
-| Fait | Implication |
+Two families of losses, both **recurring and documented** (web + Defendor/Defimon Telegram channels read on June 10, 2026).
+
+### 1.1 Compromise of individual wallets
+- **$83.85M stolen from 106,106 victims** in 2025 by wallet drainers / phishing (Scam Sniffer). *Down* 83% but far from solved: average loss **$790/victim**, and campaigns keep multiplying in volume.
+- **Permit-based attacks** = 38% of losses >$1M. **Malicious EIP-7702**: a new post-Pectra vector (2 cases in August 2025 = $2.54M; **>90% of onchain 7702 delegations are sweepers**).
+- Seen in Telegram: **297 wallets drained / $500K** (key leak), **fake Axiom app → 207 users / $147K**, **fake Uniswap Google ad / $400K**.
+
+### 1.2 Funds deposited in exploited protocols
+- **Renegade.fi** ($209K, May 2026, **Arbitrum + Stylus**, `initialize()` left exploitable for 354 days), **StakeDAO** (deployer key, Arbitrum), **Sharwa.finance** ($33K, Arbitrum, spot oracle with no TWAP). All in Telegram.
+- **Defimon insight** (decisive): *"many hacks are not atomic; reconstructing 10 timelines, the windows between the 1st malicious tx and the full drain range from 4 minutes to 5 days."* → **there is a response window** that nobody tools on the user side.
+
+### 1.3 The takeaway
+Once your key/approval is compromised **or** a protocol you're deposited in is attacked, **no consumer-grade tool acts for you automatically** within that window. Pre-signature prevention (Blockaid, Kerberus, Revoke.cash) blocks a *bad signature* but does nothing **after** the compromise nor for your **positions**.
+
+---
+
+## 2. Why now (and why it doesn't exist)
+
+| Fact | Implication |
 |------|-------------|
-| **Harpie** (« the on-chain firewall ») faisait l'évacuation auto par front-running, sur Arbitrum, soutenu Coinbase/OpenSea… | …mais a **fermé en mars 2025** pour **raison business** (« could not create a sustainable business model »), **pas** technique. Marché validé, leader parti. |
-| **EIP-7702** activé le **7 mai 2025** (Pectra) — *après* la fermeture de Harpie | La primitive qui rend un EOA existant capable d'exécuter du code guardian **n'existait pas** pour Harpie → il était condamné au front-run racing. Nous l'avons. |
-| **ERC-7579** (hooks circuit-breaker modulaires) mûri 2024-2026, **Stylus** mainnet depuis sept. 2024, **flux de menaces agent-ready** (Defimon) en 2026 | Aucune de ces briques n'était disponible à l'époque de Harpie. |
-| **Aucun produit vivant** ne couvre le scope (Webacy = panic button semi-manuel ; MetaMask Agent Wallet = prévention pré-tx). L'**auto-exit de positions DeFi sur exploit = personne.** | Créneau réellement ouvert. |
+| **Harpie** ("the on-chain firewall") did auto-evacuation via front-running, on Arbitrum, backed by Coinbase/OpenSea… | …but **shut down in March 2025** for a **business reason** ("could not create a sustainable business model"), **not** a technical one. Market validated, leader gone. |
+| **EIP-7702** activated on **May 7, 2025** (Pectra) — *after* Harpie shut down | The primitive that makes an existing EOA capable of running guardian code **did not exist** for Harpie → it was doomed to front-run racing. We have it. |
+| **ERC-7579** (modular circuit-breaker hooks) matured 2024-2026, **Stylus** mainnet since Sept. 2024, **agent-ready threat feed** (Defimon) in 2026 | None of these building blocks were available in Harpie's era. |
+| **No living product** covers the scope (Webacy = semi-manual panic button; MetaMask Agent Wallet = pre-tx prevention). **Auto-exit of DeFi positions on exploit = nobody.** | A genuinely open niche. |
 
-**Le retournement narratif** : les attaquants utilisent déjà EIP-7702 pour *drainer* (délégation → sweeper). coincoin utilise **la même primitive en défense** (délégation → guardian). On retourne leur arme.
-
----
-
-## 3. Vue produit
-
-L'utilisateur connecte son wallet, **délègue son compte** au GuardianDelegate de coincoin (EIP-7702) ou installe les modules (ERC-7579), choisit un **Safe Vault** lui appartenant, sélectionne les **protocoles à surveiller**, règle ses **seuils**, et **pré-autorise** (signature EIP-712) l'ensemble exact des actions d'urgence.
-
-Ensuite, coincoin tourne en arrière-plan :
-- **En continu** : un hook au niveau du compte évalue chaque sortie via le moteur de règles Stylus et **bloque** les patterns de drain évidents.
-- **Sur menace** : un watcher branché sur le flux Defimon détecte qu'un protocole où l'utilisateur est exposé est attaqué, et exécute l'**exit de position + sweep** pré-autorisé, vers le Safe Vault, dans la fenêtre de réponse.
-
-Tout est **non-custodial** : l'utilisateur garde ses clés, peut révoquer la délégation à tout instant (delegate → `address(0)`), et le keeper ne peut **que** déclencher les actions d'urgence pré-autorisées vers le **vault de l'utilisateur lui-même** — jamais vers une adresse arbitraire.
+**The narrative reversal**: attackers already use EIP-7702 to *drain* (delegation → sweeper). coincoin uses **the same primitive on defense** (delegation → guardian). We turn their own weapon around.
 
 ---
 
-## 4. Features essentielles (scope complet du MVP)
+## 3. Product view
 
-1. **Onboarding & compte protégé**
-   - Délégation EIP-7702 vers `GuardianDelegate` (chemin EOA), **ou** installation `GuardianHook` + `GuardianExecutor` (chemin smart account ERC-7579 : Safe/Kernel).
-   - Révocation en 1 clic (reset délégation).
-2. **Safe Vault** — contrat minimal *owned by user* ; le Guardian peut y **pousser**, seul l'utilisateur peut **retirer**.
-3. **PreAuthRegistry** — politique par utilisateur (signature EIP-712) : actifs couverts, vault de destination, protocoles surveillés, seuils, keeper(s) autorisé(s). Borne strictement ce que le keeper peut faire.
-4. **Moteur de règles Stylus (RulesEngine)** — évalue à bas coût onchain : score d'anomalie d'une tx sortante (montant vers adresse jamais vue, `approve`/`setApprovalForAll` vers contrat non vérifié, motif de drain) et conditions d'exploit protocole.
-5. **Détection à 2 couches**
-   - **Locale** : hook ERC-7579 / logique 7702 → **revert** au niveau du compte sur règle déclenchée (marche toujours, zéro dépendance externe).
-   - **Externe** : watcher abonné à Defimon `/ws/confirmed_attacks` (filtre `arbitrum`) → déclenche l'évacuation pré-autorisée.
-6. **Évacuation des actifs du wallet** — sweep ERC-20 / NFT vers le Safe Vault + **révocation des approvals** dangereuses.
-7. **Exit de position DeFi** (l'angle mort de Harpie) — adapters :
-   - **Aave V3** (Pool `0x794a61358D6845594F94dc1DB02A252b5b4814aD`) : `withdraw` (le Guardian s'exécutant dans le contexte du compte possède les aTokens).
-   - **GMX V2** (ExchangeRouter `0x602b805EedddBbD9ddff44A7dcBD46cb07849685`) : `createOrder` market-decrease (2 étapes ; le keeper finalise).
-8. **Angle Robinhood Chain** — protéger des **Stock Tokens** (hTSLA, hAMZN…) : sweep de la balance vers le Safe Vault de l'utilisateur (Chain ID **46630**, RPC `https://rpc.testnet.chain.robinhood.com/rpc`).
-9. **Dashboard** — statut de protection, positions surveillées, config des règles, **bouton panique** (déclenchement manuel immédiat), journal d'incidents, retrait du vault.
-10. **Recovery** — après incident, retrait du Safe Vault vers un wallet frais.
+The user connects their wallet, **delegates their account** to coincoin's GuardianDelegate (EIP-7702) or installs the modules (ERC-7579), chooses a **Safe Vault** they own, selects the **protocols to watch**, sets their **thresholds**, and **pre-authorizes** (EIP-712 signature) the exact set of emergency actions.
+
+Then coincoin runs in the background:
+- **Continuously**: an account-level hook evaluates every outgoing transfer through the Stylus rules engine and **blocks** obvious drain patterns.
+- **On threat**: a watcher plugged into the Defimon feed detects that a protocol the user is exposed to is being attacked, and executes the pre-authorized **position exit + sweep**, toward the Safe Vault, within the response window.
+
+Everything is **non-custodial**: the user keeps their keys, can revoke the delegation at any time (delegate → `address(0)`), and the keeper can **only** trigger the pre-authorized emergency actions toward the **user's own vault** — never toward an arbitrary address.
 
 ---
 
-## 5. Architecture & composants
+## 4. Essential features (full MVP scope)
+
+1. **Onboarding & protected account**
+   - EIP-7702 delegation to `GuardianDelegate` (EOA path), **or** installation of `GuardianHook` + `GuardianExecutor` (ERC-7579 smart account path: Safe/Kernel).
+   - 1-click revocation (delegation reset).
+2. **Safe Vault** — minimal contract *owned by user*; the Guardian can **push** into it, only the user can **withdraw**.
+3. **PreAuthRegistry** — per-user policy (EIP-712 signature): covered assets, destination vault, watched protocols, thresholds, authorized keeper(s). Strictly bounds what the keeper can do.
+4. **Stylus rules engine (RulesEngine)** — evaluates cheaply onchain: anomaly score of an outgoing tx (amount to a never-seen address, `approve`/`setApprovalForAll` to an unverified contract, drain pattern) and protocol exploit conditions.
+5. **Two-layer detection**
+   - **Local**: ERC-7579 hook / 7702 logic → account-level **revert** on a triggered rule (always works, zero external dependency).
+   - **External**: watcher subscribed to Defimon `/ws/confirmed_attacks` (filter `arbitrum`) → triggers the pre-authorized evacuation.
+6. **Wallet asset evacuation** — ERC-20 / NFT sweep to the Safe Vault + **revocation of dangerous approvals**.
+7. **DeFi position exit** (Harpie's blind spot) — adapters:
+   - **Aave V3** (Pool `0x794a61358D6845594F94dc1DB02A252b5b4814aD`): `withdraw` (the Guardian executing in the account's context holds the aTokens).
+   - **GMX V2** (ExchangeRouter `0x602b805EedddBbD9ddff44A7dcBD46cb07849685`): `createOrder` market-decrease (2 steps; the keeper finalizes).
+8. **Robinhood Chain angle** — protect **Stock Tokens** (hTSLA, hAMZN…): sweep the balance to the user's Safe Vault (Chain ID **46630**, RPC `https://rpc.testnet.chain.robinhood.com/rpc`).
+9. **Dashboard** — protection status, watched positions, rules config, **panic button** (immediate manual trigger), incident log, vault withdrawal.
+10. **Recovery** — after an incident, withdraw from the Safe Vault to a fresh wallet.
+
+---
+
+## 5. Architecture & components
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
@@ -91,151 +91,151 @@ Tout est **non-custodial** : l'utilisateur garde ses clés, peut révoquer la d�
 │  Onboarding wizard · Dashboard · Panic button · Incident log · Vault │
 └───────────────┬───────────────────────────────┬────────────────────┘
                 │                                │
-        (lecture état)                   (signe pré-auth EIP-712,
-                │                         délégation 7702)
+        (read state)                     (signs EIP-712 pre-auth,
+                │                         7702 delegation)
                 ▼                                ▼
 ┌────────────────────────────┐      ┌──────────────────────────────────┐
-│  WATCHER (TypeScript)      │      │  CONTRATS (Solidity + OZ)         │
+│  WATCHER (TypeScript)      │      │  CONTRACTS (Solidity + OZ)        │
 │  - Defimon WS subscriber   │      │  GuardianDelegate (7702 impl)     │
-│  - mapping attaque→users   │─────▶│  GuardianHook+Executor (7579)     │
+│  - attack→users mapping    │─────▶│  GuardianHook+Executor (7579)     │
 │  - relayer (ZeroDev/4337   │ tx   │  SafeVault (user-owned)           │
-│    ou tx 7702 sponsorisée) │      │  PreAuthRegistry (EIP-712)        │
+│    or sponsored 7702 tx)   │      │  PreAuthRegistry (EIP-712)        │
 └────────────┬───────────────┘      │  ExitAdapters: Aave V3, GMX V2,   │
              │                      │     ERC20 sweeper, RH Stock       │
-       (signal menace)             └───────────────┬──────────────────┘
-             │                                     │ appelle (sync, cheap)
+       (threat signal)             └───────────────┬──────────────────┘
+             │                                     │ calls (sync, cheap)
              ▼                                     ▼
    ┌─────────────────────┐            ┌──────────────────────────────┐
    │  Defimon WebSocket  │            │  RulesEngine (Stylus / Rust) │
-   │  /ws/confirmed_…    │            │  scoring anomalie + règles   │
+   │  /ws/confirmed_…    │            │  anomaly scoring + rules     │
    └─────────────────────┘            └──────────────────────────────┘
 ```
 
-**Contrats**
-- `GuardianDelegate` — implémentation déléguée via EIP-7702 ; expose les fonctions d'urgence (`evacuate`, `exitPosition`, `revokeApprovals`) appelables uniquement par le keeper pré-autorisé ou l'utilisateur, bornées par `PreAuthRegistry`.
-- `GuardianHook` + `GuardianExecutor` — variante ERC-7579 pour smart accounts (hook = blocage sync ; executor = actions d'urgence).
-- `SafeVault` — destination des fonds évacués ; `onlyOwner` pour retirer.
-- `PreAuthRegistry` — stocke/valide la politique signée (EIP-712) : portée des actions, vault, protocoles, seuils, keepers.
+**Contracts**
+- `GuardianDelegate` — implementation delegated via EIP-7702; exposes the emergency functions (`evacuate`, `exitPosition`, `revokeApprovals`) callable only by the pre-authorized keeper or the user, bounded by `PreAuthRegistry`.
+- `GuardianHook` + `GuardianExecutor` — ERC-7579 variant for smart accounts (hook = sync blocking; executor = emergency actions).
+- `SafeVault` — destination of evacuated funds; `onlyOwner` for withdrawal.
+- `PreAuthRegistry` — stores/validates the signed policy (EIP-712): action scope, vault, protocols, thresholds, keepers.
 - `ExitAdapter` (interface) + impls `AaveV3ExitAdapter`, `GmxV2ExitAdapter`, `Erc20SweepAdapter`, `RobinhoodStockAdapter`.
-- `RulesEngine` (**Stylus/Rust**) — fonction pure-ish de scoring appelée par le hook et par le watcher avant action.
+- `RulesEngine` (**Stylus/Rust**) — pure-ish scoring function called by the hook and by the watcher before action.
 
 **Off-chain**
-- `watcher` (TS) — abonnement Defimon WS, index des positions utilisateurs, déclenchement des tx via relayer.
+- `watcher` (TS) — Defimon WS subscription, index of user positions, triggering txs via relayer.
 - `frontend` (Next.js) — onboarding, dashboard, panic button, vault.
 
 ---
 
 ## 6. Data flow
 
-1. **Onboarding** : connexion → délégation 7702 (ou install modules) → choix Safe Vault → sélection protocoles → réglage seuils → **signature EIP-712** de la politique (PreAuthRegistry).
-2. **Opération normale** : chaque tx sortante passe par le hook → `RulesEngine` Stylus la score → drain évident **reverté** au niveau du compte.
-3. **Événement** : Defimon émet un `confirmed_attack` sur le protocole P (`network: arbitrum`). Le watcher voit que l'utilisateur a une position dans P → soumet **l'exit pré-autorisé** (`AaveV3`/`GMX`) **+ sweep** des actifs au repos, via le relayer, dans la fenêtre.
-4. **Mise à l'abri** : les fonds arrivent dans le **Safe Vault** de l'utilisateur. Notification.
-5. **Recovery** : l'utilisateur retire le vault vers un wallet frais.
+1. **Onboarding**: connect → 7702 delegation (or install modules) → choose Safe Vault → select protocols → set thresholds → **EIP-712 signature** of the policy (PreAuthRegistry).
+2. **Normal operation**: every outgoing tx passes through the hook → the Stylus `RulesEngine` scores it → an obvious drain is **reverted** at the account level.
+3. **Event**: Defimon emits a `confirmed_attack` on protocol P (`network: arbitrum`). The watcher sees that the user has a position in P → submits the **pre-authorized exit** (`AaveV3`/`GMX`) **+ sweep** of the assets at rest, via the relayer, within the window.
+4. **Moved to safety**: the funds land in the user's **Safe Vault**. Notification.
+5. **Recovery**: the user withdraws the vault to a fresh wallet.
 
 ---
 
-## 7. Stack technique & mapping sponsors
+## 7. Tech stack & sponsor mapping
 
-| Brique | Techno | Sponsor servi |
+| Building block | Tech | Sponsor served |
 |--------|--------|---------------|
-| Compte programmable / délégation | EIP-7702, ERC-7579, ERC-4337, **ZeroDev** (bundler/session keys) | **ZeroDev** |
-| Contrats sécurité | Solidity + **OpenZeppelin** (modules, libs) | **OpenZeppelin** |
-| Moteur de règles onchain | **Stylus** (Rust/WASM) | **Arbitrum / Stylus** |
-| Protection RWA | **Robinhood Chain** testnet (Stock Tokens) | **Robinhood Chain** |
-| Protection épargnant (thèse) | — | **CFIT** (Centre for Finance, Innovation & Tech) |
-| Flux de menaces | Defimon WS (ou mock conforme) | — |
+| Programmable account / delegation | EIP-7702, ERC-7579, ERC-4337, **ZeroDev** (bundler/session keys) | **ZeroDev** |
+| Security contracts | Solidity + **OpenZeppelin** (modules, libs) | **OpenZeppelin** |
+| Onchain rules engine | **Stylus** (Rust/WASM) | **Arbitrum / Stylus** |
+| RWA protection | **Robinhood Chain** testnet (Stock Tokens) | **Robinhood Chain** |
+| Saver protection (thesis) | — | **CFIT** (Centre for Finance, Innovation & Tech) |
+| Threat feed | Defimon WS (or conformant mock) | — |
 | Front | Next.js, wagmi, viem, RainbowKit | — |
-| Déploiement | **Arbitrum Sepolia** (éligibilité) + **Robinhood Chain testnet** | — |
-| Infra RPC | **Alchemy** (recommandé par RH Chain) | **Alchemy** |
+| Deployment | **Arbitrum Sepolia** (eligibility) + **Robinhood Chain testnet** | — |
+| RPC infra | **Alchemy** (recommended by RH Chain) | **Alchemy** |
 
 ---
 
-## 8. Sécurité & trust model
+## 8. Security & trust model
 
-- **Non-custodial** : l'utilisateur garde ses clés. La délégation 7702 est **révocable à tout instant** (`delegate → address(0)`), et n'importe qui peut broadcaster la révocation signée (gas sponsorisé).
-- **Keeper borné** : le keeper ne peut **que** déclencher les actions pré-autorisées **vers le vault de l'utilisateur lui-même** / sortir **ses** positions. Il **ne peut pas** envoyer de fonds à une adresse arbitraire. **Pire cas si keeper malveillant/compromis** : une évacuation injustifiée (désagrément, pas un vol) — les fonds vont au vault de l'utilisateur.
-- **Vault figé** : la destination est fixée à la signature de la politique, et le vault est `onlyOwner`.
-- **Guardian minimal & audité** : conformément aux best-practices 7702 (Fireblocks/Halborn), la surface du contrat délégué est minimale et auditée — c'est précisément le « contrat 7702 battle-tested » qui manque aujourd'hui.
-- **Garde-fous** : cooldown anti-déclenchement abusif, seuils configurables, double confirmation pour les actions destructrices côté UI.
-
----
-
-## 9. La démo (théâtrale, ce qui gagne)
-
-Deux wallets côte à côte, **un protégé par coincoin, un non**.
-1. **Local rule** : un drainer pousse un `setApprovalForAll` vers un contrat non vérifié → le hook **revert** au niveau du compte (le wallet non protégé, lui, signe et se fait vider).
-2. **Position exploit** : on déploie sur **Arbitrum Sepolia** un protocole mock vulnérable + un attaquant ; l'utilisateur y a déposé $Y et a $X au repos. L'attaque part → signal `confirmed_attack` → coincoin **sort la position Aave/mock + sweep** vers le Safe Vault **avant** que le drain n'atteigne l'utilisateur. Le wallet non protégé est vidé.
-3. **Robinhood angle** : sur Robinhood testnet, des **hTSLA** menacés sont mis à l'abri dans le vault.
-4. **Recovery** : retrait du vault vers un wallet frais.
-
-Métrique d'accroche : *« fonds sauvés vs perdus »*, chrono de la fenêtre de réponse à l'écran.
+- **Non-custodial**: the user keeps their keys. The 7702 delegation is **revocable at any time** (`delegate → address(0)`), and anyone can broadcast the signed revocation (sponsored gas).
+- **Bounded keeper**: the keeper can **only** trigger the pre-authorized actions **toward the user's own vault** / exit **their** positions. It **cannot** send funds to an arbitrary address. **Worst case if the keeper is malicious/compromised**: an unjustified evacuation (an annoyance, not a theft) — the funds go to the user's vault.
+- **Frozen vault**: the destination is fixed at policy-signing time, and the vault is `onlyOwner`.
+- **Minimal & audited guardian**: in line with 7702 best practices (Fireblocks/Halborn), the delegated contract's surface is minimal and audited — precisely the "battle-tested 7702 contract" that is missing today.
+- **Guardrails**: anti-abuse cooldown, configurable thresholds, double confirmation for destructive actions on the UI side.
 
 ---
 
-## 10. Direction artistique
+## 9. The demo (theatrical, what wins)
 
-**Concept** : le **canari dans la mine** rencontre le **canard qui fait coin-coin**. coincoin est ton alarme vivante : il *couine* (« coin coin ! ») au premier signe de danger et te tire en sécurité. La métaphore sécurité (early-warning) et le nom (onomatopée du canard) fusionnent parfaitement.
+Two wallets side by side, **one protected by coincoin, one not**.
+1. **Local rule**: a drainer pushes a `setApprovalForAll` to an unverified contract → the hook **reverts** at the account level (the unprotected wallet, meanwhile, signs and gets drained).
+2. **Position exploit**: on **Arbitrum Sepolia** we deploy a vulnerable mock protocol + an attacker; the user has deposited $Y there and has $X at rest. The attack starts → `confirmed_attack` signal → coincoin **exits the Aave/mock position + sweeps** to the Safe Vault **before** the drain reaches the user. The unprotected wallet is drained.
+3. **Robinhood angle**: on Robinhood testnet, threatened **hTSLA** are moved to safety in the vault.
+4. **Recovery**: withdraw from the vault to a fresh wallet.
 
-- **Mascotte** : un canard-canari cartoon, expressif, décliné en 3 états :
-  - **Calme** (veille) — assis tranquille, œil mi-clos.
-  - **Alerte** (menace détectée) — bec grand ouvert « COIN COIN ! », plumes hérissées, point d'exclamation rouge.
-  - **Héros** (fonds sauvés) — tient une **bouée de sauvetage** / un petit coffre, pouce levé.
-- **Palette** :
-  - **Jaune canari `#F5D90A`** (primaire — attention/alarme),
-  - **Bleu nuit `#0B1B3A`** (fond — cohérent Arbitrum + l'esthétique brick/arcade du buildathon),
-  - **Rouge alarme `#FF3B3B`** (états de menace),
-  - **Vert safe `#27C93F`** (état « évacué / à l'abri »).
-- **Style** : flat illustration audacieuse + clin d'œil **pixel-art rétro-arcade** (la page sponsors du buildathon est en briques façon Mario) — chaleureux mais vigilant : la sécurité qui ne fait pas peur, ce qui sert le positionnement B2C « rendre la self-custody sûre pour tout le monde ».
-- **Logo** : silhouette de canard dans un **bouclier**, ou tête de canard stylisée en **cloche d'alarme**.
-- **Ton & voix** : amical, un peu malicieux, jamais anxiogène. Micro-copy qui assume le canard (« coincoin veille », « COIN COIN ! on évacue », « tes fonds sont au sec 🦆»).
+Hook metric: *"funds saved vs lost"*, with the response-window timer on screen.
 
 ---
 
-## 11. Hors-scope (YAGNI pour le MVP)
+## 10. Art direction
 
-- Pas « tout DeFi » : **2 adapters réels** (Aave V3, GMX V2) + 1 mock + sweep générique + Stock Tokens. Architecture d'adapter extensible, le reste en roadmap.
-- **Pas de front-running** de l'attaquant (modèle fragile de Harpie ; le séquenceur Arbitrum le rend peu fiable). On enforce au niveau du compte + on réagit dans la fenêtre non-atomique.
-- Pas de détection ML maison : on consomme Defimon (ou mock) + règles déterministes Stylus.
-- Pas de multi-keeper décentralisé pour le MVP (1 keeper borné + révocation utilisateur) — décentralisation du watcher = roadmap.
+**Concept**: the **canary in the coal mine** meets the **duck that goes coin-coin**. coincoin is your living alarm: it *squawks* ("coin coin !") at the first sign of danger and pulls you to safety. The security metaphor (early-warning) and the name (the duck onomatopoeia) merge perfectly.
+
+- **Mascot**: a cartoon canary-duck, expressive, available in 3 states:
+  - **Calm** (standby) — sitting quietly, eye half-closed.
+  - **Alert** (threat detected) — beak wide open "COIN COIN !", ruffled feathers, red exclamation mark.
+  - **Hero** (funds saved) — holding a **life buoy** / a small chest, thumbs up.
+- **Palette**:
+  - **Canary yellow `#F5D90A`** (primary — attention/alarm),
+  - **Midnight blue `#0B1B3A`** (background — consistent with Arbitrum + the buildathon's brick/arcade aesthetic),
+  - **Alarm red `#FF3B3B`** (threat states),
+  - **Safe green `#27C93F`** ("evacuated / safe" state).
+- **Style**: bold flat illustration + a **retro-arcade pixel-art** wink (the buildathon's sponsor page is brick-styled in a Mario-like way) — warm but vigilant: security that isn't scary, which serves the B2C "make self-custody safe for everyone" positioning.
+- **Logo**: a duck silhouette inside a **shield**, or a duck head stylized as an **alarm bell**.
+- **Tone & voice**: friendly, a bit mischievous, never anxiety-inducing. Micro-copy that owns the duck ("coincoin is watching", "COIN COIN ! evacuating", "your funds are high and dry 🦆").
 
 ---
 
-## 12. Risques & fallbacks
+## 11. Out of scope (YAGNI for the MVP)
 
-| Risque | Mitigation / Fallback |
+- Not "all of DeFi": **2 real adapters** (Aave V3, GMX V2) + 1 mock + a generic sweep + Stock Tokens. Extensible adapter architecture, the rest on the roadmap.
+- **No front-running** of the attacker (Harpie's fragile model; the Arbitrum sequencer makes it unreliable). We enforce at the account level + react within the non-atomic window.
+- No homegrown ML detection: we consume Defimon (or a mock) + deterministic Stylus rules.
+- No decentralized multi-keeper for the MVP (1 bounded keeper + user revocation) — decentralizing the watcher = roadmap.
+
+---
+
+## 12. Risks & fallbacks
+
+| Risk | Mitigation / Fallback |
 |--------|----------------------|
-| Accès Defimon WS indisponible | **Mock** émettant le même schéma (`/ws/confirmed_attacks`) + les règles Stylus locales (toujours fonctionnelles, zéro dépendance). Honnête & documenté. |
-| EIP-7702 pas/mal supporté sur Arbitrum Sepolia / RH testnet | Chemin **ERC-7579** (Safe/Kernel) en alternative ; démo sur la chaîne qui supporte le mieux. |
-| GMX V2 exécution 2-étapes lente en démo | Démontrer d'abord Aave (1 tx) ; GMX en second / sur enregistrement. |
-| Stock Tokens rebasing (multiplier) cassent le sweep | Le sweep déplace la **balance courante** vers le vault de l'utilisateur (même actif, même propriétaire) → pas d'hypothèse sur le multiplier. |
-| Scope trop large en solo / 5 jours | Ordre de priorité : (1) Guardian + SafeVault + sweep + local rules, (2) Aave exit + watcher Defimon, (3) GMX, (4) Robinhood, (5) polish démo. |
+| Defimon WS access unavailable | **Mock** emitting the same schema (`/ws/confirmed_attacks`) + the local Stylus rules (always functional, zero dependency). Honest & documented. |
+| EIP-7702 not/poorly supported on Arbitrum Sepolia / RH testnet | **ERC-7579** path (Safe/Kernel) as an alternative; demo on the chain that supports it best. |
+| GMX V2 2-step execution slow in the demo | Demonstrate Aave first (1 tx); GMX second / on a recording. |
+| Rebasing Stock Tokens (multiplier) break the sweep | The sweep moves the **current balance** to the user's vault (same asset, same owner) → no assumption about the multiplier. |
+| Scope too large solo / in 5 days | Priority order: (1) Guardian + SafeVault + sweep + local rules, (2) Aave exit + Defimon watcher, (3) GMX, (4) Robinhood, (5) demo polish. |
 
 ---
 
-## 13. Déploiement & adresses de référence
+## 13. Deployment & reference addresses
 
-- **Arbitrum Sepolia** (déploiement principal, éligibilité buildathon).
-- **Robinhood Chain testnet** — Chain ID **46630**, RPC `https://rpc.testnet.chain.robinhood.com/rpc`, faucet `https://faucet.testnet.chain.robinhood.com/add-chain` (0,05 ETH + 5 de chaque Stock Token / 24h). Orbit L2, infra **Alchemy**.
-- Adresses mainnet de référence (pour les adapters) : Aave V3 Pool `0x794a61358D6845594F94dc1DB02A252b5b4814aD`, GMX V2 ExchangeRouter `0x602b805EedddBbD9ddff44A7dcBD46cb07849685`.
-
----
-
-## 14. Ce dont j'ai (potentiellement) besoin de ta part
-
-- **Defimon WS** : une **API key** (`@DecurityHQ`) pour brancher le vrai flux. Sinon je code le mock conforme — dis-moi si tu veux que je tente d'obtenir l'accès ou qu'on parte direct sur le mock.
-- **ZeroDev** : un projet / API key (bundler + paymaster) pour les tx sponsorisées et session keys.
-- **Alchemy** : une app sur Arbitrum Sepolia + Robinhood testnet (RPC).
-- **Comptes faucet** : Arbitrum Sepolia ETH + Robinhood testnet (Stock Tokens).
-
-**✅ Décidé (11 juin 2026)** : **EIP-7702 = chemin principal** (le plus « 2026 », retourne l'arme des attaquants, supporté par ZeroDev sur Arbitrum Sepolia chain 421614). ERC-7579/Safe = fallback documenté. ZeroDev Kernel est compatible 4337 **et** 7702 → c'est notre base de compte.
-
-> 💡 Validation externe : Decurity expose une page de recherche [rescue-window.decurity.io](https://rescue-window.decurity.io/) sur les fenêtres de drain, et **un hedge fund 9 chiffres utilise déjà leur WebSocket pour sortir ses positions automatiquement dès le début d'une attaque** — exactement notre mécanisme, mais fait pour un fonds (B2B), pas pour les particuliers. coincoin = ce mécanisme, démocratisé.
+- **Arbitrum Sepolia** (main deployment, buildathon eligibility).
+- **Robinhood Chain testnet** — Chain ID **46630**, RPC `https://rpc.testnet.chain.robinhood.com/rpc`, faucet `https://faucet.testnet.chain.robinhood.com/add-chain` (0.05 ETH + 5 of each Stock Token / 24h). Orbit L2, **Alchemy** infra.
+- Reference mainnet addresses (for the adapters): Aave V3 Pool `0x794a61358D6845594F94dc1DB02A252b5b4814aD`, GMX V2 ExchangeRouter `0x602b805EedddBbD9ddff44A7dcBD46cb07849685`.
 
 ---
 
-## 15. Questions ouvertes
+## 14. What I (potentially) need from you
 
-- Defimon couvre `arbitrum` ; couvre-t-il **Robinhood Chain** ? Sinon, sur RH on s'appuie sur les règles locales Stylus uniquement.
-- Périmètre exact des « approvals dangereuses » à révoquer auto (toutes vs liste).
-- Nom du token/marque secondaire pour le vault (« coincoin Nest » ? à décider en DA).
+- **Defimon WS**: an **API key** (`@DecurityHQ`) to plug in the real feed. Otherwise I'll code the conformant mock — tell me whether you want me to try to get access or whether we go straight for the mock.
+- **ZeroDev**: a project / API key (bundler + paymaster) for sponsored txs and session keys.
+- **Alchemy**: an app on Arbitrum Sepolia + Robinhood testnet (RPC).
+- **Faucet accounts**: Arbitrum Sepolia ETH + Robinhood testnet (Stock Tokens).
+
+**✅ Decided (June 11, 2026)**: **EIP-7702 = main path** (the most "2026", turns the attackers' weapon around, supported by ZeroDev on Arbitrum Sepolia chain 421614). ERC-7579/Safe = documented fallback. ZeroDev Kernel is compatible with both 4337 **and** 7702 → it's our account base.
+
+> 💡 External validation: Decurity publishes a research page [rescue-window.decurity.io](https://rescue-window.decurity.io/) on drain windows, and **a 9-figure hedge fund already uses their WebSocket to exit its positions automatically as soon as an attack begins** — exactly our mechanism, but built for a fund (B2B), not for individuals. coincoin = that mechanism, democratized.
+
+---
+
+## 15. Open questions
+
+- Defimon covers `arbitrum`; does it cover **Robinhood Chain**? If not, on RH we rely on the local Stylus rules only.
+- Exact scope of the "dangerous approvals" to auto-revoke (all vs a list).
+- Name of the secondary token/brand for the vault ("coincoin Nest"? to be decided in art direction).

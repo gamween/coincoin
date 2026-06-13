@@ -63,7 +63,7 @@ describe("ChainThreatSource", () => {
     });
     await src.start(async (a) => {
       received.push(a);
-      controller.abort(); // arrête le daemon après la 1re alerte
+      controller.abort(); // stops the daemon after the 1st alert
     });
     expect(received).toHaveLength(1);
     expect(received[0].exploit_address).toBe("0xaaaa000000000000000000000000000000000000");
@@ -110,7 +110,7 @@ describe("ChainThreatSource", () => {
     });
     setTimeout(() => controller.abort(), 30);
     await src.start(vi.fn());
-    // Un seul cycle de poll rattrape 0→25 en fenêtres de ≤10 blocs.
+    // A single poll cycle catches up 0→25 in windows of ≤10 blocks.
     expect(ranges.slice(0, 3)).toEqual([
       { fromBlock: 0n, toBlock: 9n },
       { fromBlock: 10n, toBlock: 19n },

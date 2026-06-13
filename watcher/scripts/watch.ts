@@ -9,16 +9,16 @@ import { KeeperClient } from "../src/keeper";
 import { runWatcher } from "../src/watcher";
 import type { ProtectedAccount } from "../src/registry";
 
-/// Daemon de surveillance (le PRODUIT) : observe en continu les logs `Drained` du
-/// protocole surveillé et évacue les fonds au repos de la victime dès qu'un exploit
-/// est détecté. NE DÉTIENT PAS la clé de la victime : lit VICTIM_ADDRESS et signe
-/// l'évacuation avec la clé keeper (`onlySelfOrKeeper`). Arrêt par SIGINT (Ctrl-C).
+/// Monitoring daemon (the PRODUCT): continuously watches the `Drained` logs of the
+/// monitored protocol and evacuates the victim's at-rest funds as soon as an exploit
+/// is detected. DOES NOT HOLD the victim's key: reads VICTIM_ADDRESS and signs the
+/// evacuation with the keeper key (`onlySelfOrKeeper`). Stops on SIGINT (Ctrl-C).
 async function main() {
   const cfg = resolveChainConfig();
   const victimAddress = process.env.VICTIM_ADDRESS as `0x${string}` | undefined;
-  if (!victimAddress) throw new Error("watch: VICTIM_ADDRESS manquant");
+  if (!victimAddress) throw new Error("watch: VICTIM_ADDRESS missing");
   const keeperKey = process.env.KEEPER_PRIVATE_KEY;
-  if (!keeperKey) throw new Error("watch: KEEPER_PRIVATE_KEY manquant");
+  if (!keeperKey) throw new Error("watch: KEEPER_PRIVATE_KEY missing");
   const keeper = privateKeyToAccount(keeperKey as `0x${string}`);
 
   const transport = http(cfg.rpcUrl);
@@ -59,19 +59,19 @@ async function main() {
 
   const controller = new AbortController();
   process.on("SIGINT", () => {
-    console.log("\n[coincoin] 🛑 arrêt du watcher…");
+    console.log("\n[coincoin] 🛑 stopping the watcher…");
     controller.abort();
   });
 
   console.log(
-    `[coincoin] 👁️  watch — surveillance de ${cfg.proto} sur ${cfg.chain.name} (keeper ${keeper.address})…`,
+    `[coincoin] 👁️  watch — monitoring ${cfg.proto} on ${cfg.chain.name} (keeper ${keeper.address})…`,
   );
   await runWatcher({
     source: new ChainThreatSource({ fetcher, protocols: [cfg.proto], signal: controller.signal }),
     accounts: [account],
     keeper: new KeeperClient(keeperWallet, ORBIT_TX_GAS),
   });
-  console.log("[coincoin] watcher arrêté.");
+  console.log("[coincoin] watcher stopped.");
 }
 
 main().catch((e) => {

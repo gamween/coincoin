@@ -1,46 +1,46 @@
 # coincoin watcher
 
-Service de détection→évacuation : un daemon surveille les exploits on-chain (logs
-`Drained`) et déclenche l'évacuation des fonds d'un compte protégé (EOA délégué via
-EIP-7702) vers son SafeVault.
+Detection→evacuation service: a daemon watches for on-chain exploits (`Drained`
+logs) and triggers the evacuation of a protected account's funds (EOA delegated via
+EIP-7702) to its SafeVault.
 
-Tests : `pnpm test`.
+Tests: `pnpm test`.
 
-## Chaîne cible
+## Target chain
 
-`CHAIN` (dans `../.env`) sélectionne la cible : `robinhood` (défaut, chain 46630)
-ou `arbitrumSepolia`. Les adresses des contrats déployés sont lues depuis `../.env`
+`CHAIN` (in `../.env`) selects the target: `robinhood` (default, chain 46630)
+or `arbitrumSepolia`. The addresses of the deployed contracts are read from `../.env`
 (`GUARDIAN_IMPL`, `DEMO_TOKEN`, `DEMO_PROTO`, `DEMO_VAULT`).
 
-## Déploiement (Robinhood Chain Testnet)
+## Deployment (Robinhood Chain Testnet)
 
-Pré-requis : deployer + victim + keeper fundés en gas Robinhood ; `../.env` rempli
+Prerequisites: deployer + victim + keeper funded with Robinhood gas; `../.env` filled in
 (`ROBINHOOD_TESTNET_RPC`, `DEPLOYER_PRIVATE_KEY`, `VICTIM_PRIVATE_KEY`,
 `VICTIM_ADDRESS`, `KEEPER_PRIVATE_KEY`).
 
 ```bash
 cd ../contracts && set -a && source ../.env && set +a
-# 1) impl GuardianModule partagée
+# 1) shared GuardianModule impl
 forge script script/Deploy.s.sol:DeployGuardian --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast
-# 2) décor de démo (token + protocole vulnérable + SafeVault de la victime)
+# 2) demo setup (token + vulnerable protocol + victim's SafeVault)
 forge script script/SetupDemo.s.sol:SetupDemo --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast
 ```
 
-Reporter dans `../.env` : `GUARDIAN_IMPL` (impl du step 1), puis `DEMO_TOKEN`,
+Record in `../.env`: `GUARDIAN_IMPL` (impl from step 1), then `DEMO_TOKEN`,
 `DEMO_PROTO`, `DEMO_VAULT` (step 2).
 
-## Démo end-to-end (multi-terminal)
+## End-to-end demo (multi-terminal)
 
 ```bash
-# Une fois : la victime délègue (7702) + configure son guardian
+# Once: the victim delegates (7702) + configures their guardian
 pnpm onboard
 
-# Terminal A — le daemon de surveillance (le produit)
-pnpm watch        # 👁️  surveillance de <PROTO>…
+# Terminal A — the watcher daemon (the product)
+pnpm watch        # 👁️  watching <PROTO>…
 
-# Terminal B — l'attaquant draine le protocole (seul acteur simulé)
-pnpm exploit      # 💥 drain → vrai log Drained on-chain
+# Terminal B — the attacker drains the protocol (the only simulated actor)
+pnpm exploit      # 💥 drain → real Drained log on-chain
 ```
 
-Le Terminal A détecte le log indépendamment, affiche « 🦆 COIN COIN ! » et évacue
-les fonds au repos de la victime vers son SafeVault. `Ctrl-C` pour arrêter le daemon.
+Terminal A detects the log independently, prints "🦆 COIN COIN !" and evacuates
+the victim's idle funds to their SafeVault. `Ctrl-C` to stop the daemon.

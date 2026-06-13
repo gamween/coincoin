@@ -6,11 +6,11 @@ import {SafeVault} from "../src/SafeVault.sol";
 import {MockERC20} from "../test/mocks/MockERC20.sol";
 import {MockVulnerableProtocol} from "../src/demo/MockVulnerableProtocol.sol";
 
-/// @notice Déploie le décor de la démo end-to-end sur la chaîne cible (Robinhood
-///         Chain Testnet par défaut, ou Arbitrum Sepolia) : un token de test, le
-///         protocole vulnérable, et le SafeVault de la victime. La victime
-///         (VICTIM_ADDRESS) reçoit des tokens au repos ; la délégation 7702 et le
-///         `configure` sont faits côté script TS (onboard.ts).
+/// @notice Sets up the end-to-end demo on the target chain (Robinhood
+///         Chain Testnet by default, or Arbitrum Sepolia): a test token, the
+///         vulnerable protocol, and the victim's SafeVault. The victim
+///         (VICTIM_ADDRESS) receives idle tokens; the 7702 delegation and the
+///         `configure` call are done on the TS script side (onboard.ts).
 contract SetupDemo is Script {
     function run() external {
         uint256 pk = vm.envUint("DEPLOYER_PRIVATE_KEY");
@@ -22,9 +22,9 @@ contract SetupDemo is Script {
         MockVulnerableProtocol proto = new MockVulnerableProtocol(token);
         SafeVault vault = new SafeVault(victim);
 
-        // La victime détient des fonds AU REPOS (cible de l'évacuation).
+        // The victim holds IDLE funds (the evacuation target).
         token.mint(victim, 500e18);
-        // Le déployeur dépose dans le protocole (qui se fera drainer).
+        // The deployer deposits into the protocol (which will get drained).
         token.mint(deployer, 1_000e18);
         token.approve(address(proto), 1_000e18);
         proto.deposit(1_000e18);

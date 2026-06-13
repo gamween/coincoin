@@ -4,30 +4,30 @@ pragma solidity ^0.8.24;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title GuardianModule
-/// @notice Logique guardian déléguée à un compte via EIP-7702. Exécutée dans le
-///         contexte du compte : `address(this)` == le compte protégé, qui détient
-///         les fonds. La configuration est réservée au compte lui-même ; les actions
-///         d'urgence sont ouvertes au compte ou au keeper borné. Les fonds ne partent
-///         QUE vers le `safeVault` enregistré.
+/// @notice Guardian logic delegated to an account via EIP-7702. Executed in the
+///         account's context: `address(this)` == the protected account, which holds
+///         the funds. Configuration is restricted to the account itself; emergency
+///         actions are open to the account or the bounded keeper. Funds only ever
+///         move to the registered `safeVault`.
 contract GuardianModule {
     address public safeVault;
     address public keeper;
     bool public configured;
-    uint256 private _locked; // guard de réentrance (0 = libre, 1 = occupé)
+    uint256 private _locked; // reentrancy guard (0 = free, 1 = busy)
 
     event Configured(address indexed safeVault, address indexed keeper);
 
     error NotAuthorized();
     error ZeroAddress();
 
-    /// @dev Seul le compte lui-même (self-call, y compris via une UserOp 7702) peut configurer.
+    /// @dev Only the account itself (self-call, including via a 7702 UserOp) can configure.
     modifier onlySelf() {
         if (msg.sender != address(this)) revert NotAuthorized();
         _;
     }
 
-    /// @dev La reconfiguration par le compte lui-même est intentionnelle (le compte est
-    ///      l'autorité suprême) ; la vérification d'intention revient à la couche signing/UX.
+    /// @dev Reconfiguration by the account itself is intentional (the account is
+    ///      the ultimate authority); intent verification is left to the signing/UX layer.
     function configure(address safeVault_, address keeper_) external onlySelf {
         if (safeVault_ == address(0) || keeper_ == address(0)) revert ZeroAddress();
         safeVault = safeVault_;
@@ -54,13 +54,13 @@ contract GuardianModule {
         _;
     }
 
-    /// @notice Balaie la totalité du solde de chaque token vers le safeVault.
-    /// @dev Chemin d'URGENCE : un token qui revert (blacklist, pause, token malveillant)
-    ///      est SAUTÉ (event EvacuationFailed) au lieu de bloquer toute l'évacuation.
-    ///      Un keeper qui rappelle après coup est un no-op (soldes à zéro) : intentionnel.
+    /// @notice Sweeps the entire balance of each token to the safeVault.
+    /// @dev EMERGENCY path: a token that reverts (blacklist, pause, malicious token)
+    ///      is SKIPPED (EvacuationFailed event) instead of blocking the whole evacuation.
+    ///      A keeper that calls again afterwards is a no-op (zero balances): intentional.
     function evacuateERC20(address[] calldata tokens) external onlySelfOrKeeper nonReentrant {
         if (!configured) revert NotConfigured();
-        address vault_ = safeVault; // cache : une seule SLOAD, immuable pendant la boucle
+        address vault_ = safeVault; // cache: a single SLOAD, immutable during the loop
         for (uint256 i; i < tokens.length; ++i) {
             uint256 bal;
             try IERC20(tokens[i]).balanceOf(address(this)) returns (uint256 b) {
@@ -72,7 +72,7 @@ contract GuardianModule {
             if (bal == 0) continue;
             (bool ok, bytes memory ret) =
                 tokens[i].call(abi.encodeCall(IERC20.transfer, (vault_, bal)));
-            // Sémantique SafeERC20 : succès si call ok ET (pas de retour [USDT] OU retour true).
+            // SafeERC20 semantics: success if call ok AND (no return value [USDT] OR returns true).
             if (ok && (ret.length == 0 || (ret.length >= 32 && abi.decode(ret, (bool))))) {
                 emit Evacuated(tokens[i], bal);
             } else {
@@ -86,12 +86,12 @@ contract GuardianModule {
 
     error LengthMismatch();
 
-    /// @notice Remet à zéro les allowances passées.
-    /// @dev Chemin d'URGENCE, symétrique d'evacuateERC20 : une paire qui échoue
-    ///      (token toxique, adresse sans code) est SAUTÉE (event ApprovalRevokeFailed)
-    ///      au lieu de bloquer le lot. Volontairement PAS de garde `configured` :
-    ///      couper une allowance est une action défensive sans mouvement de fonds,
-    ///      utile même avant la configuration du vault.
+    /// @notice Resets the given allowances to zero.
+    /// @dev EMERGENCY path, symmetric to evacuateERC20: a pair that fails
+    ///      (toxic token, address with no code) is SKIPPED (ApprovalRevokeFailed event)
+    ///      instead of blocking the batch. Deliberately NO `configured` guard:
+    ///      cutting an allowance is a defensive action with no fund movement,
+    ///      useful even before the vault is configured.
     function revokeApprovals(address[] calldata tokens, address[] calldata spenders)
         external
         onlySelfOrKeeper
@@ -105,7 +105,7 @@ contract GuardianModule {
             }
             (bool ok, bytes memory ret) =
                 tokens[i].call(abi.encodeCall(IERC20.approve, (spenders[i], 0)));
-            // Sémantique SafeERC20 : succès si call ok ET (pas de retour [USDT] OU retour true).
+            // SafeERC20 semantics: success if call ok AND (no return value [USDT] OR returns true).
             if (ok && (ret.length == 0 || (ret.length >= 32 && abi.decode(ret, (bool))))) {
                 emit ApprovalRevoked(tokens[i], spenders[i]);
             } else {

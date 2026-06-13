@@ -34,8 +34,7 @@ export const GUARANTEES = [
 
 export type TermLine = { text: string; tone: "prompt" | "muted" | "info" | "alert" | "success" };
 
-// Mirrors the real daemon run on Robinhood Chain Testnet. French daemon strings are the
-// genuine output and stay verbatim; UI copy around the terminal is English.
+// Mirrors the real daemon run on Robinhood Chain Testnet. UI copy around the terminal is English.
 export const TERMINAL_LINES: TermLine[] = [
   { text: "$ pnpm watch", tone: "prompt" },
   { text: "→ coincoin is watching. Scanning for threats in bounded block windows…", tone: "info" },
@@ -43,8 +42,8 @@ export const TERMINAL_LINES: TermLine[] = [
   { text: "$ pnpm exploit", tone: "prompt" },
   { text: "→ attacker draining the vulnerable demo protocol… tx sent.", tone: "info" },
   { text: "# back in the watcher — it catches the real Drained log on its own:", tone: "muted" },
-  { text: "🦆 COIN COIN ! menace détectée → évacuation de 0xFD0A…Ea89", tone: "alert" },
-  { text: "→ évacue vers 0xF60c…Fe7A (7702 guardian context)", tone: "success" },
+  { text: "🦆 COIN COIN ! threat detected → evacuating 0xFD0A…Ea89", tone: "alert" },
+  { text: "→ evacuated to 0xF60c…Fe7A (7702 guardian context)", tone: "success" },
   { text: "✓ done. Funds safe. The duck did its job.", tone: "success" },
 ];
 

@@ -16,7 +16,7 @@ contract GuardianModuleConfigureTest is Test {
     }
 
     function test_SelfCanConfigure() public {
-        // En 7702, le compte exécute son propre code : msg.sender == address(this).
+        // Under 7702, the account executes its own code: msg.sender == address(this).
         vm.prank(address(guardian));
         guardian.configure(vault, keeper);
         assertEq(guardian.safeVault(), vault);
@@ -66,7 +66,7 @@ contract GuardianModuleEvacuateTest is Test {
         guardian = new GuardianModule();
         tokenA = new MockERC20("A", "A");
         tokenB = new MockERC20("B", "B");
-        // Le compte (== address(guardian) en 7702) détient les fonds.
+        // The account (== address(guardian) under 7702) holds the funds.
         tokenA.mint(address(guardian), 100e18);
         tokenB.mint(address(guardian), 50e18);
         vm.prank(address(guardian));
@@ -129,10 +129,10 @@ contract GuardianModuleEvacuateTest is Test {
         vm.prank(keeper);
         guardian.evacuateERC20(tokens);
 
-        // Les tokens sains sont évacués malgré le token qui revert.
+        // The healthy tokens are evacuated despite the token that reverts.
         assertEq(tokenA.balanceOf(vault), 100e18);
         assertEq(tokenB.balanceOf(vault), 50e18);
-        // Le token toxique reste sur le compte, mais n'a pas bloqué l'évacuation.
+        // The toxic token stays on the account, but did not block the evacuation.
         assertEq(bad.balanceOf(address(guardian)), 10e18);
     }
 }
@@ -148,7 +148,7 @@ contract GuardianModuleRevokeTest is Test {
     function setUp() public {
         guardian = new GuardianModule();
         token = new MockERC20("A", "A");
-        // Le compte a une allowance dangereuse encore active.
+        // The account has a dangerous allowance still active.
         vm.prank(address(guardian));
         token.approve(spender, type(uint256).max);
         vm.prank(address(guardian));
@@ -209,15 +209,15 @@ contract GuardianModuleRevokeTest is Test {
         RevertingApproveERC20 bad = new RevertingApproveERC20();
         address[] memory tokens = new address[](2);
         address[] memory spenders = new address[](2);
-        tokens[0] = address(bad);     // toxique en position 0
+        tokens[0] = address(bad);     // toxic at position 0
         spenders[0] = spender;
-        tokens[1] = address(token);   // sain ensuite
+        tokens[1] = address(token);   // healthy next
         spenders[1] = spender;
 
         vm.prank(keeper);
         guardian.revokeApprovals(tokens, spenders);
 
-        // Le sain est révoqué malgré le toxique devant lui.
+        // The healthy one is revoked despite the toxic one ahead of it.
         assertEq(token.allowance(address(guardian), spender), 0);
     }
 }

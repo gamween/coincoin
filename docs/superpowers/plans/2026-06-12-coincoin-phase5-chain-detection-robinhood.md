@@ -1,55 +1,55 @@
-# coincoin — Phase 5 : Détection on-chain réelle + démo Robinhood — Implementation Plan
+# coincoin — Phase 5: Real on-chain detection + Robinhood demo — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remplacer la détection mockée par un vrai daemon qui surveille les logs `Drained` on-chain (`ChainThreatSource`), et rendre l'ensemble configurable pour tourner sur Robinhood Chain Testnet (chain 46630).
+**Goal:** Replace the mocked detection with a real daemon that watches the on-chain `Drained` logs (`ChainThreatSource`), and make the whole thing configurable to run on Robinhood Chain Testnet (chain 46630).
 
-**Architecture:** On ajoute une source de menace réelle (`ChainThreatSource`) qui poll `getLogs` via un fetcher injecté (testable sans chaîne live) et réutilise le `decodeExploitLog` existant. `config.ts` devient piloté par env (défaut Robinhood). Trois scripts séparés remplacent `demo.ts` : `onboard` (délégation 7702 + configure, one-time), `watch` (le daemon), `exploit` (l'attaquant = deployer, seul acteur simulé). `runWatcher` est durci (try/catch par compte). Aucun changement Solidity : les contrats Phase 4 sont redéployés tels quels sur Robinhood.
+**Architecture:** We add a real threat source (`ChainThreatSource`) that polls `getLogs` via an injected fetcher (testable without a live chain) and reuses the existing `decodeExploitLog`. `config.ts` becomes env-driven (default Robinhood). Three separate scripts replace `demo.ts`: `onboard` (7702 delegation + configure, one-time), `watch` (the daemon), `exploit` (the attacker = deployer, the only simulated actor). `runWatcher` is hardened (per-account try/catch). No Solidity change: the Phase 4 contracts are redeployed as is on Robinhood.
 
-**Tech Stack:** Node 22, pnpm, TypeScript, viem 2.52 (EIP-7702 + getLogs), vitest, tsx. Foundry (déploiement uniquement, scripts existants). Spec source : `docs/superpowers/specs/2026-06-12-phase5-chain-detection-robinhood-design.md`.
+**Tech Stack:** Node 22, pnpm, TypeScript, viem 2.52 (EIP-7702 + getLogs), vitest, tsx. Foundry (deployment only, existing scripts). Source spec: `docs/superpowers/specs/2026-06-12-phase5-chain-detection-robinhood-design.md`.
 
 ---
 
-## Pré-requis & contexte
+## Prerequisites & context
 
-- **Phase 4 mergée** (sur `main`) : `watcher/` avec `threat.ts`, `registry.ts`, `keeper.ts`/`abi.ts`, `sources.ts` (`ThreatSource`/`MockThreatSource`/`decodeExploitLog`/`DrainedLog`), `watcher.ts` (`runWatcher`), `config.ts` ; contrats `MockVulnerableProtocol`/`Attacker` + scripts forge `DeployGuardian` (`contracts/script/Deploy.s.sol`) et `SetupDemo` (`contracts/script/SetupDemo.s.sol`).
-- **7702 confirmé sur Robinhood** (ArbOS 61). Rien n'y est déployé : on redéploie les contrats (aucun code Solidity nouveau).
-- **viem 2.52** installé : `signAuthorization` est une action wallet par défaut, `executor:"self"` requis pour l'auto-exécution 7702 (acquis en Phase 4).
-- **Adresses runtime** lues depuis `../.env` (gitignoré) : `CHAIN`, `ROBINHOOD_TESTNET_RPC`/`ARBITRUM_SEPOLIA_RPC`, `GUARDIAN_IMPL` (override), `DEMO_TOKEN`/`DEMO_PROTO`/`DEMO_VAULT`, `DEPLOYER_PRIVATE_KEY`/`VICTIM_PRIVATE_KEY`/`VICTIM_ADDRESS`/`KEEPER_PRIVATE_KEY`.
+- **Phase 4 merged** (on `main`): `watcher/` with `threat.ts`, `registry.ts`, `keeper.ts`/`abi.ts`, `sources.ts` (`ThreatSource`/`MockThreatSource`/`decodeExploitLog`/`DrainedLog`), `watcher.ts` (`runWatcher`), `config.ts`; contracts `MockVulnerableProtocol`/`Attacker` + forge scripts `DeployGuardian` (`contracts/script/Deploy.s.sol`) and `SetupDemo` (`contracts/script/SetupDemo.s.sol`).
+- **7702 confirmed on Robinhood** (ArbOS 61). Nothing is deployed there: we redeploy the contracts (no new Solidity code).
+- **viem 2.52** installed: `signAuthorization` is a wallet action by default, `executor:"self"` required for 7702 self-execution (acquired in Phase 4).
+- **Runtime addresses** read from `../.env` (gitignored): `CHAIN`, `ROBINHOOD_TESTNET_RPC`/`ARBITRUM_SEPOLIA_RPC`, `GUARDIAN_IMPL` (override), `DEMO_TOKEN`/`DEMO_PROTO`/`DEMO_VAULT`, `DEPLOYER_PRIVATE_KEY`/`VICTIM_PRIVATE_KEY`/`VICTIM_ADDRESS`/`KEEPER_PRIVATE_KEY`.
 
-## Structure de fichiers (Phase 5)
+## File structure (Phase 5)
 
 ```
 watcher/
 ├── src/
-│   ├── config.ts        # MODIFIE : + resolveChainConfig() piloté par env
-│   ├── sources.ts       # MODIFIE : + DrainedLogFetcher + ChainThreatSource
-│   └── watcher.ts       # MODIFIE : runWatcher try/catch par compte
+│   ├── config.ts        # MODIFIED: + env-driven resolveChainConfig()
+│   ├── sources.ts       # MODIFIED: + DrainedLogFetcher + ChainThreatSource
+│   └── watcher.ts       # MODIFIED: runWatcher per-account try/catch
 ├── test/
-│   ├── config.test.ts   # CREE : resolveChainConfig
-│   ├── sources.test.ts  # MODIFIE : + tests ChainThreatSource
-│   └── watcher.test.ts  # MODIFIE : + test résilience
+│   ├── config.test.ts   # CREATED: resolveChainConfig
+│   ├── sources.test.ts  # MODIFIED: + ChainThreatSource tests
+│   └── watcher.test.ts  # MODIFIED: + resilience test
 ├── scripts/
-│   ├── onboard.ts       # CREE : délégation 7702 + configure (one-time)
-│   ├── watch.ts         # CREE : daemon (ChainThreatSource -> runWatcher)
-│   ├── exploit.ts       # CREE : attaquant (deployer) draine le protocole
-│   └── demo.ts          # SUPPRIME (remplacé par les 3 ci-dessus)
-├── package.json         # MODIFIE : scripts watch/onboard/exploit (retire demo)
-└── README.md            # MODIFIE : déploiement Robinhood + flux multi-terminal
-.env.example             # MODIFIE : + CHAIN, GUARDIAN_IMPL, ROBINHOOD_TESTNET_RPC
+│   ├── onboard.ts       # CREATED: 7702 delegation + configure (one-time)
+│   ├── watch.ts         # CREATED: daemon (ChainThreatSource -> runWatcher)
+│   ├── exploit.ts       # CREATED: attacker (deployer) drains the protocol
+│   └── demo.ts          # REMOVED (replaced by the 3 above)
+├── package.json         # MODIFIED: watch/onboard/exploit scripts (removes demo)
+└── README.md            # MODIFIED: Robinhood deployment + multi-terminal flow
+.env.example             # MODIFIED: + CHAIN, GUARDIAN_IMPL, ROBINHOOD_TESTNET_RPC
 ```
 
 ---
 
-### Task 1 : Durcir `runWatcher` (try/catch par compte)
+### Task 1: Harden `runWatcher` (per-account try/catch)
 
 **Files:**
 - Modify: `watcher/src/watcher.ts`
 - Test: `watcher/test/watcher.test.ts`
 
-- [ ] **Step 1 : Ajouter le test de résilience (`watcher/test/watcher.test.ts`)**
+- [ ] **Step 1: Add the resilience test (`watcher/test/watcher.test.ts`)**
 
-Ajouter ce test À LA FIN du `describe("runWatcher", ...)` existant (avant l'accolade fermante du `describe`) :
+Add this test AT THE END of the existing `describe("runWatcher", ...)` (before the `describe`'s closing brace):
 
 ```typescript
   it("continues evacuating other exposed accounts when one evacuation fails", async () => {
@@ -72,14 +72,14 @@ Ajouter ce test À LA FIN du `describe("runWatcher", ...)` existant (avant l'acc
   });
 ```
 
-- [ ] **Step 2 : Lancer pour voir l'échec**
+- [ ] **Step 2: Run it to see the failure**
 
 Run: `cd watcher && pnpm vitest run test/watcher.test.ts`
-Expected: FAIL — l'`evacuate` rejeté se propage hors de `runWatcher` (promesse rejetée / 2e appel jamais atteint).
+Expected: FAIL — the rejected `evacuate` propagates out of `runWatcher` (rejected promise / the 2nd call never reached).
 
-- [ ] **Step 3 : Modifier `watcher/src/watcher.ts`**
+- [ ] **Step 3: Modify `watcher/src/watcher.ts`**
 
-Remplacer le corps de la boucle `for` dans `runWatcher` par une version avec try/catch par compte. Le fichier complet devient :
+Replace the body of the `for` loop in `runWatcher` with a version that has a per-account try/catch. The full file becomes:
 
 ```typescript
 import { findExposed, type ProtectedAccount } from "./registry";
@@ -95,31 +95,31 @@ export interface WatcherDeps {
   keeper: Keeper;
 }
 
-/// Câble la boucle : chaque alerte → comptes exposés → évacuation de leurs tokens.
-/// Daemon-safe : une évacuation qui échoue est loggée et N'INTERROMPT PAS la boucle
-/// (les autres comptes exposés sont quand même traités, le watcher reste vivant).
+/// Wires the loop: each alert → exposed accounts → evacuation of their tokens.
+/// Daemon-safe: an evacuation that fails is logged and DOES NOT INTERRUPT the loop
+/// (the other exposed accounts are still processed, the watcher stays alive).
 export async function runWatcher({ source, accounts, keeper }: WatcherDeps): Promise<void> {
   await source.start(async (alert) => {
     const exposed = findExposed(alert, accounts);
     for (const acc of exposed) {
-      console.log(`[coincoin] 🦆 COIN COIN ! menace sur ${alert.exploit_address} → évacuation de ${acc.address}`);
+      console.log(`[coincoin] 🦆 COIN COIN ! threat on ${alert.exploit_address} → evacuating ${acc.address}`);
       try {
         const hash = await keeper.evacuate(acc.address, acc.tokens);
-        console.log(`[coincoin] ✅ évacué vers ${acc.safeVault} (tx ${hash})`);
+        console.log(`[coincoin] ✅ evacuated to ${acc.safeVault} (tx ${hash})`);
       } catch (err) {
-        console.error(`[coincoin] ⚠️ évacuation échouée pour ${acc.address}:`, err);
+        console.error(`[coincoin] ⚠️ evacuation failed for ${acc.address}:`, err);
       }
     }
   });
 }
 ```
 
-- [ ] **Step 4 : Lancer pour voir le succès**
+- [ ] **Step 4: Run it to see it pass**
 
 Run: `cd watcher && pnpm vitest run test/watcher.test.ts`
-Expected: PASS (3 tests : les 2 existants + le nouveau).
+Expected: PASS (3 tests: the 2 existing ones + the new one).
 
-- [ ] **Step 5 : Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add watcher/src/watcher.ts watcher/test/watcher.test.ts
@@ -128,13 +128,13 @@ git commit -m "feat(watcher): harden runWatcher with per-account evacuation try/
 
 ---
 
-### Task 2 : `config.ts` piloté par env (`resolveChainConfig`)
+### Task 2: env-driven `config.ts` (`resolveChainConfig`)
 
 **Files:**
 - Modify: `watcher/src/config.ts`
 - Test: `watcher/test/config.test.ts`
 
-- [ ] **Step 1 : Écrire le test qui échoue (`watcher/test/config.test.ts`)**
+- [ ] **Step 1: Write the failing test (`watcher/test/config.test.ts`)**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -155,7 +155,7 @@ describe("resolveChainConfig", () => {
     expect(cfg.chain.id).toBe(ROBINHOOD_TESTNET.id);
     expect(cfg.rpcUrl).toBe("https://rh.example/rpc");
     expect(cfg.proto).toBe("0xaaaa000000000000000000000000000000000000");
-    expect(cfg.guardianImpl).toBe(GUARDIAN_IMPL); // fallback constante
+    expect(cfg.guardianImpl).toBe(GUARDIAN_IMPL); // constant fallback
   });
 
   it("selects Arbitrum Sepolia when CHAIN=arbitrumSepolia", () => {
@@ -182,12 +182,12 @@ describe("resolveChainConfig", () => {
 });
 ```
 
-- [ ] **Step 2 : Lancer pour voir l'échec**
+- [ ] **Step 2: Run it to see the failure**
 
 Run: `cd watcher && pnpm vitest run test/config.test.ts`
-Expected: FAIL — `resolveChainConfig` n'existe pas encore (export introuvable).
+Expected: FAIL — `resolveChainConfig` doesn't exist yet (export not found).
 
-- [ ] **Step 3 : Modifier `watcher/src/config.ts`** (fichier complet)
+- [ ] **Step 3: Modify `watcher/src/config.ts`** (full file)
 
 ```typescript
 import { defineChain, type Chain } from "viem";
@@ -195,8 +195,8 @@ import { arbitrumSepolia } from "viem/chains";
 
 export { arbitrumSepolia };
 
-/// Adresse de l'implémentation GuardianModule déployée sur Arbitrum Sepolia.
-/// Sert de fallback quand `GUARDIAN_IMPL` n'est pas fourni en env.
+/// Address of the GuardianModule implementation deployed on Arbitrum Sepolia.
+/// Used as a fallback when `GUARDIAN_IMPL` is not provided in env.
 export const GUARDIAN_IMPL = "0x6671b4B73b79c284A710B00ef777d8E65f55200F" as const;
 
 export const ROBINHOOD_TESTNET = defineChain({
@@ -223,20 +223,20 @@ const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 function requireAddressEnv(env: NodeJS.ProcessEnv, key: string): `0x${string}` {
   const v = env[key];
   if (!v || !ADDRESS_RE.test(v)) {
-    throw new Error(`config: ${key} manquant ou invalide (attendu une adresse 0x…)`);
+    throw new Error(`config: ${key} missing or invalid (expected a 0x… address)`);
   }
   return v as `0x${string}`;
 }
 
-/// Résout la config de chaîne depuis l'environnement. Appelée par les SCRIPTS
-/// uniquement (jamais au top-level) : throw si une valeur requise manque, mais
-/// l'import du module reste sans effet de bord. `env` est injectable (tests).
+/// Resolves the chain config from the environment. Called by the SCRIPTS only
+/// (never at the top level): throws if a required value is missing, but importing
+/// the module stays side-effect-free. `env` is injectable (tests).
 export function resolveChainConfig(env: NodeJS.ProcessEnv = process.env): ResolvedConfig {
   const chainKey: ChainKey = env.CHAIN === "arbitrumSepolia" ? "arbitrumSepolia" : "robinhood";
   const chain = chainKey === "arbitrumSepolia" ? arbitrumSepolia : ROBINHOOD_TESTNET;
   const rpcEnvKey = chainKey === "arbitrumSepolia" ? "ARBITRUM_SEPOLIA_RPC" : "ROBINHOOD_TESTNET_RPC";
   const rpcUrl = env[rpcEnvKey];
-  if (!rpcUrl) throw new Error(`config: ${rpcEnvKey} manquant pour la chaîne ${chainKey}`);
+  if (!rpcUrl) throw new Error(`config: ${rpcEnvKey} missing for chain ${chainKey}`);
   const guardianImpl =
     env.GUARDIAN_IMPL && ADDRESS_RE.test(env.GUARDIAN_IMPL)
       ? (env.GUARDIAN_IMPL as `0x${string}`)
@@ -253,12 +253,12 @@ export function resolveChainConfig(env: NodeJS.ProcessEnv = process.env): Resolv
 }
 ```
 
-- [ ] **Step 4 : Lancer pour voir le succès**
+- [ ] **Step 4: Run it to see it pass**
 
 Run: `cd watcher && pnpm vitest run test/config.test.ts`
-Expected: PASS (5 tests). Vérifier aussi que `test/smoke.test.ts` passe toujours (import `GUARDIAN_IMPL` inchangé) : `cd watcher && pnpm vitest run test/smoke.test.ts` → PASS.
+Expected: PASS (5 tests). Also verify that `test/smoke.test.ts` still passes (`GUARDIAN_IMPL` import unchanged): `cd watcher && pnpm vitest run test/smoke.test.ts` → PASS.
 
-- [ ] **Step 5 : Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add watcher/src/config.ts watcher/test/config.test.ts
@@ -267,15 +267,15 @@ git commit -m "feat(watcher): env-driven chain config (resolveChainConfig, defau
 
 ---
 
-### Task 3 : `ChainThreatSource` (détection on-chain réelle)
+### Task 3: `ChainThreatSource` (real on-chain detection)
 
 **Files:**
 - Modify: `watcher/src/sources.ts`
 - Test: `watcher/test/sources.test.ts`
 
-- [ ] **Step 1 : Ajouter les tests qui échouent (`watcher/test/sources.test.ts`)**
+- [ ] **Step 1: Add the failing tests (`watcher/test/sources.test.ts`)**
 
-D'abord, remplacer LES TROIS LIGNES D'IMPORT existantes en haut du fichier (l'import de `vitest`, celui de `../src/sources`, celui de `../src/threat`) par exactement ces trois lignes (ajoute `vi`, `ChainThreatSource`, `DrainedLogFetcher` ; ne pas dupliquer les imports existants) :
+First, replace THE THREE EXISTING IMPORT LINES at the top of the file (the `vitest` import, the `../src/sources` one, the `../src/threat` one) with exactly these three lines (adds `vi`, `ChainThreatSource`, `DrainedLogFetcher`; do not duplicate the existing imports):
 
 ```typescript
 import { describe, it, expect, vi } from "vitest";
@@ -283,7 +283,7 @@ import { MockThreatSource, decodeExploitLog, ChainThreatSource, type DrainedLogF
 import type { ThreatAlert } from "../src/threat";
 ```
 
-Puis ajouter ce bloc À LA FIN du fichier :
+Then add this block AT THE END of the file:
 
 ```typescript
 describe("ChainThreatSource", () => {
@@ -313,7 +313,7 @@ describe("ChainThreatSource", () => {
     });
     await src.start(async (a) => {
       received.push(a);
-      controller.abort(); // arrête le daemon après la 1re alerte
+      controller.abort(); // stops the daemon after the 1st alert
     });
     expect(received).toHaveLength(1);
     expect(received[0].exploit_address).toBe("0xaaaa000000000000000000000000000000000000");
@@ -342,19 +342,19 @@ describe("ChainThreatSource", () => {
 });
 ```
 
-- [ ] **Step 2 : Lancer pour voir l'échec**
+- [ ] **Step 2: Run it to see the failure**
 
 Run: `cd watcher && pnpm vitest run test/sources.test.ts`
-Expected: FAIL — `ChainThreatSource` / `DrainedLogFetcher` introuvables.
+Expected: FAIL — `ChainThreatSource` / `DrainedLogFetcher` not found.
 
-- [ ] **Step 3 : Modifier `watcher/src/sources.ts`** — ajouter À LA FIN du fichier (après `decodeExploitLog`) :
+- [ ] **Step 3: Modify `watcher/src/sources.ts`** — add AT THE END of the file (after `decodeExploitLog`):
 
 ```typescript
 
 export interface DrainedLogFetcher {
-  /// Logs `Drained` émis par l'un des `protocols` depuis `fromBlock` (inclus).
+  /// `Drained` logs emitted by one of the `protocols` since `fromBlock` (inclusive).
   getDrainedLogs(args: { protocols: `0x${string}`[]; fromBlock: bigint }): Promise<DrainedLog[]>;
-  /// Numéro du dernier bloc connu.
+  /// Number of the last known block.
   currentBlock(): Promise<bigint>;
 }
 
@@ -366,7 +366,7 @@ export interface ChainThreatSourceOpts {
   signal?: AbortSignal;
 }
 
-/// Attend `ms`, ou se résout immédiatement si `signal` est (ou devient) aborté.
+/// Waits `ms`, or resolves immediately if `signal` is (or becomes) aborted.
 function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
   if (signal?.aborted) return Promise.resolve();
   return new Promise((resolve) => {
@@ -382,10 +382,10 @@ function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
-/// Source de menace RÉELLE : surveille en continu les logs `Drained` on-chain et
-/// émet une alerte (schéma Defimon) pour chaque exploit détecté. Daemon : ne se
-/// résout qu'à l'`AbortSignal`. Sémantique at-least-once (curseur = dernier bloc
-/// vu + 1) ; les logs sans `blockNumber` sont filtrés en amont par le fetcher.
+/// REAL threat source: continuously watches the on-chain `Drained` logs and emits
+/// an alert (Defimon schema) for each detected exploit. Daemon: resolves only on the
+/// `AbortSignal`. At-least-once semantics (cursor = last block seen + 1); logs without
+/// a `blockNumber` are filtered upstream by the fetcher.
 export class ChainThreatSource implements ThreatSource {
   private readonly fetcher: DrainedLogFetcher;
   private readonly protocols: `0x${string}`[];
@@ -416,7 +416,7 @@ export class ChainThreatSource implements ThreatSource {
           cursor = sorted[sorted.length - 1].blockNumber + 1n;
         }
       } catch (err) {
-        console.warn("[coincoin] ⚠️ getLogs a échoué, nouvelle tentative au prochain tick:", err);
+        console.warn("[coincoin] ⚠️ getLogs failed, retrying on the next tick:", err);
       }
       await abortableSleep(this.pollIntervalMs, this.signal);
     }
@@ -424,17 +424,17 @@ export class ChainThreatSource implements ThreatSource {
 }
 ```
 
-- [ ] **Step 4 : Lancer pour voir le succès**
+- [ ] **Step 4: Run it to see it pass**
 
 Run: `cd watcher && pnpm vitest run test/sources.test.ts`
-Expected: PASS (les 2 tests existants + les 2 nouveaux de `ChainThreatSource`).
+Expected: PASS (the 2 existing tests + the 2 new `ChainThreatSource` ones).
 
-- [ ] **Step 5 : Lancer toute la suite + typecheck**
+- [ ] **Step 5: Run the whole suite + typecheck**
 
 Run: `cd watcher && pnpm test && pnpm exec tsc --noEmit`
-Expected: tous les tests passent (smoke + threat + registry + keeper + sources + watcher + config) ; tsc sans erreur.
+Expected: all tests pass (smoke + threat + registry + keeper + sources + watcher + config); tsc with no error.
 
-- [ ] **Step 6 : Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add watcher/src/sources.ts watcher/test/sources.test.ts
@@ -443,12 +443,12 @@ git commit -m "feat(watcher): ChainThreatSource — real on-chain Drained-log de
 
 ---
 
-### Task 4 : Script `onboard.ts` (délégation 7702 + configure, one-time)
+### Task 4: `onboard.ts` script (7702 delegation + configure, one-time)
 
 **Files:**
 - Create: `watcher/scripts/onboard.ts`
 
-- [ ] **Step 1 : Écrire `watcher/scripts/onboard.ts`**
+- [ ] **Step 1: Write `watcher/scripts/onboard.ts`**
 
 ```typescript
 import "dotenv/config";
@@ -456,10 +456,10 @@ import { createWalletClient, createPublicClient, http, encodeFunctionData } from
 import { privateKeyToAccount } from "viem/accounts";
 import { resolveChainConfig } from "../src/config";
 
-/// One-time : la victime délègue (EIP-7702) vers GuardianModule et s'auto-configure
-/// (safeVault + keeper). `executor:"self"` car la victime signe ET envoie la tx.
-/// Nécessite VICTIM_PRIVATE_KEY, KEEPER_PRIVATE_KEY (pour dériver l'adresse keeper),
-/// et la config de chaîne (CHAIN, RPC, GUARDIAN_IMPL, DEMO_VAULT).
+/// One-time: the victim delegates (EIP-7702) to GuardianModule and self-configures
+/// (safeVault + keeper). `executor:"self"` because the victim signs AND sends the tx.
+/// Requires VICTIM_PRIVATE_KEY, KEEPER_PRIVATE_KEY (to derive the keeper address),
+/// and the chain config (CHAIN, RPC, GUARDIAN_IMPL, DEMO_VAULT).
 async function main() {
   const cfg = resolveChainConfig();
   const victim = privateKeyToAccount(process.env.VICTIM_PRIVATE_KEY as `0x${string}`);
@@ -469,7 +469,7 @@ async function main() {
   const pub = createPublicClient({ chain: cfg.chain, transport });
   const wallet = createWalletClient({ account: victim, chain: cfg.chain, transport });
 
-  console.log(`[onboard] délégation 7702 de ${victim.address} → ${cfg.guardianImpl} sur ${cfg.chain.name}…`);
+  console.log(`[onboard] 7702 delegation of ${victim.address} → ${cfg.guardianImpl} on ${cfg.chain.name}…`);
   const auth = await wallet.signAuthorization({
     account: victim,
     contractAddress: cfg.guardianImpl,
@@ -497,7 +497,7 @@ async function main() {
     authorizationList: [auth],
   } as any);
   await pub.waitForTransactionReceipt({ hash: tx });
-  console.log(`[onboard] ✅ délégué + configuré (vault=${cfg.vault}, keeper=${keeper.address}) tx=${tx}`);
+  console.log(`[onboard] ✅ delegated + configured (vault=${cfg.vault}, keeper=${keeper.address}) tx=${tx}`);
 }
 
 main().catch((e) => {
@@ -506,12 +506,12 @@ main().catch((e) => {
 });
 ```
 
-- [ ] **Step 2 : Typecheck (sans exécuter — pas de clés/funds requis)**
+- [ ] **Step 2: Typecheck (without running — no keys/funds required)**
 
 Run: `cd watcher && pnpm exec tsc --noEmit`
-Expected: aucune erreur de type. (Si `signAuthorization`/`executor`/`authorizationList` produit une erreur sur la version viem installée, S'ARRÊTER et reporter l'erreur exacte — l'API a été validée pour viem 2.52.)
+Expected: no type error. (If `signAuthorization`/`executor`/`authorizationList` produces an error on the installed viem version, STOP and report the exact error — the API was validated for viem 2.52.)
 
-- [ ] **Step 3 : Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
 git add watcher/scripts/onboard.ts
@@ -520,12 +520,12 @@ git commit -m "feat(watcher): onboard script (7702 delegate + configure)"
 
 ---
 
-### Task 5 : Script `watch.ts` (le daemon)
+### Task 5: `watch.ts` script (the daemon)
 
 **Files:**
 - Create: `watcher/scripts/watch.ts`
 
-- [ ] **Step 1 : Écrire `watcher/scripts/watch.ts`**
+- [ ] **Step 1: Write `watcher/scripts/watch.ts`**
 
 ```typescript
 import "dotenv/config";
@@ -538,14 +538,14 @@ import { KeeperClient } from "../src/keeper";
 import { runWatcher } from "../src/watcher";
 import type { ProtectedAccount } from "../src/registry";
 
-/// Daemon de surveillance (le PRODUIT) : observe en continu les logs `Drained` du
-/// protocole surveillé et évacue les fonds au repos de la victime dès qu'un exploit
-/// est détecté. NE DÉTIENT PAS la clé de la victime : lit VICTIM_ADDRESS et signe
-/// l'évacuation avec la clé keeper (`onlySelfOrKeeper`). Arrêt par SIGINT (Ctrl-C).
+/// Monitoring daemon (the PRODUCT): continuously watches the `Drained` logs of the
+/// monitored protocol and evacuates the victim's funds at rest as soon as an exploit
+/// is detected. DOES NOT HOLD the victim's key: reads VICTIM_ADDRESS and signs the
+/// evacuation with the keeper key (`onlySelfOrKeeper`). Stopped by SIGINT (Ctrl-C).
 async function main() {
   const cfg = resolveChainConfig();
   const victimAddress = process.env.VICTIM_ADDRESS as `0x${string}` | undefined;
-  if (!victimAddress) throw new Error("watch: VICTIM_ADDRESS manquant");
+  if (!victimAddress) throw new Error("watch: VICTIM_ADDRESS missing");
   const keeper = privateKeyToAccount(process.env.KEEPER_PRIVATE_KEY as `0x${string}`);
 
   const transport = http(cfg.rpcUrl);
@@ -586,19 +586,19 @@ async function main() {
 
   const controller = new AbortController();
   process.on("SIGINT", () => {
-    console.log("\n[coincoin] 🛑 arrêt du watcher…");
+    console.log("\n[coincoin] 🛑 stopping the watcher…");
     controller.abort();
   });
 
   console.log(
-    `[coincoin] 👁️  watch — surveillance de ${cfg.proto} sur ${cfg.chain.name} (keeper ${keeper.address})…`,
+    `[coincoin] 👁️  watch — watching ${cfg.proto} on ${cfg.chain.name} (keeper ${keeper.address})…`,
   );
   await runWatcher({
     source: new ChainThreatSource({ fetcher, protocols: [cfg.proto], signal: controller.signal }),
     accounts: [account],
     keeper: new KeeperClient(keeperWallet),
   });
-  console.log("[coincoin] watcher arrêté.");
+  console.log("[coincoin] watcher stopped.");
 }
 
 main().catch((e) => {
@@ -607,12 +607,12 @@ main().catch((e) => {
 });
 ```
 
-- [ ] **Step 2 : Typecheck (sans exécuter)**
+- [ ] **Step 2: Typecheck (without running)**
 
 Run: `cd watcher && pnpm exec tsc --noEmit`
-Expected: aucune erreur de type. (En particulier `pub.getLogs({ address: protocols, event: exploitEventAbi[0] })` doit typer `l.args.attacker`/`l.args.amount`. Si erreur, S'ARRÊTER et reporter.)
+Expected: no type error. (In particular, `pub.getLogs({ address: protocols, event: exploitEventAbi[0] })` must type `l.args.attacker`/`l.args.amount`. If there's an error, STOP and report.)
 
-- [ ] **Step 3 : Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
 git add watcher/scripts/watch.ts
@@ -621,12 +621,12 @@ git commit -m "feat(watcher): watch daemon wires ChainThreatSource -> runWatcher
 
 ---
 
-### Task 6 : Script `exploit.ts` (l'attaquant = deployer)
+### Task 6: `exploit.ts` script (the attacker = deployer)
 
 **Files:**
 - Create: `watcher/scripts/exploit.ts`
 
-- [ ] **Step 1 : Écrire `watcher/scripts/exploit.ts`**
+- [ ] **Step 1: Write `watcher/scripts/exploit.ts`**
 
 ```typescript
 import "dotenv/config";
@@ -644,9 +644,9 @@ const erc20BalanceAbi = [
   },
 ] as const;
 
-/// Acteur SIMULÉ (le seul) : l'attaquant (= deployer, ≠ keeper) draine le protocole
-/// vulnérable via `emergencyWithdraw()`. Produit un VRAI log `Drained` on-chain que
-/// le daemon `watch` détecte indépendamment.
+/// SIMULATED actor (the only one): the attacker (= deployer, ≠ keeper) drains the
+/// vulnerable protocol via `emergencyWithdraw()`. Produces a REAL on-chain `Drained`
+/// log that the `watch` daemon detects independently.
 async function main() {
   const cfg = resolveChainConfig();
   const attacker = privateKeyToAccount(process.env.DEPLOYER_PRIVATE_KEY as `0x${string}`);
@@ -661,7 +661,7 @@ async function main() {
     functionName: "balanceOf",
     args: [cfg.proto],
   });
-  console.log(`[exploit] solde du protocole avant: ${before}`);
+  console.log(`[exploit] protocol balance before: ${before}`);
 
   const data = encodeFunctionData({
     abi: [{ type: "function", name: "emergencyWithdraw", stateMutability: "nonpayable", inputs: [], outputs: [] }],
@@ -677,7 +677,7 @@ async function main() {
     functionName: "balanceOf",
     args: [cfg.proto],
   });
-  console.log(`[exploit] 💥 drainé ${before - after} depuis ${cfg.proto} (attaquant ${attacker.address}) tx=${tx}`);
+  console.log(`[exploit] 💥 drained ${before - after} from ${cfg.proto} (attacker ${attacker.address}) tx=${tx}`);
 }
 
 main().catch((e) => {
@@ -686,12 +686,12 @@ main().catch((e) => {
 });
 ```
 
-- [ ] **Step 2 : Typecheck (sans exécuter)**
+- [ ] **Step 2: Typecheck (without running)**
 
 Run: `cd watcher && pnpm exec tsc --noEmit`
-Expected: aucune erreur de type.
+Expected: no type error.
 
-- [ ] **Step 3 : Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
 git add watcher/scripts/exploit.ts
@@ -700,19 +700,19 @@ git commit -m "feat(watcher): exploit script (attacker drains protocol, real Dra
 
 ---
 
-### Task 7 : Retirer `demo.ts`, mettre à jour `package.json`, `README.md`, `.env.example`
+### Task 7: Remove `demo.ts`, update `package.json`, `README.md`, `.env.example`
 
 **Files:**
 - Delete: `watcher/scripts/demo.ts`
 - Modify: `watcher/package.json`, `watcher/README.md`, `.env.example`
 
-- [ ] **Step 1 : Supprimer l'ancien runner all-in-one**
+- [ ] **Step 1: Remove the old all-in-one runner**
 
 Run: `git rm watcher/scripts/demo.ts`
 
-- [ ] **Step 2 : Mettre à jour les scripts dans `watcher/package.json`**
+- [ ] **Step 2: Update the scripts in `watcher/package.json`**
 
-Remplacer le bloc `"scripts"` par :
+Replace the `"scripts"` block with:
 
 ```json
   "scripts": {
@@ -723,79 +723,79 @@ Remplacer le bloc `"scripts"` par :
   },
 ```
 
-- [ ] **Step 3 : Réécrire `watcher/README.md`** (contenu complet)
+- [ ] **Step 3: Rewrite `watcher/README.md`** (full content)
 
 ````markdown
 # coincoin watcher
 
-Service de détection→évacuation : un daemon surveille les exploits on-chain (logs
-`Drained`) et déclenche l'évacuation des fonds d'un compte protégé (EOA délégué via
-EIP-7702) vers son SafeVault.
+Detection→evacuation service: a daemon watches on-chain exploits (`Drained` logs)
+and triggers the evacuation of a protected account's funds (an EOA delegated via
+EIP-7702) to its SafeVault.
 
-Tests : `pnpm test`.
+Tests: `pnpm test`.
 
-## Chaîne cible
+## Target chain
 
-`CHAIN` (dans `../.env`) sélectionne la cible : `robinhood` (défaut, chain 46630)
-ou `arbitrumSepolia`. Les adresses des contrats déployés sont lues depuis `../.env`
+`CHAIN` (in `../.env`) selects the target: `robinhood` (default, chain 46630)
+or `arbitrumSepolia`. The deployed contracts' addresses are read from `../.env`
 (`GUARDIAN_IMPL`, `DEMO_TOKEN`, `DEMO_PROTO`, `DEMO_VAULT`).
 
-## Déploiement (Robinhood Chain Testnet)
+## Deployment (Robinhood Chain Testnet)
 
-Pré-requis : deployer + victim + keeper fundés en gas Robinhood ; `../.env` rempli
+Prerequisites: deployer + victim + keeper funded with Robinhood gas; `../.env` filled
 (`ROBINHOOD_TESTNET_RPC`, `DEPLOYER_PRIVATE_KEY`, `VICTIM_PRIVATE_KEY`,
 `VICTIM_ADDRESS`, `KEEPER_PRIVATE_KEY`).
 
 ```bash
 cd ../contracts && set -a && source ../.env && set +a
-# 1) impl GuardianModule partagée
+# 1) shared GuardianModule impl
 forge script script/Deploy.s.sol:DeployGuardian --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast
-# 2) décor de démo (token + protocole vulnérable + SafeVault de la victime)
+# 2) demo setup (token + vulnerable protocol + victim's SafeVault)
 forge script script/SetupDemo.s.sol:SetupDemo --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast
 ```
 
-Reporter dans `../.env` : `GUARDIAN_IMPL` (impl du step 1), puis `DEMO_TOKEN`,
+Record in `../.env`: `GUARDIAN_IMPL` (the impl from step 1), then `DEMO_TOKEN`,
 `DEMO_PROTO`, `DEMO_VAULT` (step 2).
 
-## Démo end-to-end (multi-terminal)
+## End-to-end demo (multi-terminal)
 
 ```bash
-# Une fois : la victime délègue (7702) + configure son guardian
+# Once: the victim delegates (7702) + configures their guardian
 pnpm onboard
 
-# Terminal A — le daemon de surveillance (le produit)
-pnpm watch        # 👁️  surveillance de <PROTO>…
+# Terminal A — the monitoring daemon (the product)
+pnpm watch        # 👁️  watching <PROTO>…
 
-# Terminal B — l'attaquant draine le protocole (seul acteur simulé)
-pnpm exploit      # 💥 drain → vrai log Drained on-chain
+# Terminal B — the attacker drains the protocol (the only simulated actor)
+pnpm exploit      # 💥 drain → real on-chain Drained log
 ```
 
-Le Terminal A détecte le log indépendamment, affiche « 🦆 COIN COIN ! » et évacue
-les fonds au repos de la victime vers son SafeVault. `Ctrl-C` pour arrêter le daemon.
+Terminal A detects the log independently, prints "🦆 COIN COIN !" and evacuates
+the victim's funds at rest to their SafeVault. `Ctrl-C` to stop the daemon.
 ````
 
-- [ ] **Step 4 : Mettre à jour `.env.example`**
+- [ ] **Step 4: Update `.env.example`**
 
-Lire `.env.example`, puis AJOUTER (s'ils sont absents) ces clés à la fin :
+Read `.env.example`, then ADD (if absent) these keys at the end:
 
 ```text
 
-# ── Phase 5 : chaîne cible + détection on-chain ──
-# robinhood (défaut, chain 46630) | arbitrumSepolia
+# ── Phase 5: target chain + on-chain detection ──
+# robinhood (default, chain 46630) | arbitrumSepolia
 CHAIN=robinhood
 ROBINHOOD_TESTNET_RPC=
-# Impl GuardianModule sur la chaîne cible (vide => fallback constante Arb Sepolia)
+# GuardianModule impl on the target chain (empty => Arb Sepolia constant fallback)
 GUARDIAN_IMPL=
 ```
 
-(Si `ROBINHOOD_TESTNET_RPC` existe déjà dans `.env.example`, ne pas le dupliquer.)
+(If `ROBINHOOD_TESTNET_RPC` already exists in `.env.example`, do not duplicate it.)
 
-- [ ] **Step 5 : Vérifier la suite complète + typecheck**
+- [ ] **Step 5: Verify the full suite + typecheck**
 
 Run: `cd watcher && pnpm test && pnpm exec tsc --noEmit`
-Expected: tous les tests passent ; tsc propre ; `scripts/demo.ts` n'existe plus.
+Expected: all tests pass; tsc clean; `scripts/demo.ts` no longer exists.
 
-- [ ] **Step 6 : Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add watcher/package.json watcher/README.md .env.example
@@ -806,13 +806,13 @@ git commit -m "chore(watcher): replace demo.ts with watch/onboard/exploit + Robi
 
 ## Definition of Done (Phase 5)
 
-- [ ] `cd watcher && pnpm test` : tous les tests passent (smoke, threat, registry, keeper, sources **+ ChainThreatSource**, watcher **+ résilience**, config).
-- [ ] `cd watcher && pnpm exec tsc --noEmit` : pas d'erreur de type (scripts inclus).
-- [ ] `cd contracts && forge test` : 26/26 inchangé (aucun changement Solidity).
-- [ ] `config.ts` piloté par env (défaut Robinhood), import sans effet de bord.
-- [ ] Scripts `watch`/`onboard`/`exploit` présents ; `demo.ts` retiré ; `package.json` à jour.
-- [ ] `README` (flux multi-terminal + déploiement Robinhood) et `.env.example` à jour.
-- [ ] Aucun secret commité.
-- [ ] **Exécution live (humain, après funding Robinhood)** : déployer → `pnpm onboard` → `pnpm watch` (terminal A) → `pnpm exploit` (terminal B) → « COIN COIN » + fonds au repos de la victime = 0, vault crédité.
+- [ ] `cd watcher && pnpm test`: all tests pass (smoke, threat, registry, keeper, sources **+ ChainThreatSource**, watcher **+ resilience**, config).
+- [ ] `cd watcher && pnpm exec tsc --noEmit`: no type error (scripts included).
+- [ ] `cd contracts && forge test`: 26/26 unchanged (no Solidity change).
+- [ ] `config.ts` env-driven (default Robinhood), side-effect-free import.
+- [ ] `watch`/`onboard`/`exploit` scripts present; `demo.ts` removed; `package.json` up to date.
+- [ ] `README` (multi-terminal flow + Robinhood deployment) and `.env.example` up to date.
+- [ ] No secret committed.
+- [ ] **Live run (human, after Robinhood funding)**: deploy → `pnpm onboard` → `pnpm watch` (terminal A) → `pnpm exploit` (terminal B) → "COIN COIN" + victim's funds at rest = 0, vault credited.
 
-**Next:** Phase 3 (adapters Aave V3 / GMX V2 pour évacuer les positions DÉPOSÉES) ; intégration du vrai flux Defimon (WS) en parallèle de `ChainThreatSource` ; Phase 5bis (dashboard).
+**Next:** Phase 3 (Aave V3 / GMX V2 adapters to evacuate the DEPOSITED positions); integration of the real Defimon feed (WS) alongside `ChainThreatSource`; Phase 5bis (dashboard).

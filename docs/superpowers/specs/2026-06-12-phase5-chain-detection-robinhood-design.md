@@ -1,51 +1,51 @@
-# coincoin — Phase 5 : Détection on-chain réelle + démo sur Robinhood Chain — Design
+# coincoin — Phase 5: Real on-chain detection + demo on Robinhood Chain — Design
 
-> Statut : design validé (brainstorming). Prochaine étape : writing-plans.
-> Date : 2026-06-12. Track buildathon : **Robinhood Chain** (Arbitrum Open House London).
+> Status: design validated (brainstorming). Next step: writing-plans.
+> Date: 2026-06-12. Buildathon track: **Robinhood Chain** (Arbitrum Open House London).
 
 ## Goal
 
-Rendre la boucle de détection **réelle** et la faire tourner sur la chaîne de la track.
+Make the detection loop **real** and run it on the track's chain.
 
-Aujourd'hui (Phase 4), `demo.ts` envoie lui-même l'exploit, récupère le reçu, puis **fabrique l'alerte à partir de ce reçu** : la détection est court-circuitée. On veut un **daemon de surveillance** qui observe la chaîne indépendamment, détecte le vrai log d'exploit, et déclenche l'évacuation — le seul acteur simulé étant l'attaquant. Et on cible **Robinhood Chain Testnet** (chain 46630), où tout reste à déployer.
+Today (Phase 4), `demo.ts` sends the exploit itself, retrieves the receipt, then **builds the alert from that receipt**: detection is short-circuited. We want a **monitoring daemon** that watches the chain independently, detects the real exploit log, and triggers the evacuation — the only simulated actor being the attacker. And we target **Robinhood Chain Testnet** (chain 46630), where everything remains to be deployed.
 
-## Contexte & faits établis
+## Context & established facts
 
-- **7702 confirmé sur Robinhood** : chaîne Arbitrum Orbit (`nitro/v3.11.0-rc.4`), **ArbOS 61** (Arb Sepolia est ArbOS 60). EIP-7702 actif depuis ArbOS 40. Base fee ~0,01 gwei → 0,0233 ETH/wallet largement suffisant.
-- **Rien n'est déployé sur Robinhood** : l'impl GuardianModule (`0x6671b4B73b79c284A710B00ef777d8E65f55200F`) n'existe que sur Arb Sepolia. Les contrats Solidity ne changent pas — on redéploie tels quels.
-- **Wallets** (rôles cohérents avec Arb Sepolia) : deployer `0xdae8992a9b5Fe850bE63781d1c2e65a3e496F728`, victim `0xFD0AFe0E91CBb9EBEB181060441a54E19300Ea89`, keeper `0x627872F35b724222413e7421C9e40A26B2762B9e`. Fundés sur Arb Sepolia, **à funder sur Robinhood** (action utilisateur).
-- **Réutilisé tel quel** : `decodeExploitLog`, `exploitEventAbi`/`DrainedLog`, `ThreatSource`/`MockThreatSource`, `findExposed`, `KeeperClient`, `runWatcher`, contrats `MockVulnerableProtocol`/`Attacker`, scripts forge `DeployGuardian`/`SetupDemo`.
+- **7702 confirmed on Robinhood**: an Arbitrum Orbit chain (`nitro/v3.11.0-rc.4`), **ArbOS 61** (Arb Sepolia is ArbOS 60). EIP-7702 active since ArbOS 40. Base fee ~0.01 gwei → 0.0233 ETH/wallet is more than enough.
+- **Nothing is deployed on Robinhood**: the GuardianModule impl (`0x6671b4B73b79c284A710B00ef777d8E65f55200F`) exists only on Arb Sepolia. The Solidity contracts don't change — we redeploy them as is.
+- **Wallets** (roles consistent with Arb Sepolia): deployer `0xdae8992a9b5Fe850bE63781d1c2e65a3e496F728`, victim `0xFD0AFe0E91CBb9EBEB181060441a54E19300Ea89`, keeper `0x627872F35b724222413e7421C9e40A26B2762B9e`. Funded on Arb Sepolia, **to be funded on Robinhood** (user action).
+- **Reused as is**: `decodeExploitLog`, `exploitEventAbi`/`DrainedLog`, `ThreatSource`/`MockThreatSource`, `findExposed`, `KeeperClient`, `runWatcher`, contracts `MockVulnerableProtocol`/`Attacker`, forge scripts `DeployGuardian`/`SetupDemo`.
 
-## Décisions de design (issues du brainstorming)
+## Design decisions (from the brainstorming)
 
-1. **Cycle de vie : daemon pur, arrêt manuel.** `ChainThreatSource` surveille en continu et ne se résout jamais en marche normale ; on l'arrête au `SIGINT` (Ctrl-C).
-2. **Orchestration : split réaliste multi-terminal.** Points d'entrée séparés : `pnpm watch` (daemon = le produit), `pnpm exploit` (déclenche l'attaque), `pnpm onboard` (délégation 7702 + configure, one-time).
-3. **Funding : les 3 rôles sur Robinhood.** deployer déploie, victim = compte protégé, keeper = keeper. **Attaquant = deployer** (et non le keeper) → trace on-chain lisible (attaquant ≠ sauveteur ≠ victime).
-4. **Détection : approche B — boucle `getLogs` avec injection de dépendance.** Curseur de bloc explicite, robuste sur tout RPC Orbit, testable unitairement sans chaîne live, cohérent avec le style DI du reste. `decodeExploitLog` se branche tel quel.
+1. **Lifecycle: pure daemon, manual stop.** `ChainThreatSource` watches continuously and never resolves during normal operation; we stop it on `SIGINT` (Ctrl-C).
+2. **Orchestration: realistic multi-terminal split.** Separate entry points: `pnpm watch` (daemon = the product), `pnpm exploit` (triggers the attack), `pnpm onboard` (7702 delegation + configure, one-time).
+3. **Funding: the 3 roles on Robinhood.** deployer deploys, victim = protected account, keeper = keeper. **Attacker = deployer** (not the keeper) → readable on-chain trace (attacker ≠ rescuer ≠ victim).
+4. **Detection: approach B — `getLogs` loop with dependency injection.** Explicit block cursor, robust on any Orbit RPC, unit-testable without a live chain, consistent with the DI style of the rest. `decodeExploitLog` plugs in as is.
 
 ## Architecture
 
-### Unité 1 — `config.ts` (étendu, pilotage par env)
+### Unit 1 — `config.ts` (extended, env-driven)
 
-But : rendre la chaîne et les adresses configurables, défaut Robinhood, **sans casser l'import** (le smoke test et les tests unitaires importent ce module).
+Purpose: make the chain and addresses configurable, default to Robinhood, **without breaking the import** (the smoke test and unit tests import this module).
 
-- Conserver les exports statiques actuels : `arbitrumSepolia`, `ROBINHOOD_TESTNET` (désormais **utilisé**), et `GUARDIAN_IMPL` (constante Arb Sepolia, gardée comme fallback + pour le smoke test).
-- Ajouter `resolveChainConfig()` : lit l'env et retourne un objet résolu, **appelé par les scripts uniquement** (pas au top-level, donc import sans effet de bord et sans throw) :
+- Keep the current static exports: `arbitrumSepolia`, `ROBINHOOD_TESTNET` (now **used**), and `GUARDIAN_IMPL` (Arb Sepolia constant, kept as a fallback + for the smoke test).
+- Add `resolveChainConfig()`: reads the env and returns a resolved object, **called by the scripts only** (not at the top level, so importing is side-effect-free and doesn't throw):
   ```ts
   interface ResolvedConfig {
-    chain: Chain;               // robinhood (défaut) | arbitrumSepolia, via env CHAIN
-    rpcUrl: string;             // ROBINHOOD_TESTNET_RPC | ARBITRUM_SEPOLIA_RPC selon CHAIN
-    guardianImpl: `0x${string}`;// env GUARDIAN_IMPL || constante Arb Sepolia
+    chain: Chain;               // robinhood (default) | arbitrumSepolia, via env CHAIN
+    rpcUrl: string;             // ROBINHOOD_TESTNET_RPC | ARBITRUM_SEPOLIA_RPC depending on CHAIN
+    guardianImpl: `0x${string}`;// env GUARDIAN_IMPL || Arb Sepolia constant
     token: `0x${string}`;       // env DEMO_TOKEN
     proto: `0x${string}`;       // env DEMO_PROTO
     vault: `0x${string}`;       // env DEMO_VAULT
   }
   ```
-  `resolveChainConfig()` **throw** si une adresse requise (`DEMO_*`) manque ou si le RPC de la chaîne sélectionnée est absent — erreur claire au lancement des scripts, jamais à l'import.
+  `resolveChainConfig()` **throws** if a required address (`DEMO_*`) is missing or if the RPC of the selected chain is absent — a clear error when launching the scripts, never at import time.
 
-### Unité 2 — `ChainThreatSource` (dans `sources.ts`)
+### Unit 2 — `ChainThreatSource` (in `sources.ts`)
 
-`implements ThreatSource`. Dépendance injectée via une interface étroite (testabilité, pas de couplage dur à viem) :
+`implements ThreatSource`. Dependency injected via a narrow interface (testability, no hard coupling to viem):
 
 ```ts
 export interface DrainedLogFetcher {
@@ -56,99 +56,99 @@ export interface DrainedLogFetcher {
 export interface ChainThreatSourceOpts {
   fetcher: DrainedLogFetcher;
   protocols: `0x${string}`[];
-  fromBlock?: bigint;       // défaut : currentBlock() au démarrage
-  pollIntervalMs?: number;  // défaut : 4000
-  signal?: AbortSignal;     // arrêt du daemon
+  fromBlock?: bigint;       // default: currentBlock() at startup
+  pollIntervalMs?: number;  // default: 4000
+  signal?: AbortSignal;     // daemon stop
 }
 
 export class ChainThreatSource implements ThreatSource {
   constructor(opts: ChainThreatSourceOpts) {}
-  async start(onAlert: AlertHandler): Promise<void> { /* boucle */ }
+  async start(onAlert: AlertHandler): Promise<void> { /* loop */ }
 }
 ```
 
-Boucle `start` :
+`start` loop:
 1. `cursor = opts.fromBlock ?? await fetcher.currentBlock()`.
-2. Tant que non-aborté :
-   - `try` : `logs = await fetcher.getDrainedLogs({ protocols, fromBlock: cursor })` ; pour chaque log (ordre bloc croissant) : `await onAlert(decodeExploitLog(log))` ; si `logs.length`, `cursor = max(blockNumber) + 1n`.
-   - `catch` : `console.warn` (hoquet RPC), **curseur inchangé**, on retente au prochain tick.
-   - `await sleep(pollIntervalMs)` **respectant l'`AbortSignal`** (réveil immédiat si aborté).
-3. Se résout uniquement quand l'`AbortSignal` est déclenché (sortie propre).
+2. While not aborted:
+   - `try`: `logs = await fetcher.getDrainedLogs({ protocols, fromBlock: cursor })`; for each log (ascending block order): `await onAlert(decodeExploitLog(log))`; if `logs.length`, `cursor = max(blockNumber) + 1n`.
+   - `catch`: `console.warn` (RPC hiccup), **cursor unchanged**, we retry on the next tick.
+   - `await sleep(pollIntervalMs)` **respecting the `AbortSignal`** (immediate wake-up if aborted).
+3. Resolves only when the `AbortSignal` is triggered (clean exit).
 
-Sémantique **at-least-once** (curseur = dernier bloc vu + 1) ; un reorg profond pourrait dupliquer/rater — acceptable pour une démo testnet (noté). Les logs sans `blockNumber` (pending) sont ignorés par l'adaptateur. `MockThreatSource` reste inchangé (transport de test / autres usages).
+**At-least-once** semantics (cursor = last block seen + 1); a deep reorg could duplicate/miss — acceptable for a testnet demo (noted). Logs without a `blockNumber` (pending) are ignored by the adapter. `MockThreatSource` remains unchanged (test transport / other uses).
 
-### Unité 3 — `scripts/watch.ts` (`pnpm watch`, le daemon)
+### Unit 3 — `scripts/watch.ts` (`pnpm watch`, the daemon)
 
 - `dotenv`, `resolveChainConfig()`.
-- `publicClient` (chaîne active) ; `keeperWallet` (compte `KEEPER_PRIVATE_KEY`).
-- Adaptateur `DrainedLogFetcher` au-dessus de `publicClient.getLogs({ address, event: drainedEvent, fromBlock, toBlock: 'latest' })` (event = fragment `Drained` de `exploitEventAbi`) + `publicClient.getBlockNumber()`.
-- Registre = le compte protégé : `{ address: VICTIM_ADDRESS, safeVault: vault, watchedProtocols: [proto], tokens: [token] }`.
-- **Le daemon ne détient JAMAIS la clé privée de la victime** : il lit `VICTIM_ADDRESS` (env) et signe l'évacuation avec la clé keeper uniquement (propriété de sécurité : `onlySelfOrKeeper` autorise le keeper). Seul `onboard.ts` utilise `VICTIM_PRIVATE_KEY`.
+- `publicClient` (active chain); `keeperWallet` (`KEEPER_PRIVATE_KEY` account).
+- `DrainedLogFetcher` adapter on top of `publicClient.getLogs({ address, event: drainedEvent, fromBlock, toBlock: 'latest' })` (event = the `Drained` fragment of `exploitEventAbi`) + `publicClient.getBlockNumber()`.
+- Registry = the protected account: `{ address: VICTIM_ADDRESS, safeVault: vault, watchedProtocols: [proto], tokens: [token] }`.
+- **The daemon NEVER holds the victim's private key**: it reads `VICTIM_ADDRESS` (env) and signs the evacuation with the keeper key only (security property: `onlySelfOrKeeper` authorizes the keeper). Only `onboard.ts` uses `VICTIM_PRIVATE_KEY`.
 - `keeper = new KeeperClient(keeperWallet)`.
-- `AbortController` ; handler `SIGINT` → `abort()` + log de sortie.
-- `runWatcher({ source: new ChainThreatSource({ fetcher, protocols: [proto], signal }), accounts: [compte], keeper })`.
-- Bannière de démarrage : `👁️  coincoin watch — surveillance de <proto> sur <chain>…`. Les logs « 🦆 COIN COIN ! » / « ✅ évacué » viennent déjà de `runWatcher`.
+- `AbortController`; `SIGINT` handler → `abort()` + exit log.
+- `runWatcher({ source: new ChainThreatSource({ fetcher, protocols: [proto], signal }), accounts: [account], keeper })`.
+- Startup banner: `👁️  coincoin watch — watching <proto> on <chain>…`. The "🦆 COIN COIN !" / "✅ evacuated" logs already come from `runWatcher`.
 
-### Unité 4 — `scripts/exploit.ts` (`pnpm exploit`, seul acteur simulé)
+### Unit 4 — `scripts/exploit.ts` (`pnpm exploit`, the only simulated actor)
 
 - `attacker = DEPLOYER_PRIVATE_KEY` (≠ keeper).
-- Envoie `emergencyWithdraw()` à `proto`, attend le reçu, log `💥 drain` + hash + montant (lecture solde proto avant/après ou event `Drained`).
+- Sends `emergencyWithdraw()` to `proto`, waits for the receipt, logs `💥 drain` + hash + amount (reading the proto balance before/after, or the `Drained` event).
 
-### Unité 5 — `scripts/onboard.ts` (`pnpm onboard`, one-time)
+### Unit 5 — `scripts/onboard.ts` (`pnpm onboard`, one-time)
 
 - `victim = VICTIM_PRIVATE_KEY`.
-- `signAuthorization({ contractAddress: guardianImpl, executor: "self" })` + self-send `configure(vault, keeper.address)` avec `authorizationList: [auth]`, attend le reçu. Extrait du `demo.ts` step 1 actuel (avec le fix `executor:"self"` déjà acquis).
+- `signAuthorization({ contractAddress: guardianImpl, executor: "self" })` + self-send `configure(vault, keeper.address)` with `authorizationList: [auth]`, waits for the receipt. Extracted from the current `demo.ts` step 1 (with the `executor:"self"` fix already acquired).
 
-### Unité 6 — Déploiement Robinhood (zéro code nouveau)
+### Unit 6 — Robinhood deployment (zero new code)
 
-Réutilise `DeployGuardian` (impl) puis `SetupDemo` (token + proto + vault + mint), lancés avec `--rpc-url $ROBINHOOD_TESTNET_RPC --broadcast`. On reporte les adresses dans `.env` : `GUARDIAN_IMPL`, `DEMO_TOKEN`, `DEMO_PROTO`, `DEMO_VAULT`.
+Reuses `DeployGuardian` (impl) then `SetupDemo` (token + proto + vault + mint), launched with `--rpc-url $ROBINHOOD_TESTNET_RPC --broadcast`. We record the addresses in `.env`: `GUARDIAN_IMPL`, `DEMO_TOKEN`, `DEMO_PROTO`, `DEMO_VAULT`.
 
-### Unité 7 — `runWatcher` (petit durcissement) + retrait de `demo.ts`
+### Unit 7 — `runWatcher` (small hardening) + removal of `demo.ts`
 
-- `runWatcher` : envelopper l'évacuation **par compte** dans un `try/catch` (log de l'échec, on continue) au lieu du fail-fast actuel — une évacuation ratée ne doit pas tuer le daemon (point déjà relevé en revue Phase 4).
-- Supprimer `scripts/demo.ts` et le script npm `demo` ; ajouter `watch`/`exploit`/`onboard`. Le fix « attente fixe 4 s » disparaît de fait (le daemon réagit en temps réel).
+- `runWatcher`: wrap the **per-account** evacuation in a `try/catch` (log the failure, keep going) instead of the current fail-fast — a failed evacuation must not kill the daemon (a point already raised in the Phase 4 review).
+- Remove `scripts/demo.ts` and the `demo` npm script; add `watch`/`exploit`/`onboard`. The "fixed 4s wait" fix disappears de facto (the daemon reacts in real time).
 
-## Flux de démo (multi-terminal)
+## Demo flow (multi-terminal)
 
-1. **Déploiement** (forge, Robinhood) : `DeployGuardian` → `SetupDemo` ; reporter les adresses dans `.env`.
-2. `pnpm onboard` — la victime délègue (7702) + `configure(vault, keeper)`. Une fois.
-3. **Terminal A** : `pnpm watch` → `👁️ surveillance de PROTO…`.
-4. **Terminal B** : `pnpm exploit` → `💥` l'attaquant draine le protocole (vrai log on-chain).
-5. **Terminal A** s'allume : `🦆 COIN COIN !` → évacue les fonds **au repos** de la victime vers son SafeVault. `Ctrl-C` pour arrêter.
+1. **Deployment** (forge, Robinhood): `DeployGuardian` → `SetupDemo`; record the addresses in `.env`.
+2. `pnpm onboard` — the victim delegates (7702) + `configure(vault, keeper)`. Once.
+3. **Terminal A**: `pnpm watch` → `👁️ watching PROTO…`.
+4. **Terminal B**: `pnpm exploit` → `💥` the attacker drains the protocol (real on-chain log).
+5. **Terminal A** lights up: `🦆 COIN COIN !` → evacuates the victim's funds **at rest** to their SafeVault. `Ctrl-C` to stop.
 
-## Gestion d'erreur
+## Error handling
 
-- **`getLogs` échoue** : attrapé, `console.warn`, curseur inchangé, retry au tick suivant (le daemon ne crashe pas, ne saute pas de blocs).
-- **`evacuate` throw** : attrapé **par compte** dans `runWatcher`, loggé, le daemon continue.
-- **Adresses/RPC manquants** : `resolveChainConfig()` throw au lancement du script avec un message clair (jamais à l'import).
-- **Reorg** : at-least-once assumé pour la démo (noté).
+- **`getLogs` fails**: caught, `console.warn`, cursor unchanged, retry on the next tick (the daemon doesn't crash, doesn't skip blocks).
+- **`evacuate` throws**: caught **per account** in `runWatcher`, logged, the daemon continues.
+- **Missing addresses/RPC**: `resolveChainConfig()` throws when launching the script with a clear message (never at import time).
+- **Reorg**: at-least-once assumed for the demo (noted).
 
-## Stratégie de test
+## Test strategy
 
-- **`ChainThreatSource` (unitaire, sans chaîne live)** : `DrainedLogFetcher` fake. (a) un log `Drained` canned au 1er poll puis vide → `onAlert` appelé une fois avec l'alerte décodée correcte (adresses en minuscules, `block_number` exact) ; (b) `AbortSignal` déclenché → `start()` se résout, plus d'appel. Curseur avancé correctement entre polls.
-- **`runWatcher` résilience** : `evacuate` throw sur un compte → l'exception est avalée (loggée), le daemon ne propage pas ; les comptes exposés suivants sont quand même tentés.
-- **Non-régression** : `MockThreatSource`, `threat`, `registry`, `keeper`, `smoke` restent verts.
-- **Typecheck** : `pnpm exec tsc --noEmit` propre (watch/exploit/onboard inclus).
-- **Solidity** : `forge test` 26/26 inchangé (aucun changement de contrat).
+- **`ChainThreatSource` (unit, without a live chain)**: fake `DrainedLogFetcher`. (a) one canned `Drained` log on the 1st poll then empty → `onAlert` called once with the correct decoded alert (lowercased addresses, exact `block_number`); (b) `AbortSignal` triggered → `start()` resolves, no more calls. Cursor advanced correctly between polls.
+- **`runWatcher` resilience**: `evacuate` throws on one account → the exception is swallowed (logged), the daemon does not propagate; the following exposed accounts are still attempted.
+- **Non-regression**: `MockThreatSource`, `threat`, `registry`, `keeper`, `smoke` stay green.
+- **Typecheck**: `pnpm exec tsc --noEmit` clean (watch/exploit/onboard included).
+- **Solidity**: `forge test` 26/26 unchanged (no contract change).
 
 ## Definition of Done
 
-- [ ] `ChainThreatSource` implémenté + testé ; suite watcher verte (incl. nouveaux tests + résilience `runWatcher`).
-- [ ] `pnpm exec tsc --noEmit` propre ; `forge test` 26/26.
-- [ ] `config.ts` piloté par env (défaut Robinhood), import sans effet de bord.
-- [ ] Scripts `watch`/`exploit`/`onboard` écrits ; `demo.ts` retiré ; `package.json` à jour.
-- [ ] `README` mis à jour : déploiement Robinhood + flux multi-terminal.
-- [ ] `.env.example` : ajout `CHAIN`, `GUARDIAN_IMPL` (override), rappel `ROBINHOOD_TESTNET_RPC`.
-- [ ] Aucun secret commité.
+- [ ] `ChainThreatSource` implemented + tested; watcher suite green (incl. new tests + `runWatcher` resilience).
+- [ ] `pnpm exec tsc --noEmit` clean; `forge test` 26/26.
+- [ ] `config.ts` env-driven (default Robinhood), side-effect-free import.
+- [ ] `watch`/`exploit`/`onboard` scripts written; `demo.ts` removed; `package.json` up to date.
+- [ ] `README` updated: Robinhood deployment + multi-terminal flow.
+- [ ] `.env.example`: add `CHAIN`, `GUARDIAN_IMPL` (override), reminder of `ROBINHOOD_TESTNET_RPC`.
+- [ ] No secret committed.
 
-## Prérequis (action utilisateur, hors code)
+## Prerequisites (user action, outside code)
 
-- Funder **deployer + victim + keeper** sur Robinhood (faucet/bridge).
-- Lancer les déploiements forge sur Robinhood et reporter les adresses dans `.env`.
-- L'exécution live (`onboard` → `watch` → `exploit`) est faite par l'humain une fois fundé/déployé.
+- Fund **deployer + victim + keeper** on Robinhood (faucet/bridge).
+- Run the forge deployments on Robinhood and record the addresses in `.env`.
+- The live run (`onboard` → `watch` → `exploit`) is done by the human once funded/deployed.
 
-## Hors scope (Phase 5)
+## Out of scope (Phase 5)
 
-- Intégration du vrai flux Defimon (WS) — `decodeExploitLog`/le schéma restent compatibles pour l'ajouter plus tard.
-- Multi-comptes / multi-protocoles à grande échelle, persistance du curseur, gestion fine des reorgs.
-- Adapters Aave/GMX (positions déposées) — Phase 3 séparée.
+- Integration of the real Defimon feed (WS) — `decodeExploitLog`/the schema remain compatible to add it later.
+- Multi-account / multi-protocol at scale, cursor persistence, fine-grained reorg handling.
+- Aave/GMX adapters (deposited positions) — a separate Phase 3.

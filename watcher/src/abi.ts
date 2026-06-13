@@ -18,7 +18,7 @@ export const guardianAbi = [
   },
 ] as const;
 
-/// Event émis par le protocole vulnérable de démo lors du drain (voir contracts/src/demo).
+/// Event emitted by the vulnerable demo protocol on drain (see contracts/src/demo).
 export const exploitEventAbi = [
   {
     type: "event",

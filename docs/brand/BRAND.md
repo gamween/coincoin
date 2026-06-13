@@ -1,8 +1,8 @@
 # coincoin Brand Kit
 
-> Source de vérité UI pour le front (Next.js). Concrétise la DA de la spec ([section 10](../superpowers/specs/2026-06-10-coincoin-design.md)) en tokens directement exploitables. Généré le 11/06/2026 à partir de l'illustration de référence [`coincoin-illustration.png`](coincoin-illustration.png).
+> UI source of truth for the front end (Next.js). Turns the art direction from the spec ([section 10](../superpowers/specs/2026-06-10-coincoin-design.md)) into directly usable tokens. Generated on 2026-06-11 from the reference illustration [`coincoin-illustration.png`](coincoin-illustration.png).
 >
-> ⚠️ Ne pas réutiliser le lettrage du titre de l'illustration comme wordmark : il contient une cédille parasite (« COINÇOIN »). Le wordmark app est le texte « coincoin » composé en font display.
+> ⚠️ Do not reuse the illustration's title lettering as the wordmark: it contains a stray cedilla ("COINÇOIN"). The app wordmark is the text "coincoin" set in the display font.
 
 ## 1. Brand essence
 
@@ -372,12 +372,12 @@ Don't:
 - Do not use thin gray borders, glassmorphism, pastel gradients, or minimal fintech styling.
 - Do not replace `COIN COIN !` with another quack, slogan, or localized translation.
 
-## 10. Illustrations de la campagne
+## 10. Campaign illustrations
 
-Série de visuels produits pour le fil X du buildathon (un par jour). Tous en 16:9, même univers comic (canard `#F5D90A`, voleur bleu, fond bleu nuit, briques pixel, lettrage block jaune). Servent aussi de référence de style et de personnages pour générer les suivants.
+Series of visuals produced for the buildathon X thread (one per day). All in 16:9, same comic universe (`#F5D90A` duck, blue thief, midnight-blue background, pixel bricks, yellow block lettering). They also serve as a style and character reference for generating the next ones.
 
-| Fichier | Sujet | Usage |
+| File | Subject | Usage |
 |---|---|---|
-| [`coincoin-illustration.png`](coincoin-illustration.png) | Canard alerte « COIN COIN ! » devant le coffre, voleur en fuite | Jour 1 : ce que c'est |
-| [`eip-7702-flip.png`](eip-7702-flip.png) | Split EIP-7702 : drainer (EOA → SWEEPER) vs coincoin (EOA → GUARDIAN → VAULT), badge « 90%+ ARE SWEEPERS » | Jour 2, tweet 1 : le retournement de primitive |
-| [`how-it-works.png`](how-it-works.png) | Pipeline ALERTS → KEEPER → EOA/GUARDIAN → VAULT, badges « ONLY YOUR VAULT » et « REVOCABLE » | Jour 2, tweet 2 : le mécanisme et la garantie |
+| [`coincoin-illustration.png`](coincoin-illustration.png) | Duck raising the alarm "COIN COIN !" in front of the vault, thief fleeing | Day 1: what it is |
+| [`eip-7702-flip.png`](eip-7702-flip.png) | EIP-7702 split: drainer (EOA → SWEEPER) vs coincoin (EOA → GUARDIAN → VAULT), "90%+ ARE SWEEPERS" badge | Day 2, tweet 1: flipping the primitive |
+| [`how-it-works.png`](how-it-works.png) | ALERTS → KEEPER → EOA/GUARDIAN → VAULT pipeline, "ONLY YOUR VAULT" and "REVOCABLE" badges | Day 2, tweet 2: the mechanism and the guarantee |

@@ -1,38 +1,38 @@
 # 🦆 coincoin
 
-> Le pare-feu onchain qui crie « coin coin ! » quand on essaie de te vider — et met tes fonds à l'abri tout seul.
+> The onchain firewall that shouts "coin coin !" when someone tries to drain you — and moves your funds to safety all on its own.
 
-**coincoin** est un pare-feu onchain **self-custodial** pour particuliers, sur **Arbitrum**. Il protège **à la fois tes actifs au repos dans le wallet ET tes fonds déposés dans des protocoles DeFi**, en évacuant / sortant automatiquement tes fonds dès qu'une menace vérifiable est détectée — dans la fenêtre de réaction que laissent les hacks non-atomiques.
+**coincoin** is a **self-custodial** onchain firewall for retail users, on **Arbitrum**. It protects **both your assets at rest in the wallet AND your funds deposited in DeFi protocols**, by automatically evacuating / withdrawing your funds as soon as a verifiable threat is detected — within the reaction window that non-atomic hacks leave open.
 
-Projet pour le **[Arbitrum Open House London](https://arbitrum-london.hackquest.io/)** buildathon (soumission 14 juin 2026).
+A project for the **[Arbitrum Open House London](https://arbitrum-london.hackquest.io/)** buildathon (submission June 14, 2026).
 
-## Le problème
+## The problem
 
-- **$83,85M volés à 106 106 victimes** en 2025 via wallet drainers / phishing (Scam Sniffer). Les attaquants utilisent même déjà **EIP-7702** pour drainer (90%+ des délégations 7702 sont des sweepers).
-- Côté protocoles, les exploits laissent une **fenêtre de réponse non-atomique** (4 min → 5 jours, données Defimon) que personne n'outille côté utilisateur.
-- La prévention pré-signature (Blockaid, Revoke.cash…) bloque une mauvaise signature, mais **ne fait rien après compromission ni pour tes positions**.
+- **$83.85M stolen from 106,106 victims** in 2025 via wallet drainers / phishing (Scam Sniffer). Attackers are even already using **EIP-7702** to drain (90%+ of 7702 delegations are sweepers).
+- On the protocol side, exploits leave a **non-atomic response window** (4 min → 5 days, Defimon data) that nobody tools up on the user side.
+- Pre-signature prevention (Blockaid, Revoke.cash…) blocks a bad signature, but **does nothing after a compromise nor for your positions**.
 
-## L'approche
+## The approach
 
-Là où **Harpie** (fermé en 2025, pour raison business) devait courir un fragile *front-run racing*, coincoin :
+Where **Harpie** (shut down in 2025, for business reasons) had to run a fragile *front-run racing*, coincoin:
 
-- **enforce au niveau du compte** via **EIP-7702** / hooks **ERC-7579** (la primitive 7702 est arrivée *après* Harpie) ;
-- **réagit à un flux de menaces live** (Defimon) couplé à un **moteur de règles Stylus** ;
-- **couvre les positions DeFi** (auto-exit Aave V3 / GMX) — l'angle mort que Harpie n'a jamais pu adresser ;
-- reste **100% non-custodial** : tu gardes tes clés, le keeper ne peut qu'évacuer vers **ton propre** Safe Vault.
+- **enforces at the account level** via **EIP-7702** / **ERC-7579** hooks (the 7702 primitive arrived *after* Harpie);
+- **reacts to a live threat feed** (Defimon) coupled with a **Stylus rules engine**;
+- **covers DeFi positions** (auto-exit Aave V3 / GMX) — the blind spot Harpie could never address;
+- stays **100% non-custodial**: you keep your keys, the keeper can only evacuate to **your own** Safe Vault.
 
-On retourne l'arme des attaquants : la même délégation EIP-7702 qu'ils utilisent pour drainer, on l'utilise pour protéger.
+We turn the attackers' weapon against them: the same EIP-7702 delegation they use to drain, we use to protect.
 
 ## Stack
 
-Solidity + OpenZeppelin · **Stylus** (Rust/WASM) pour le moteur de règles · **ZeroDev** (ERC-4337 / session keys) · EIP-7702 / ERC-7579 · Next.js + wagmi/viem · déploiement **Arbitrum Sepolia** + **Robinhood Chain testnet**.
+Solidity + OpenZeppelin · **Stylus** (Rust/WASM) for the rules engine · **ZeroDev** (ERC-4337 / session keys) · EIP-7702 / ERC-7579 · Next.js + wagmi/viem · deployed on **Arbitrum Sepolia** + **Robinhood Chain testnet**.
 
 ## Docs
 
-Spec & design complets : [`docs/superpowers/specs/2026-06-10-coincoin-design.md`](docs/superpowers/specs/2026-06-10-coincoin-design.md)
+Full spec & design: [`docs/superpowers/specs/2026-06-10-coincoin-design.md`](docs/superpowers/specs/2026-06-10-coincoin-design.md)
 
-Brand kit (DA en tokens UI : palette, fonts, composants, mascotte) : [`docs/brand/BRAND.md`](docs/brand/BRAND.md)
+Brand kit (design system in UI tokens: palette, fonts, components, mascot): [`docs/brand/BRAND.md`](docs/brand/BRAND.md)
 
-## Statut
+## Status
 
-🚧 En développement — design validé, implémentation à venir.
+🚧 In development — design validated, implementation to come.

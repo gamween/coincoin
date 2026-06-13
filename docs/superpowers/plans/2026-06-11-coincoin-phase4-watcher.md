@@ -1,37 +1,37 @@
-# coincoin — Phase 4 : Watcher & boucle de détection→évacuation Implementation Plan
+# coincoin — Phase 4: Watcher & detection→evacuation loop Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Construire le service qui ferme la boucle produit : détecter un exploit on-chain (vrai, rejoué sur Arbitrum Sepolia), en déduire qu'un compte protégé est exposé, et déclencher le keeper pour évacuer ses fonds vers son SafeVault — la « magic moment » de la démo.
+**Goal:** Build the service that closes the product loop: detect an on-chain exploit (a real one, replayed on Arbitrum Sepolia), infer that a protected account is exposed, and trigger the keeper to evacuate its funds to its SafeVault — the demo's "magic moment".
 
-**Architecture:** Un service TypeScript (`watcher/`) construit autour d'unités pures testables : un schéma d'alerte compatible Defimon, un registre d'exposition (alerte → comptes protégés concernés), un client keeper (encode + envoie `evacuateERC20` via viem), des sources de menace (une `MockThreatSource` pour le transport au schéma Defimon, une `ChainThreatSource` qui décode les logs d'un protocole exploité), et un orchestrateur qui les câble. Côté on-chain, un mini protocole vulnérable + attaquant (Foundry) génère un VRAI exploit ; seul le *fournisseur* d'intelligence (Defimon) est substitué, pas le signal. Un script de démo orchestre tout sur Arbitrum Sepolia en s'appuyant sur les contrats Phase 1 déjà déployés.
+**Architecture:** A TypeScript service (`watcher/`) built around pure, testable units: a Defimon-compatible alert schema, an exposure registry (alert → affected protected accounts), a keeper client (encodes + sends `evacuateERC20` via viem), threat sources (a `MockThreatSource` for the Defimon-schema transport, a `ChainThreatSource` that decodes the logs of an exploited protocol), and an orchestrator that wires them together. On the on-chain side, a tiny vulnerable protocol + attacker (Foundry) generates a REAL exploit; only the intelligence *provider* (Defimon) is substituted, not the signal. A demo script orchestrates everything on Arbitrum Sepolia, relying on the Phase 1 contracts already deployed.
 
-**Tech Stack:** Node 22, pnpm, TypeScript, viem 2.x (EIP-7702 + tx), vitest, tsx. Foundry pour les contrats de scénario. GuardianModule live : `0x6671b4B73b79c284A710B00ef777d8E65f55200F` (Arbitrum Sepolia, chain 421614).
+**Tech Stack:** Node 22, pnpm, TypeScript, viem 2.x (EIP-7702 + tx), vitest, tsx. Foundry for the scenario contracts. Live GuardianModule: `0x6671b4B73b79c284A710B00ef777d8E65f55200F` (Arbitrum Sepolia, chain 421614).
 
 ---
 
-## Dépendances & pré-requis
+## Dependencies & prerequisites
 
-- **Phase 1 mergée** (SafeVault, GuardianModule) — fait. GuardianModule impl déployée.
-- `.env` à la racine contient déjà : `ARBITRUM_SEPOLIA_RPC`, `DEPLOYER_PRIVATE_KEY`. Ce plan ajoutera (Task 8) `KEEPER_PRIVATE_KEY` et `VICTIM_PRIVATE_KEY` (deux wallets de dev jetables).
-- Pas de dépendance à Defimon (pas de clé) : le signal vient d'un exploit rejoué, transporté au schéma Defimon.
+- **Phase 1 merged** (SafeVault, GuardianModule) — done. GuardianModule impl deployed.
+- The root `.env` already contains: `ARBITRUM_SEPOLIA_RPC`, `DEPLOYER_PRIVATE_KEY`. This plan will add (Task 8) `KEEPER_PRIVATE_KEY` and `VICTIM_PRIVATE_KEY` (two throwaway dev wallets).
+- No dependency on Defimon (no key): the signal comes from a replayed exploit, transported in the Defimon schema.
 
-## Structure de fichiers (Phase 4)
+## File structure (Phase 4)
 
 ```
 watcher/
-├── package.json              # projet pnpm/TS isolé
+├── package.json              # isolated pnpm/TS project
 ├── tsconfig.json
 ├── vitest.config.ts
 ├── .gitignore
 ├── src/
-│   ├── threat.ts             # type ThreatAlert (schéma Defimon) + parseThreatAlert (validation)
+│   ├── threat.ts             # ThreatAlert type (Defimon schema) + parseThreatAlert (validation)
 │   ├── registry.ts           # ProtectedAccount + findExposed(alert, accounts)
 │   ├── keeper.ts             # buildEvacuateTx + KeeperClient.evacuate(victim, tokens)
 │   ├── sources.ts            # ThreatSource interface + MockThreatSource + ChainThreatSource
 │   ├── watcher.ts            # runWatcher(source, accounts, keeper) — orchestration
-│   ├── abi.ts                # fragments ABI (GuardianModule.evacuateERC20, exploit event)
-│   └── config.ts             # chargement env + constantes chaîne
+│   ├── abi.ts                # ABI fragments (GuardianModule.evacuateERC20, exploit event)
+│   └── config.ts             # env loading + chain constants
 ├── test/
 │   ├── threat.test.ts
 │   ├── registry.test.ts
@@ -39,26 +39,26 @@ watcher/
 │   ├── sources.test.ts
 │   └── watcher.test.ts
 └── scripts/
-    └── demo.ts               # runner end-to-end sur Arbitrum Sepolia (Task 8)
+    └── demo.ts               # end-to-end runner on Arbitrum Sepolia (Task 8)
 
-contracts/                    # projet Foundry existant — Phase 4 ajoute :
+contracts/                    # existing Foundry project — Phase 4 adds:
 ├── src/demo/
-│   ├── MockVulnerableProtocol.sol   # protocole avec bug volontaire (withdraw sans auth)
-│   └── Attacker.sol                 # exploite MockVulnerableProtocol
+│   ├── MockVulnerableProtocol.sol   # protocol with an intentional bug (withdraw without auth)
+│   └── Attacker.sol                 # exploits MockVulnerableProtocol
 ├── test/demo/
-│   └── Exploit.t.sol                # prouve l'exploit
+│   └── Exploit.t.sol                # proves the exploit
 └── script/
-    └── SetupDemo.s.sol              # déploie SafeVault + tokens + MockVulnerableProtocol pour la démo
+    └── SetupDemo.s.sol              # deploys SafeVault + tokens + MockVulnerableProtocol for the demo
 ```
 
 ---
 
-### Task 1 : Scaffolder le projet watcher (TypeScript)
+### Task 1: Scaffold the watcher project (TypeScript)
 
 **Files:**
 - Create: `watcher/package.json`, `watcher/tsconfig.json`, `watcher/vitest.config.ts`, `watcher/.gitignore`, `watcher/src/config.ts`, `watcher/test/smoke.test.ts`
 
-- [ ] **Step 1 : Créer `watcher/package.json`**
+- [ ] **Step 1: Create `watcher/package.json`**
 
 ```json
 {
@@ -83,7 +83,7 @@ contracts/                    # projet Foundry existant — Phase 4 ajoute :
 }
 ```
 
-- [ ] **Step 2 : Créer `watcher/tsconfig.json`**
+- [ ] **Step 2: Create `watcher/tsconfig.json`**
 
 ```json
 {
@@ -101,7 +101,7 @@ contracts/                    # projet Foundry existant — Phase 4 ajoute :
 }
 ```
 
-- [ ] **Step 3 : Créer `watcher/vitest.config.ts`**
+- [ ] **Step 3: Create `watcher/vitest.config.ts`**
 
 ```typescript
 import { defineConfig } from "vitest/config";
@@ -114,14 +114,14 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 4 : Créer `watcher/.gitignore`**
+- [ ] **Step 4: Create `watcher/.gitignore`**
 
 ```text
 node_modules/
 dist/
 ```
 
-- [ ] **Step 5 : Créer `watcher/src/config.ts`** (constantes de chaîne, sans secret)
+- [ ] **Step 5: Create `watcher/src/config.ts`** (chain constants, no secret)
 
 ```typescript
 import { defineChain } from "viem";
@@ -129,7 +129,7 @@ import { arbitrumSepolia } from "viem/chains";
 
 export { arbitrumSepolia };
 
-/// Adresse de l'implémentation GuardianModule déployée (cible de délégation 7702).
+/// Address of the deployed GuardianModule implementation (the 7702 delegation target).
 export const GUARDIAN_IMPL = "0x6671b4B73b79c284A710B00ef777d8E65f55200F" as const;
 
 export const ROBINHOOD_TESTNET = defineChain({
@@ -140,7 +140,7 @@ export const ROBINHOOD_TESTNET = defineChain({
 });
 ```
 
-- [ ] **Step 6 : Créer le test de fumée `watcher/test/smoke.test.ts`**
+- [ ] **Step 6: Create the smoke test `watcher/test/smoke.test.ts`**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -153,15 +153,15 @@ describe("smoke", () => {
 });
 ```
 
-- [ ] **Step 7 : Installer et lancer**
+- [ ] **Step 7: Install and run**
 
 Run:
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm install && pnpm test
 ```
-Expected: 1 test passe (`smoke`). (pnpm crée `pnpm-lock.yaml`.)
+Expected: 1 test passes (`smoke`). (pnpm creates `pnpm-lock.yaml`.)
 
-- [ ] **Step 8 : Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -171,12 +171,12 @@ git commit -m "chore(watcher): scaffold TypeScript service (viem + vitest)"
 
 ---
 
-### Task 2 : Schéma d'alerte de menace (compatible Defimon)
+### Task 2: Threat alert schema (Defimon-compatible)
 
 **Files:**
 - Create: `watcher/src/threat.ts`, `watcher/test/threat.test.ts`
 
-- [ ] **Step 1 : Écrire le test qui échoue (`watcher/test/threat.test.ts`)**
+- [ ] **Step 1: Write the failing test (`watcher/test/threat.test.ts`)**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -211,24 +211,24 @@ describe("parseThreatAlert", () => {
 });
 ```
 
-- [ ] **Step 2 : Lancer pour voir l'échec**
+- [ ] **Step 2: Run it to see the failure**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm vitest run test/threat.test.ts`
-Expected: FAIL — module `../src/threat` introuvable.
+Expected: FAIL — module `../src/threat` not found.
 
-- [ ] **Step 3 : Écrire `watcher/src/threat.ts`**
+- [ ] **Step 3: Write `watcher/src/threat.ts`**
 
 ```typescript
 export type Severity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 const SEVERITIES: Severity[] = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
-/// Sous-ensemble du schéma Defimon `/ws/confirmed_attacks` (champs utilisés par coincoin).
+/// Subset of the Defimon `/ws/confirmed_attacks` schema (fields used by coincoin).
 export interface ThreatAlert {
   network: string;
   severity: Severity;
   attack_type: string;
   transaction_hash: string;
-  exploit_address: `0x${string}`; // contrat ciblé (le protocole exploité)
+  exploit_address: `0x${string}`; // targeted contract (the exploited protocol)
   attacker_address: `0x${string}`;
   block_number: number;
   victim_protocol?: string;
@@ -264,12 +264,12 @@ export function parseThreatAlert(raw: unknown): ThreatAlert {
 }
 ```
 
-- [ ] **Step 4 : Lancer pour voir le succès**
+- [ ] **Step 4: Run it to see it pass**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm vitest run test/threat.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5 : Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -279,12 +279,12 @@ git commit -m "feat(watcher): Defimon-compatible threat alert schema + validatio
 
 ---
 
-### Task 3 : Registre d'exposition (alerte → comptes protégés concernés)
+### Task 3: Exposure registry (alert → affected protected accounts)
 
 **Files:**
 - Create: `watcher/src/registry.ts`, `watcher/test/registry.test.ts`
 
-- [ ] **Step 1 : Écrire le test qui échoue (`watcher/test/registry.test.ts`)**
+- [ ] **Step 1: Write the failing test (`watcher/test/registry.test.ts`)**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -305,13 +305,13 @@ const accounts: ProtectedAccount[] = [
   {
     address: "0x1111111111111111111111111111111111111111",
     safeVault: "0x9999999999999999999999999999999999999999",
-    watchedProtocols: ["0xAAAA000000000000000000000000000000000000"], // exposé (casse différente)
+    watchedProtocols: ["0xAAAA000000000000000000000000000000000000"], // exposed (different case)
     tokens: ["0xcccc000000000000000000000000000000000000"],
   },
   {
     address: "0x2222222222222222222222222222222222222222",
     safeVault: "0x8888888888888888888888888888888888888888",
-    watchedProtocols: ["0xdddd000000000000000000000000000000000000"], // non exposé
+    watchedProtocols: ["0xdddd000000000000000000000000000000000000"], // not exposed
     tokens: ["0xcccc000000000000000000000000000000000000"],
   },
 ];
@@ -329,24 +329,24 @@ describe("findExposed", () => {
 });
 ```
 
-- [ ] **Step 2 : Lancer pour voir l'échec**
+- [ ] **Step 2: Run it to see the failure**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm vitest run test/registry.test.ts`
-Expected: FAIL — module `../src/registry` introuvable.
+Expected: FAIL — module `../src/registry` not found.
 
-- [ ] **Step 3 : Écrire `watcher/src/registry.ts`**
+- [ ] **Step 3: Write `watcher/src/registry.ts`**
 
 ```typescript
 import type { ThreatAlert } from "./threat";
 
 export interface ProtectedAccount {
-  address: `0x${string}`;       // l'EOA délégué (compte protégé)
-  safeVault: `0x${string}`;     // sa destination d'évacuation
-  watchedProtocols: `0x${string}`[]; // protocoles où il est exposé
-  tokens: `0x${string}`[];      // tokens à évacuer du compte
+  address: `0x${string}`;       // the delegated EOA (protected account)
+  safeVault: `0x${string}`;     // its evacuation destination
+  watchedProtocols: `0x${string}`[]; // protocols it is exposed to
+  tokens: `0x${string}`[];      // tokens to evacuate from the account
 }
 
-/// Comptes protégés exposés au protocole ciblé par l'alerte (comparaison insensible à la casse).
+/// Protected accounts exposed to the protocol targeted by the alert (case-insensitive comparison).
 export function findExposed(alert: ThreatAlert, accounts: ProtectedAccount[]): ProtectedAccount[] {
   const target = alert.exploit_address.toLowerCase();
   return accounts.filter((acc) =>
@@ -355,12 +355,12 @@ export function findExposed(alert: ThreatAlert, accounts: ProtectedAccount[]): P
 }
 ```
 
-- [ ] **Step 4 : Lancer pour voir le succès**
+- [ ] **Step 4: Run it to see it pass**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm vitest run test/registry.test.ts`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5 : Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -370,12 +370,12 @@ git commit -m "feat(watcher): exposure registry (alert -> exposed protected acco
 
 ---
 
-### Task 4 : Client keeper (encode + envoie `evacuateERC20`)
+### Task 4: Keeper client (encodes + sends `evacuateERC20`)
 
 **Files:**
 - Create: `watcher/src/abi.ts`, `watcher/src/keeper.ts`, `watcher/test/keeper.test.ts`
 
-- [ ] **Step 1 : Écrire `watcher/src/abi.ts`** (fragment ABI, pas de test propre — couvert par keeper.test)
+- [ ] **Step 1: Write `watcher/src/abi.ts`** (ABI fragment, no test of its own — covered by keeper.test)
 
 ```typescript
 export const guardianAbi = [
@@ -398,7 +398,7 @@ export const guardianAbi = [
   },
 ] as const;
 
-/// Event émis par le protocole vulnérable de démo lors du drain (voir contracts/src/demo).
+/// Event emitted by the demo vulnerable protocol during the drain (see contracts/src/demo).
 export const exploitEventAbi = [
   {
     type: "event",
@@ -411,9 +411,9 @@ export const exploitEventAbi = [
 ] as const;
 ```
 
-- [ ] **Step 2 : Écrire le test qui échoue (`watcher/test/keeper.test.ts`)**
+- [ ] **Step 2: Write the failing test (`watcher/test/keeper.test.ts`)**
 
-Le keeper encode correctement l'appel et l'envoie à l'adresse du compte protégé (le délégué 7702), avec un WalletClient injecté simulé.
+The keeper correctly encodes the call and sends it to the protected account's address (the 7702 delegate), with an injected mock WalletClient.
 
 ```typescript
 import { describe, it, expect, vi } from "vitest";
@@ -435,7 +435,7 @@ describe("KeeperClient.evacuate", () => {
     expect(hash).toBe("0xhash");
     expect(sendTransaction).toHaveBeenCalledTimes(1);
     const arg = sendTransaction.mock.calls[0][0];
-    expect(arg.to).toBe(victim); // ⚠️ la cible est le compte délégué, PAS l'impl
+    expect(arg.to).toBe(victim); // ⚠️ the target is the delegated account, NOT the impl
     expect(arg.data).toBe(
       encodeFunctionData({ abi: guardianAbi, functionName: "evacuateERC20", args: [tokens] }),
     );
@@ -443,20 +443,20 @@ describe("KeeperClient.evacuate", () => {
 });
 ```
 
-- [ ] **Step 3 : Lancer pour voir l'échec**
+- [ ] **Step 3: Run it to see the failure**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm vitest run test/keeper.test.ts`
-Expected: FAIL — module `../src/keeper` introuvable.
+Expected: FAIL — module `../src/keeper` not found.
 
-- [ ] **Step 4 : Écrire `watcher/src/keeper.ts`**
+- [ ] **Step 4: Write `watcher/src/keeper.ts`**
 
 ```typescript
 import { encodeFunctionData, type WalletClient } from "viem";
 import { guardianAbi } from "./abi";
 
-/// Déclenche les actions d'urgence. Le keeper appelle la fonction SUR L'ADRESSE DU COMPTE
-/// PROTÉGÉ (délégué via 7702) : le code GuardianModule s'exécute alors dans le contexte du
-/// compte, et `msg.sender == keeper` satisfait `onlySelfOrKeeper`.
+/// Triggers the emergency actions. The keeper calls the function ON THE PROTECTED
+/// ACCOUNT'S ADDRESS (delegated via 7702): the GuardianModule code then runs in the
+/// account's context, and `msg.sender == keeper` satisfies `onlySelfOrKeeper`.
 export class KeeperClient {
   constructor(private readonly wallet: Pick<WalletClient, "sendTransaction">) {}
 
@@ -467,12 +467,12 @@ export class KeeperClient {
 }
 ```
 
-- [ ] **Step 5 : Lancer pour voir le succès**
+- [ ] **Step 5: Run it to see it pass**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm vitest run test/keeper.test.ts`
 Expected: PASS (1 test).
 
-- [ ] **Step 6 : Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -482,12 +482,12 @@ git commit -m "feat(watcher): keeper client encodes+sends evacuateERC20 to the d
 
 ---
 
-### Task 5 : Sources de menace (mock transport + détecteur on-chain)
+### Task 5: Threat sources (mock transport + on-chain detector)
 
 **Files:**
 - Create: `watcher/src/sources.ts`, `watcher/test/sources.test.ts`
 
-- [ ] **Step 1 : Écrire le test qui échoue (`watcher/test/sources.test.ts`)**
+- [ ] **Step 1: Write the failing test (`watcher/test/sources.test.ts`)**
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -529,12 +529,12 @@ describe("decodeExploitLog", () => {
 });
 ```
 
-- [ ] **Step 2 : Lancer pour voir l'échec**
+- [ ] **Step 2: Run it to see the failure**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm vitest run test/sources.test.ts`
-Expected: FAIL — module `../src/sources` introuvable.
+Expected: FAIL — module `../src/sources` not found.
 
-- [ ] **Step 3 : Écrire `watcher/src/sources.ts`**
+- [ ] **Step 3: Write `watcher/src/sources.ts`**
 
 ```typescript
 import { parseThreatAlert, type ThreatAlert } from "./threat";
@@ -545,8 +545,8 @@ export interface ThreatSource {
   start(onAlert: AlertHandler): Promise<void>;
 }
 
-/// Source de transport au schéma Defimon : rejoue des alertes connues (démo / tests).
-/// C'est le SEUL élément simulé du système ; le contenu provient d'un vrai exploit on-chain.
+/// Defimon-schema transport source: replays known alerts (demo / tests).
+/// This is the ONLY simulated element of the system; the content comes from a real on-chain exploit.
 export class MockThreatSource implements ThreatSource {
   constructor(private readonly alerts: ThreatAlert[]) {}
   async start(onAlert: AlertHandler): Promise<void> {
@@ -554,7 +554,7 @@ export class MockThreatSource implements ThreatSource {
   }
 }
 
-/// Forme minimale d'un log `Drained` décodé par viem.
+/// Minimal shape of a `Drained` log decoded by viem.
 export interface DrainedLog {
   address: string;
   transactionHash: string;
@@ -562,7 +562,7 @@ export interface DrainedLog {
   args: { attacker: string; amount: bigint };
 }
 
-/// Transforme un vrai log d'exploit on-chain en alerte au schéma Defimon.
+/// Turns a real on-chain exploit log into a Defimon-schema alert.
 export function decodeExploitLog(log: DrainedLog): ThreatAlert {
   return parseThreatAlert({
     network: "arbitrum",
@@ -576,12 +576,12 @@ export function decodeExploitLog(log: DrainedLog): ThreatAlert {
 }
 ```
 
-- [ ] **Step 4 : Lancer pour voir le succès**
+- [ ] **Step 4: Run it to see it pass**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm vitest run test/sources.test.ts`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5 : Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -591,12 +591,12 @@ git commit -m "feat(watcher): threat sources (mock transport + on-chain exploit-
 
 ---
 
-### Task 6 : Orchestrateur (source → exposition → keeper)
+### Task 6: Orchestrator (source → exposure → keeper)
 
 **Files:**
 - Create: `watcher/src/watcher.ts`, `watcher/test/watcher.test.ts`
 
-- [ ] **Step 1 : Écrire le test qui échoue (`watcher/test/watcher.test.ts`)**
+- [ ] **Step 1: Write the failing test (`watcher/test/watcher.test.ts`)**
 
 ```typescript
 import { describe, it, expect, vi } from "vitest";
@@ -647,12 +647,12 @@ describe("runWatcher", () => {
 });
 ```
 
-- [ ] **Step 2 : Lancer pour voir l'échec**
+- [ ] **Step 2: Run it to see the failure**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm vitest run test/watcher.test.ts`
-Expected: FAIL — module `../src/watcher` introuvable.
+Expected: FAIL — module `../src/watcher` not found.
 
-- [ ] **Step 3 : Écrire `watcher/src/watcher.ts`**
+- [ ] **Step 3: Write `watcher/src/watcher.ts`**
 
 ```typescript
 import { findExposed, type ProtectedAccount } from "./registry";
@@ -668,30 +668,30 @@ export interface WatcherDeps {
   keeper: Keeper;
 }
 
-/// Câble la boucle : chaque alerte → comptes exposés → évacuation de leurs tokens.
+/// Wires the loop: each alert → exposed accounts → evacuation of their tokens.
 export async function runWatcher({ source, accounts, keeper }: WatcherDeps): Promise<void> {
   await source.start(async (alert) => {
     const exposed = findExposed(alert, accounts);
     for (const acc of exposed) {
-      console.log(`[coincoin] 🦆 COIN COIN ! menace sur ${alert.exploit_address} → évacuation de ${acc.address}`);
+      console.log(`[coincoin] 🦆 COIN COIN ! threat on ${alert.exploit_address} → evacuating ${acc.address}`);
       const hash = await keeper.evacuate(acc.address, acc.tokens);
-      console.log(`[coincoin] ✅ évacué vers ${acc.safeVault} (tx ${hash})`);
+      console.log(`[coincoin] ✅ evacuated to ${acc.safeVault} (tx ${hash})`);
     }
   });
 }
 ```
 
-- [ ] **Step 4 : Lancer pour voir le succès**
+- [ ] **Step 4: Run it to see it pass**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm vitest run test/watcher.test.ts`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5 : Lancer toute la suite watcher**
+- [ ] **Step 5: Run the whole watcher suite**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm test`
-Expected: PASS — tous les tests (smoke + threat + registry + keeper + sources + watcher).
+Expected: PASS — all tests (smoke + threat + registry + keeper + sources + watcher).
 
-- [ ] **Step 6 : Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -701,12 +701,12 @@ git commit -m "feat(watcher): orchestrator wires threat source -> exposure -> ke
 
 ---
 
-### Task 7 : Contrats de scénario (vrai exploit rejouable)
+### Task 7: Scenario contracts (real replayable exploit)
 
 **Files:**
 - Create: `contracts/src/demo/MockVulnerableProtocol.sol`, `contracts/src/demo/Attacker.sol`, `contracts/test/demo/Exploit.t.sol`
 
-- [ ] **Step 1 : Écrire le test qui échoue (`contracts/test/demo/Exploit.t.sol`)**
+- [ ] **Step 1: Write the failing test (`contracts/test/demo/Exploit.t.sol`)**
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -727,7 +727,7 @@ contract ExploitTest is Test {
         token = new MockERC20("USD", "USD");
         proto = new MockVulnerableProtocol(token);
         attacker = new Attacker(proto, token);
-        // Une victime a déposé des fonds dans le protocole.
+        // A victim has deposited funds in the protocol.
         token.mint(victim, 1_000e18);
         vm.startPrank(victim);
         token.approve(address(proto), 1_000e18);
@@ -749,12 +749,12 @@ contract ExploitTest is Test {
 }
 ```
 
-- [ ] **Step 2 : Lancer pour voir l'échec**
+- [ ] **Step 2: Run it to see the failure**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test --match-contract ExploitTest -vv`
-Expected: FAIL — sources `MockVulnerableProtocol` / `Attacker` introuvables.
+Expected: FAIL — sources `MockVulnerableProtocol` / `Attacker` not found.
 
-- [ ] **Step 3 : Écrire `contracts/src/demo/MockVulnerableProtocol.sol`**
+- [ ] **Step 3: Write `contracts/src/demo/MockVulnerableProtocol.sol`**
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -762,9 +762,9 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/// @notice Protocole de DÉMO volontairement vulnérable : `emergencyWithdraw` n'a aucun
-///         contrôle d'accès et envoie tout le solde à l'appelant. Représente un protocole
-///         où des utilisateurs ont déposé des fonds, puis se fait drainer (exploit réel).
+/// @notice An intentionally vulnerable DEMO protocol: `emergencyWithdraw` has no access
+///         control and sends the whole balance to the caller. Represents a protocol where
+///         users have deposited funds, then gets drained (a real exploit).
 contract MockVulnerableProtocol {
     IERC20 public immutable token;
     mapping(address => uint256) public deposits;
@@ -780,7 +780,7 @@ contract MockVulnerableProtocol {
         deposits[msg.sender] += amount;
     }
 
-    /// @dev BUG VOLONTAIRE : pas d'auth, vide tout le contrat vers msg.sender.
+    /// @dev INTENTIONAL BUG: no auth, drains the entire contract to msg.sender.
     function emergencyWithdraw() external {
         uint256 bal = token.balanceOf(address(this));
         token.transfer(msg.sender, bal);
@@ -789,7 +789,7 @@ contract MockVulnerableProtocol {
 }
 ```
 
-- [ ] **Step 4 : Écrire `contracts/src/demo/Attacker.sol`**
+- [ ] **Step 4: Write `contracts/src/demo/Attacker.sol`**
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -798,7 +798,7 @@ pragma solidity ^0.8.24;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockVulnerableProtocol} from "./MockVulnerableProtocol.sol";
 
-/// @notice Exploite MockVulnerableProtocol via la fonction non protégée.
+/// @notice Exploits MockVulnerableProtocol via the unprotected function.
 contract Attacker {
     MockVulnerableProtocol public immutable target;
     IERC20 public immutable token;
@@ -814,12 +814,12 @@ contract Attacker {
 }
 ```
 
-- [ ] **Step 5 : Lancer pour voir le succès**
+- [ ] **Step 5: Run it to see it pass**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/contracts && forge test --match-contract ExploitTest -vv`
-Expected: PASS (1 test). Puis `forge test` complet — toujours vert (25 Phase 1 + 1 nouveau).
+Expected: PASS (1 test). Then the full `forge test` — still green (25 Phase 1 + 1 new).
 
-- [ ] **Step 6 : Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -829,15 +829,15 @@ git commit -m "feat(contracts): demo exploit scenario (vulnerable protocol + att
 
 ---
 
-### Task 8 : Runner end-to-end sur Arbitrum Sepolia + doc
+### Task 8: End-to-end runner on Arbitrum Sepolia + docs
 
-**But :** orchestrer la démo réelle. Manuel (clés requises). Ce task crée le script et la doc ; l'exécution live est lancée par l'humain.
+**Purpose:** orchestrate the real demo. Manual (keys required). This task creates the script and the docs; the live run is launched by the human.
 
 **Files:**
 - Create: `contracts/script/SetupDemo.s.sol`, `watcher/scripts/demo.ts`, `watcher/README.md`
-- Modify: `.env.example` (ajout `KEEPER_PRIVATE_KEY`, `VICTIM_PRIVATE_KEY`)
+- Modify: `.env.example` (add `KEEPER_PRIVATE_KEY`, `VICTIM_PRIVATE_KEY`)
 
-- [ ] **Step 1 : Écrire `contracts/script/SetupDemo.s.sol`** (déploie le décor de démo)
+- [ ] **Step 1: Write `contracts/script/SetupDemo.s.sol`** (deploys the demo setup)
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -848,10 +848,10 @@ import {SafeVault} from "../src/SafeVault.sol";
 import {MockERC20} from "../test/mocks/MockERC20.sol";
 import {MockVulnerableProtocol} from "../src/demo/MockVulnerableProtocol.sol";
 
-/// @notice Déploie le décor de la démo end-to-end sur Arbitrum Sepolia :
-///         un token de test, le protocole vulnérable, et le SafeVault de la victime.
-///         La victime (VICTIM_ADDRESS) reçoit des tokens au repos ; la délégation 7702
-///         et le `configure` sont faits côté script TS (demo.ts).
+/// @notice Deploys the end-to-end demo setup on Arbitrum Sepolia:
+///         a test token, the vulnerable protocol, and the victim's SafeVault.
+///         The victim (VICTIM_ADDRESS) receives tokens at rest; the 7702 delegation
+///         and the `configure` are done on the TS script side (demo.ts).
 contract SetupDemo is Script {
     function run() external {
         uint256 pk = vm.envUint("DEPLOYER_PRIVATE_KEY");
@@ -862,9 +862,9 @@ contract SetupDemo is Script {
         MockVulnerableProtocol proto = new MockVulnerableProtocol(token);
         SafeVault vault = new SafeVault(victim);
 
-        // La victime détient des fonds AU REPOS (cible de l'évacuation).
+        // The victim holds funds AT REST (the evacuation target).
         token.mint(victim, 500e18);
-        // Et des fonds déposés dans le protocole (qui se fera drainer).
+        // And funds deposited in the protocol (which will be drained).
         token.mint(address(this), 1_000e18);
         token.approve(address(proto), 1_000e18);
         proto.deposit(1_000e18);
@@ -877,7 +877,7 @@ contract SetupDemo is Script {
 }
 ```
 
-- [ ] **Step 2 : Écrire `watcher/scripts/demo.ts`** (le runner end-to-end)
+- [ ] **Step 2: Write `watcher/scripts/demo.ts`** (the end-to-end runner)
 
 ```typescript
 import "dotenv/config";
@@ -892,8 +892,8 @@ import { runWatcher } from "../src/watcher";
 import { MockThreatSource } from "../src/sources";
 import type { ProtectedAccount } from "../src/registry";
 
-/// ⚠️ Démo réelle, nécessite dans .env : ARBITRUM_SEPOLIA_RPC, VICTIM_PRIVATE_KEY,
-/// KEEPER_PRIVATE_KEY, et les adresses imprimées par SetupDemo (TOKEN, PROTO, VAULT).
+/// ⚠️ Real demo, requires in .env: ARBITRUM_SEPOLIA_RPC, VICTIM_PRIVATE_KEY,
+/// KEEPER_PRIVATE_KEY, and the addresses printed by SetupDemo (TOKEN, PROTO, VAULT).
 const RPC = process.env.ARBITRUM_SEPOLIA_RPC!;
 const TOKEN = process.env.DEMO_TOKEN as `0x${string}`;
 const PROTO = process.env.DEMO_PROTO as `0x${string}`;
@@ -908,9 +908,9 @@ const victimWallet = createWalletClient({ account: victim, chain: arbitrumSepoli
 const keeperWallet = createWalletClient({ account: keeper, chain: arbitrumSepolia, transport });
 
 async function main() {
-  console.log("1) Délégation EIP-7702 de la victime vers GuardianModule…");
-  // NB: API viem 7702 — vérifier la forme exacte avec la version installée :
-  //     `pnpm why viem` puis https://viem.sh/docs/eip7702
+  console.log("1) EIP-7702 delegation of the victim to GuardianModule…");
+  // NB: viem 7702 API — verify the exact shape against the installed version:
+  //     `pnpm why viem` then https://viem.sh/docs/eip7702
   const auth = await victimWallet.signAuthorization({ account: victim, contractAddress: GUARDIAN_IMPL });
   const configureData = encodeFunctionData({
     abi: [{ type: "function", name: "configure", stateMutability: "nonpayable",
@@ -918,18 +918,18 @@ async function main() {
     functionName: "configure",
     args: [VAULT, keeper.address],
   });
-  // Self-call : la victime s'envoie le configure (msg.sender == address(this) == victim).
+  // Self-call: the victim sends the configure to itself (msg.sender == address(this) == victim).
   const delegTx = await victimWallet.sendTransaction({
     to: victim.address, data: configureData, authorizationList: [auth],
   } as any);
   await pub.waitForTransactionReceipt({ hash: delegTx });
-  console.log("   ✅ délégué + configuré:", delegTx);
+  console.log("   ✅ delegated + configured:", delegTx);
 
   const balBefore = await pub.readContract({ address: TOKEN, abi: erc20Abi, functionName: "balanceOf", args: [victim.address] });
   const vaultBefore = await pub.readContract({ address: TOKEN, abi: erc20Abi, functionName: "balanceOf", args: [VAULT] });
-  console.log(`   Victime au repos: ${balBefore} | Vault: ${vaultBefore}`);
+  console.log(`   Victim at rest: ${balBefore} | Vault: ${vaultBefore}`);
 
-  console.log("2) L'attaquant draine le protocole (vrai exploit on-chain)…");
+  console.log("2) The attacker drains the protocol (real on-chain exploit)…");
   const exploitData = encodeFunctionData({
     abi: [{ type: "function", name: "emergencyWithdraw", stateMutability: "nonpayable", inputs: [], outputs: [] }],
     functionName: "emergencyWithdraw", args: [],
@@ -938,12 +938,12 @@ async function main() {
   const exploitReceipt = await pub.waitForTransactionReceipt({ hash: exploitTx });
   console.log("   💥 exploit:", exploitTx);
 
-  console.log("3) coincoin détecte et évacue les fonds AU REPOS de la victime…");
+  console.log("3) coincoin detects and evacuates the victim's funds AT REST…");
   const account: ProtectedAccount = {
     address: victim.address, safeVault: VAULT, watchedProtocols: [PROTO], tokens: [TOKEN],
   };
   const keeperClient = new KeeperClient(keeperWallet);
-  // Le signal vient du VRAI exploit (mêmes adresse/tx), transporté au schéma Defimon.
+  // The signal comes from the REAL exploit (same address/tx), transported in the Defimon schema.
   await runWatcher({
     source: new MockThreatSource([{
       network: "arbitrum", severity: "CRITICAL", attack_type: "drain",
@@ -956,12 +956,12 @@ async function main() {
     keeper: keeperClient,
   });
 
-  // Laisser le temps à la tx d'évacuation d'être minée.
+  // Give the evacuation tx time to be mined.
   await new Promise((r) => setTimeout(r, 4000));
   const balAfter = await pub.readContract({ address: TOKEN, abi: erc20Abi, functionName: "balanceOf", args: [victim.address] });
   const vaultAfter = await pub.readContract({ address: TOKEN, abi: erc20Abi, functionName: "balanceOf", args: [VAULT] });
-  console.log(`4) Résultat — Victime au repos: ${balAfter} (était ${balBefore}) | Vault: ${vaultAfter} (était ${vaultBefore})`);
-  console.log(balAfter === 0n ? "   🦆 Fonds au sec dans le coffre." : "   ⚠️ évacuation incomplète, voir traces.");
+  console.log(`4) Result — Victim at rest: ${balAfter} (was ${balBefore}) | Vault: ${vaultAfter} (was ${vaultBefore})`);
+  console.log(balAfter === 0n ? "   🦆 Funds high and dry in the vault." : "   ⚠️ incomplete evacuation, check traces.");
 }
 
 const erc20Abi = [{ type: "function", name: "balanceOf", stateMutability: "view",
@@ -970,45 +970,45 @@ const erc20Abi = [{ type: "function", name: "balanceOf", stateMutability: "view"
 main().catch((e) => { console.error(e); process.exit(1); });
 ```
 
-- [ ] **Step 3 : Vérifier que `demo.ts` typecheck (sans l'exécuter)**
+- [ ] **Step 3: Verify that `demo.ts` typechecks (without running it)**
 
 Run:
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin/watcher && pnpm exec tsc --noEmit
 ```
-Expected: aucune erreur de type. (Si l'API `signAuthorization` diffère sur la version viem installée, ajuster selon https://viem.sh/docs/eip7702 et re-typer ; documenter l'ajustement.)
+Expected: no type error. (If the `signAuthorization` API differs on the installed viem version, adjust per https://viem.sh/docs/eip7702 and re-type; document the adjustment.)
 
-- [ ] **Step 4 : Écrire `watcher/README.md`** (procédure de démo)
+- [ ] **Step 4: Write `watcher/README.md`** (demo procedure)
 
 ````markdown
 # coincoin watcher
 
-Service de détection→évacuation. Tests : `pnpm test`.
+Detection→evacuation service. Tests: `pnpm test`.
 
-## Démo end-to-end (Arbitrum Sepolia)
+## End-to-end demo (Arbitrum Sepolia)
 
-Pré-requis dans `../.env` : `ARBITRUM_SEPOLIA_RPC`, `DEPLOYER_PRIVATE_KEY`,
-`VICTIM_PRIVATE_KEY`, `KEEPER_PRIVATE_KEY` (3 wallets de dev jetables financés au faucet),
-et `VICTIM_ADDRESS` = adresse dérivée de `VICTIM_PRIVATE_KEY`.
+Prerequisites in `../.env`: `ARBITRUM_SEPOLIA_RPC`, `DEPLOYER_PRIVATE_KEY`,
+`VICTIM_PRIVATE_KEY`, `KEEPER_PRIVATE_KEY` (3 throwaway dev wallets funded at the faucet),
+and `VICTIM_ADDRESS` = the address derived from `VICTIM_PRIVATE_KEY`.
 
-1. Déployer le décor :
+1. Deploy the setup:
    ```bash
    cd ../contracts && set -a && source ../.env && set +a
    forge script script/SetupDemo.s.sol:SetupDemo --rpc-url "$ARBITRUM_SEPOLIA_RPC" --broadcast
    ```
-   Reporter les adresses imprimées dans `../.env` : `DEMO_TOKEN`, `DEMO_PROTO`, `DEMO_VAULT`.
-2. Lancer la démo :
+   Record the printed addresses in `../.env`: `DEMO_TOKEN`, `DEMO_PROTO`, `DEMO_VAULT`.
+2. Run the demo:
    ```bash
    cd ../watcher && pnpm demo
    ```
-   Sortie attendue : délégation 7702 → exploit → « COIN COIN ! » → fonds au repos = 0, vault crédité.
+   Expected output: 7702 delegation → exploit → "COIN COIN !" → funds at rest = 0, vault credited.
 ````
 
-- [ ] **Step 5 : Mettre à jour `.env.example`** — ajouter à la fin :
+- [ ] **Step 5: Update `.env.example`** — add at the end:
 
 ```text
 
-# ── Démo Phase 4 (wallets de dev jetables + adresses imprimées par SetupDemo) ──
+# ── Phase 4 demo (throwaway dev wallets + addresses printed by SetupDemo) ──
 VICTIM_PRIVATE_KEY=
 VICTIM_ADDRESS=
 KEEPER_PRIVATE_KEY=
@@ -1017,12 +1017,12 @@ DEMO_PROTO=
 DEMO_VAULT=
 ```
 
-- [ ] **Step 6 : Vérifier la compilation Foundry du script**
+- [ ] **Step 6: Verify the Foundry compilation of the script**
 
 Run: `cd /Users/fianso/Development/hackathons/coincoin/contracts && forge build`
 Expected: `Compiler run successful`.
 
-- [ ] **Step 7 : Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 cd /Users/fianso/Development/hackathons/coincoin
@@ -1034,10 +1034,10 @@ git commit -m "feat(demo): end-to-end runner (7702 delegate -> exploit -> evacua
 
 ## Definition of Done (Phase 4)
 
-- [ ] `cd watcher && pnpm test` : tous les tests passent (schéma, registre, keeper, sources, orchestrateur).
-- [ ] `cd contracts && forge test` : 26/26 (Phase 1 + scénario d'exploit).
-- [ ] `pnpm exec tsc --noEmit` : pas d'erreur de type dans le watcher.
-- [ ] Procédure de démo documentée ; exécution live laissée à l'humain (clés keeper/victim).
-- [ ] Aucun secret commité.
+- [ ] `cd watcher && pnpm test`: all tests pass (schema, registry, keeper, sources, orchestrator).
+- [ ] `cd contracts && forge test`: 26/26 (Phase 1 + exploit scenario).
+- [ ] `pnpm exec tsc --noEmit`: no type error in the watcher.
+- [ ] Demo procedure documented; live run left to the human (keeper/victim keys).
+- [ ] No secret committed.
 
-**Next:** Phase 3 (adapters Aave V3 / GMX V2 pour évacuer aussi les positions DÉPOSÉES, pas seulement les fonds au repos) ; Phase 2 (moteur de règles Stylus pour le blocage local) ; Phase 5 (dashboard).
+**Next:** Phase 3 (Aave V3 / GMX V2 adapters to also evacuate the DEPOSITED positions, not only the funds at rest); Phase 2 (Stylus rules engine for local blocking); Phase 5 (dashboard).

@@ -1,13 +1,13 @@
 export type Severity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 const SEVERITIES: Severity[] = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
-/// Sous-ensemble du schéma Defimon `/ws/confirmed_attacks` (champs utilisés par coincoin).
+/// Subset of the Defimon `/ws/confirmed_attacks` schema (fields used by coincoin).
 export interface ThreatAlert {
   network: string;
   severity: Severity;
   attack_type: string;
   transaction_hash: string;
-  exploit_address: `0x${string}`; // contrat ciblé (le protocole exploité)
+  exploit_address: `0x${string}`; // targeted contract (the exploited protocol)
   attacker_address: `0x${string}`;
   block_number: number;
   victim_protocol?: string;
