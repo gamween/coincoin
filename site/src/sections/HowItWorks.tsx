@@ -2,6 +2,13 @@ import { Section, SectionHeading, Pill, Chevron } from "../components/ui";
 import { Reveal } from "../components/Reveal";
 import { PIPELINE, GUARANTEES } from "../data";
 
+const ICON: Record<string, string> = {
+  alerts: "/icons/alerts.png",
+  keeper: "/icons/keeper.png",
+  guardian: "/icons/eoa.png",
+  vault: "/icons/vault.png",
+};
+
 const STATUS = [
   { tone: "info", dot: "bg-info", text: "All quiet. coincoin is watching your wallets." },
   { tone: "danger", dot: "bg-danger", text: "COIN COIN ! Suspicious drain detected." },
@@ -37,6 +44,7 @@ export function HowItWorks() {
           <div key={step.key} className="flex flex-1 items-center gap-3">
             <Reveal delay={i * 0.08} className="flex-1">
               <div className="comic-card h-full p-5">
+                <img src={ICON[step.key]} alt="" aria-hidden="true" className="mb-3 h-16 w-16 object-contain" />
                 <div className="display text-[15px] text-primary">{step.label}</div>
                 <p className="mt-2 font-body text-body-sm text-text-muted">{step.body}</p>
               </div>

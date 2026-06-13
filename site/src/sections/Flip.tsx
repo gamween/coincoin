@@ -52,6 +52,7 @@ export function Flip() {
               <h3 className="display text-[22px] text-danger">The drainer</h3>
               <Pill tone="threat">90%+ ARE SWEEPERS</Pill>
             </div>
+            <img src="/flip-sweeper.png" alt="" aria-hidden="true" className="mx-auto mb-5 h-28 object-contain drop-shadow-[4px_5px_0_rgba(4,6,7,0.85)]" />
             <Flow nodes={["EOA", "SWEEPER"]} tone="danger" />
             <p className="mt-5 font-body text-body text-text-muted">
               They delegate your account to a sweeper contract. One signature, and everything you
@@ -67,6 +68,7 @@ export function Flip() {
               <h3 className="display text-[22px] text-success">coincoin</h3>
               <Pill tone="safe">YOUR SIDE</Pill>
             </div>
+            <img src="/flip-guardian.png" alt="" aria-hidden="true" className="mx-auto mb-5 h-28 object-contain drop-shadow-[4px_5px_0_rgba(4,6,7,0.85)]" />
             <Flow nodes={["EOA", "GUARDIAN", "VAULT"]} tone="success" />
             <p className="mt-5 font-body text-body text-text-muted">
               We delegate your account to a GuardianModule instead. The only move it can make is to

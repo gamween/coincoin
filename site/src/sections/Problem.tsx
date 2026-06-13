@@ -1,6 +1,7 @@
 import { Section, SectionHeading, Pill } from "../components/ui";
 import { Reveal } from "../components/Reveal";
 import { CountUp } from "../components/CountUp";
+import { Duck } from "../components/Duck";
 import { PROBLEM_BULLETS } from "../data";
 
 function StatCard({
@@ -8,15 +9,25 @@ function StatCard({
   label,
   source,
   delay,
+  stamp,
 }: {
   children: React.ReactNode;
   label: string;
   source: string;
   delay: number;
+  stamp?: string;
 }) {
   return (
     <Reveal delay={delay}>
-      <div className="comic-card glow-red h-full !border-danger p-7">
+      <div className="comic-card glow-red relative h-full !border-danger p-7">
+        {stamp && (
+          <img
+            src={stamp}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-5 -top-6 w-24 rotate-6 drop-shadow-[3px_4px_0_rgba(4,6,7,0.8)]"
+          />
+        )}
         <div className="display text-[clamp(34px,5vw,52px)] leading-none text-danger">{children}</div>
         <p className="mt-4 font-body text-body text-text-primary">{label}</p>
         <p className="mt-3 font-body text-caption uppercase tracking-wide text-text-muted">Source: {source}</p>
@@ -28,6 +39,10 @@ function StatCard({
 export function Problem() {
   return (
     <Section id="problem">
+      <Duck
+        state="alert"
+        className="pointer-events-none absolute right-3 top-10 z-10 hidden w-48 -rotate-2 lg:block"
+      />
       <SectionHeading
         eyebrow="THE PROBLEM"
         eyebrowTone="threat"
@@ -36,13 +51,13 @@ export function Problem() {
       />
 
       <div className="mt-12 grid gap-6 md:grid-cols-3">
-        <StatCard label="stolen in 2025 via wallet drainers & phishing" source="Scam Sniffer" delay={0}>
+        <StatCard label="stolen in 2025 via wallet drainers & phishing" source="Scam Sniffer" delay={0} stamp="/pow-stamp.png">
           <CountUp to={83.85} decimals={2} prefix="$" suffix="M" />
         </StatCard>
         <StatCard label="victims in a single year" source="Scam Sniffer" delay={0.08}>
           <CountUp to={106106} />
         </StatCard>
-        <StatCard label="the non-atomic response window exploits leave open" source="Defimon" delay={0.16}>
+        <StatCard label="the non-atomic response window exploits leave open" source="Defimon" delay={0.16} stamp="/boom-stamp.png">
           4 min → 5 days
         </StatCard>
       </div>
