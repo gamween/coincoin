@@ -371,3 +371,13 @@ Don't:
 - Do not mix red and green as equal accents on the same screen unless showing before-and-after security states.
 - Do not use thin gray borders, glassmorphism, pastel gradients, or minimal fintech styling.
 - Do not replace `COIN COIN !` with another quack, slogan, or localized translation.
+
+## 10. Illustrations de la campagne
+
+Série de visuels produits pour le fil X du buildathon (un par jour). Tous en 16:9, même univers comic (canard `#F5D90A`, voleur bleu, fond bleu nuit, briques pixel, lettrage block jaune). Servent aussi de référence de style et de personnages pour générer les suivants.
+
+| Fichier | Sujet | Usage |
+|---|---|---|
+| [`coincoin-illustration.png`](coincoin-illustration.png) | Canard alerte « COIN COIN ! » devant le coffre, voleur en fuite | Jour 1 : ce que c'est |
+| [`eip-7702-flip.png`](eip-7702-flip.png) | Split EIP-7702 : drainer (EOA → SWEEPER) vs coincoin (EOA → GUARDIAN → VAULT), badge « 90%+ ARE SWEEPERS » | Jour 2, tweet 1 : le retournement de primitive |
+| [`how-it-works.png`](how-it-works.png) | Pipeline ALERTS → KEEPER → EOA/GUARDIAN → VAULT, badges « ONLY YOUR VAULT » et « REVOCABLE » | Jour 2, tweet 2 : le mécanisme et la garantie |
