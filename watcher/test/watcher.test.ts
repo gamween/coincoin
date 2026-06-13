@@ -43,4 +43,23 @@ describe("runWatcher", () => {
     });
     expect(evacuate).not.toHaveBeenCalled();
   });
+
+  it("continues evacuating other exposed accounts when one evacuation fails", async () => {
+    const evacuate = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("boom"))
+      .mockResolvedValueOnce("0xhash");
+    const exposed2: ProtectedAccount = {
+      ...exposed,
+      address: "0x3333333333333333333333333333333333333333",
+    };
+    await runWatcher({
+      source: new MockThreatSource([alert]),
+      accounts: [exposed, exposed2],
+      keeper: { evacuate },
+    });
+    expect(evacuate).toHaveBeenCalledTimes(2);
+    expect(evacuate).toHaveBeenNthCalledWith(1, exposed.address, exposed.tokens);
+    expect(evacuate).toHaveBeenNthCalledWith(2, exposed2.address, exposed2.tokens);
+  });
 });

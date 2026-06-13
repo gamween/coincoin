@@ -12,13 +12,19 @@ export interface WatcherDeps {
 }
 
 /// Câble la boucle : chaque alerte → comptes exposés → évacuation de leurs tokens.
+/// Daemon-safe : une évacuation qui échoue est loggée et N'INTERROMPT PAS la boucle
+/// (les autres comptes exposés sont quand même traités, le watcher reste vivant).
 export async function runWatcher({ source, accounts, keeper }: WatcherDeps): Promise<void> {
   await source.start(async (alert) => {
     const exposed = findExposed(alert, accounts);
     for (const acc of exposed) {
       console.log(`[coincoin] 🦆 COIN COIN ! menace sur ${alert.exploit_address} → évacuation de ${acc.address}`);
-      const hash = await keeper.evacuate(acc.address, acc.tokens);
-      console.log(`[coincoin] ✅ évacué vers ${acc.safeVault} (tx ${hash})`);
+      try {
+        const hash = await keeper.evacuate(acc.address, acc.tokens);
+        console.log(`[coincoin] ✅ évacué vers ${acc.safeVault} (tx ${hash})`);
+      } catch (err) {
+        console.error(`[coincoin] ⚠️ évacuation échouée pour ${acc.address}:`, err);
+      }
     }
   });
 }
