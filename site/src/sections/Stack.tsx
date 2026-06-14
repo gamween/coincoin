@@ -28,7 +28,7 @@ export function Stack() {
               href={`${DOCS_URL}#deploy`}
               className="mt-5 inline-block font-body text-body-sm font-semibold text-info underline-offset-2 hover:underline"
             >
-              Roadmap: local rules engine · GMX exit →
+              Roadmap: PreAuthRegistry · broader rules · GMX exit →
             </a>
           </div>
         </Reveal>

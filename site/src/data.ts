@@ -141,6 +141,11 @@ export const ARCH_UNITS = [
     body: "Yours alone. The keeper can only push funds in. Only you, the owner, can ever withdraw funds out.",
   },
   {
+    name: "RulesEngineV1.sol",
+    tag: "Solidity",
+    body: "The proactive layer. Outgoing calls routed through the guardian's execute() are scored by this stateless engine; granting spending power to an untrusted spender — unlimited approve, increaseAllowance, EIP-2612 permit, or blanket setApprovalForAll — reverts at the account level before it lands. Stylus-ready behind IRulesEngine.",
+  },
+  {
     name: "ChainThreatSource",
     tag: "TypeScript",
     body: "Polls Drained logs in ≤10-block windows (respecting RPC caps) and decodes them into Defimon-shaped alerts.",
@@ -181,6 +186,7 @@ export const STACK_LIVE = [
   "Foundry",
   "EIP-7702 guardian",
   "DeFi position exit",
+  "Local firewall",
   "TypeScript",
   "viem",
   "vitest",

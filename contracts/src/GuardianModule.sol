@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IRulesEngine} from "./IRulesEngine.sol";
 
 /// @dev Minimal Aave V3 Pool surface used by the DeFi-position exit. The real Pool
 ///      (mainnet 0x794a61358D6845594F94dc1DB02A252b5b4814aD) matches this ABI;
@@ -21,6 +22,12 @@ contract GuardianModule {
     address public keeper;
     bool public configured;
     uint256 private _locked; // reentrancy guard (0 = free, 1 = busy)
+
+    // Local firewall (proactive layer): outgoing calls routed through execute() are scored by
+    // the rules engine and reverted at the account level when a drain pattern is flagged.
+    address public rulesEngine;
+    uint16 public blockThreshold; // 0 = firewall off; otherwise block at/above this score
+    mapping(address => bool) public trustedSpender;
 
     event Configured(address indexed safeVault, address indexed keeper);
 
@@ -160,5 +167,62 @@ contract GuardianModule {
                 emit ApprovalRevokeFailed(tokens[i], spenders[i]);
             }
         }
+    }
+
+    // ─── Local firewall: proactive, account-level blocking of obvious drains ───
+
+    event RulesConfigured(address indexed rulesEngine, uint16 threshold);
+    event SpenderTrusted(address indexed spender, bool trusted);
+    event Blocked(address indexed to, uint16 score, address indexed spender);
+    event Executed(address indexed to, uint256 value);
+
+    error CallBlocked(uint16 score, address spender);
+
+    /// @notice Configure the local rules engine + the score at which a call is blocked.
+    /// @dev threshold == 0 turns the firewall off. The engine is a stateless scorer (an
+    ///      IRulesEngine; a Stylus impl can drop in behind the same ABI later).
+    function setRules(address rulesEngine_, uint16 threshold_) external onlySelf {
+        rulesEngine = rulesEngine_;
+        blockThreshold = threshold_;
+        emit RulesConfigured(rulesEngine_, threshold_);
+    }
+
+    /// @notice Allowlist a spender so a deliberate approval to a contract you trust isn't blocked.
+    function trustSpender(address spender, bool trusted) external onlySelf {
+        trustedSpender[spender] = trusted;
+        emit SpenderTrusted(spender, trusted);
+    }
+
+    /// @notice Route an outgoing call through the firewall. A flagged drain pattern (e.g. an
+    ///         unlimited approval / blanket NFT approval to an untrusted spender) reverts at the
+    ///         account level — the malicious signature never lands.
+    /// @dev onlySelf: this is the account's OWN execution entrypoint (EIP-7702 / 4337 style), so
+    ///      it grants the keeper nothing and adds no surface the EOA didn't already have — it only
+    ///      interposes the rules check. Protection holds for calls ROUTED THROUGH here; a direct
+    ///      top-level EOA tx bypasses it (opt-in per call). `value` is funded from the account's own
+    ///      balance (it need not equal msg.value). NOTE: rulesEngine/trustedSpender are NOT reset on
+    ///      re-delegation — call setRules after delegating to a fresh GuardianModule.
+    function execute(address to, uint256 value, bytes calldata data)
+        external
+        payable
+        onlySelf
+        nonReentrant
+        returns (bytes memory)
+    {
+        if (blockThreshold != 0 && rulesEngine != address(0)) {
+            (uint16 s, address spender) = IRulesEngine(rulesEngine).score(to, value, data);
+            if (s >= blockThreshold && !(spender != address(0) && trustedSpender[spender])) {
+                emit Blocked(to, s, spender);
+                revert CallBlocked(s, spender);
+            }
+        }
+        (bool ok, bytes memory ret) = to.call{value: value}(data);
+        if (!ok) {
+            assembly {
+                revert(add(ret, 0x20), mload(ret))
+            }
+        }
+        emit Executed(to, value);
+        return ret;
     }
 }
