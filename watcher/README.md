@@ -24,11 +24,15 @@ cd ../contracts && set -a && source ../.env && set +a
 forge script script/Deploy.s.sol:DeployGuardian --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast
 # 2) demo setup (token + vulnerable protocol + victim's SafeVault + MockAavePool position)
 forge script script/SetupDemo.s.sol:SetupDemo --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast
+# 3) local-firewall scorer (lights up the dashboard's firewall controls)
+forge script script/DeployRules.s.sol:DeployRules --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast
 ```
 
-Record in `../.env`: `GUARDIAN_IMPL` (impl from step 1), then `DEMO_TOKEN`,
-`DEMO_PROTO`, `DEMO_VAULT`, and `DEMO_AAVE_POOL` (step 2). With `DEMO_AAVE_POOL`
-set, the watcher exits the victim's deposited Aave position before sweeping.
+Record in `../.env`: `GUARDIAN_IMPL` (step 1), then `DEMO_TOKEN`, `DEMO_PROTO`,
+`DEMO_VAULT`, `DEMO_AAVE_POOL` (step 2). With `DEMO_AAVE_POOL` set, the watcher exits the
+victim's deposited Aave position before sweeping. To enable the firewall from the dashboard,
+set `VITE_RULES_ENGINE` in `site/.env` to the RulesEngineV1 address (step 3), then
+`pnpm build` the site — the "Enable firewall" button calls `setRules`.
 
 ## End-to-end demo (multi-terminal)
 

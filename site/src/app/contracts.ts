@@ -10,9 +10,9 @@ export const ADDR = {
   guardianImpl: "0x6671b4B73b79c284A710B00ef777d8E65f55200F",
   /// Demo dUSD token used in the end-to-end scenario.
   token: "0x759E3Febe2F4034cBfA61A70A4349a1C201c22ac",
-  /// RulesEngineV1 — deploy on Robinhood and paste its address here to enable the firewall
-  /// controls from the dashboard. Empty = firewall management shown read-only / disabled.
-  rulesEngine: "" as `0x${string}` | "",
+  /// RulesEngineV1 — deploy on Robinhood (script/DeployRules.s.sol) and set its address as
+  /// VITE_RULES_ENGINE to enable the firewall controls. Empty = the Enable button stays off.
+  rulesEngine: ((import.meta.env.VITE_RULES_ENGINE as string | undefined) ?? "") as `0x${string}` | "",
 } as const;
 
 export const guardianAbi = [
