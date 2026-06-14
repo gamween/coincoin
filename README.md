@@ -35,13 +35,16 @@ Brand kit (design system in UI tokens: palette, fonts, components, mascot): [`do
 
 ## Status
 
-**Live, end-to-end** on Robinhood Chain testnet (chain 46630, Arbitrum Orbit):
+**Built & fully tested — 90 tests** (65 Foundry incl. a real-Aave fork on Arbitrum One, 25 watcher):
 
-- ✅ `GuardianModule` (EIP-7702 delegate) — bounded keeper, **frozen vault** (a leaked key can't redirect funds), ERC-20 sweep + approval revocation.
-- ✅ **Signed policy (PreAuthRegistry, folded)** — the account sets a policy (safe vault + a multi-keeper set) directly or via an **EIP-712 signature a relayer submits**, so onboarding can be **gasless**. The vault is frozen on first config; rotating the keeper set revokes the old keepers; a leaked keeper key can't change the policy. *(Asset/protocol scoping in the policy is roadmap.)*
-- ✅ `SafeVault` (owner-only withdrawal) + watcher with **real on-chain threat detection** → exit + evacuate, no human in the loop.
-- ✅ **DeFi position auto-exit** — `exitAaveV3` pulls funds *deposited in a protocol* back to the account, then sweeps to your vault (**Harpie's blind spot, covered**). It's **fork-verified against the live Aave V3 Pool on Arbitrum One** (`test/AaveRealFork.t.sol`) and unit-tested against a `MockAavePool`. Not run on Robinhood itself — **Aave V3 isn't deployed there** — but it's the same code path proven against real Aave.
-- ✅ **Local firewall** (proactive layer) — outgoing calls routed through `execute()` are scored by a stateless `RulesEngine` and **reverted at the account level** when they grant spending power to an *untrusted* spender: an unlimited `approve`, `increaseAllowance`, EIP-2612 `permit`, or a blanket NFT `setApprovalForAll`. `IRulesEngine` is Stylus-ready. **Honest limits:** it only protects calls *routed through* `execute` (a direct top-level EOA tx bypasses it), and covers those four approval vectors — **not** Permit2, multicall/batched calls, or direct `transfer`/`transferFrom`.
+- ✅ `GuardianModule` (EIP-7702 delegate) — **frozen vault** (a leaked key can't redirect funds), bounded keeper, ERC-20 sweep + approval revocation.
+- ✅ **Signed policy (PreAuthRegistry, folded)** — set a policy (safe vault + multi-keeper set) directly or via an **EIP-712 signature a relayer submits** (gasless onboarding). Vault frozen on first config; rotating the keeper set revokes the old keepers; a leaked keeper key can't change the policy. *(Asset/protocol scoping is roadmap.)*
+- ✅ **DeFi position auto-exit** — `exitAaveV3` pulls funds *deposited in a protocol* back to the account, then sweeps to your vault (**Harpie's blind spot, covered**). **Fork-verified against the live Aave V3 Pool on Arbitrum One** (`test/AaveRealFork.t.sol`); unit-tested vs `MockAavePool` (Aave V3 isn't on Robinhood) — same code path, proven on real Aave.
+- ✅ **Local firewall** (proactive layer) — calls routed through `execute()` are scored by a stateless `RulesEngine` and **reverted at the account level** for an unlimited `approve` / `increaseAllowance` / EIP-2612 `permit` / blanket `setApprovalForAll` to an *untrusted* spender. Stylus-ready. **Limits:** only protects calls routed through `execute`; covers those four vectors — not Permit2, multicall, or direct transfers.
+- ✅ `SafeVault` (owner-only withdrawal) + watcher (**real on-chain detection** → exit → evacuate, receipt-confirmed) + a dashboard dApp (`site` → `/app`).
+
+**Live on Robinhood Chain testnet (chain 46630) right now:** the **core loop** — EIP-7702 delegation, ERC-20 sweep, and the real on-chain **detection → evacuation** — runs live (the GuardianModule deployed there predates the features above). **To run the frozen vault, signed policy, DeFi exit and firewall live on Robinhood too, redeploy the current contracts** — see [`watcher/README.md` → Deployment](watcher/README.md) (one `forge script` set + `pnpm onboard`).
+
 - 🔭 Roadmap: policy asset/protocol scoping · broader rules (Permit2 / multicall / transfer heuristics) · GMX V2 exit · Stylus rules engine.
 
-Run it: see [`docs/superpowers/specs`](docs/superpowers/specs) and `watcher/` (`pnpm onboard` → `pnpm watch`). Tests: `forge test` (contracts) · `pnpm test` (watcher).
+Run it: [`watcher/README.md`](watcher/README.md) (`pnpm onboard` → `pnpm watch`). Tests: `forge test` (contracts; set `ARBITRUM_ONE_RPC` to include the live-Aave fork) · `pnpm test` (watcher).

@@ -14,9 +14,8 @@ const ALT: Record<DuckState, string> = {
 };
 
 /**
- * State-driven mascot. The standalone duck PNGs (duck-alert/calm/hero.png) are generated
- * later; until they exist the <img> errors and renders nothing — sections stay beautiful
- * via the three real campaign illustrations. Drop the PNGs into /public and they appear.
+ * State-driven mascot. The standalone duck PNGs (duck-alert/calm/hero.png) live in /public;
+ * the onError fallback keeps a section safe if one is ever missing.
  */
 export function Duck({ state, className = "" }: { state: DuckState; className?: string }) {
   const [ok, setOk] = useState(true);

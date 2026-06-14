@@ -15,5 +15,5 @@
   "deployedAt": "2026-06-12",
   "deployer": "0xdae8992a9b5Fe850bE63781d1c2e65a3e496F728",
   "explorer": "https://explorer.testnet.chain.robinhood.com/address/0x6671b4B73b79c284A710B00ef777d8E65f55200F",
-  "note": "Robinhood Chain testnet (Arbitrum Orbit). Detection -> exit -> evacuation runs live here. The DeFi exit uses MockAavePool (Aave V3 is not deployed on this chain); exitAaveV3 targets the real Aave V3 withdraw ABI."
+  "note": "Robinhood Chain testnet (Arbitrum Orbit). LIVE here: EIP-7702 delegation + ERC-20 sweep + on-chain detection->evacuation (the core loop). This deployed GuardianModule PREDATES the frozen-vault, signed-policy, exitAaveV3 and firewall features — redeploy (Deploy + DeployRules + SetupDemo, then re-onboard) to run those live here too, and add the new GuardianModule + RulesEngineV1 + MockAavePool addresses. The DeFi exit is fork-verified against real Aave V3 on Arbitrum One (Aave isn't deployed on this chain)."
 }

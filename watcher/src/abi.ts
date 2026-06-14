@@ -8,16 +8,6 @@ export const guardianAbi = [
   },
   {
     type: "function",
-    name: "revokeApprovals",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "tokens", type: "address[]" },
-      { name: "spenders", type: "address[]" },
-    ],
-    outputs: [],
-  },
-  {
-    type: "function",
     name: "exitAaveV3",
     stateMutability: "nonpayable",
     inputs: [

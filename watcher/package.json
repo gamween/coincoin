@@ -7,7 +7,8 @@
     "test": "vitest run",
     "onboard": "tsx scripts/onboard.ts",
     "watch": "tsx scripts/watch.ts",
-    "exploit": "tsx scripts/exploit.ts"
+    "exploit": "tsx scripts/exploit.ts",
+    "revoke": "tsx scripts/revoke.ts"
   },
   "dependencies": {
     "viem": "^2.21.0",

@@ -10,7 +10,6 @@ export interface ThreatAlert {
   exploit_address: `0x${string}`; // targeted contract (the exploited protocol)
   attacker_address: `0x${string}`;
   block_number: number;
-  victim_protocol?: string;
 }
 
 function requireString(obj: Record<string, unknown>, key: string): string {
@@ -38,6 +37,5 @@ export function parseThreatAlert(raw: unknown): ThreatAlert {
     exploit_address: requireAddress(obj, "exploit_address"),
     attacker_address: requireAddress(obj, "attacker_address"),
     block_number: typeof obj.block_number === "number" ? obj.block_number : 0,
-    victim_protocol: typeof obj.victim_protocol === "string" ? obj.victim_protocol : undefined,
   };
 }
