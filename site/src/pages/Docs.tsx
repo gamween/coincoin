@@ -202,10 +202,10 @@ forge script script/SetupDemo.s.sol:SetupDemo \\
           <P>
             <strong className="text-text-primary">On the DeFi exit &amp; mocks (honest note):</strong>{" "}
             <code className="font-mono text-primary">exitAaveV3</code> is fork-verified against the{" "}
-            <em>live</em> Aave V3 Pool on Arbitrum One (<code className="font-mono text-primary">test/AaveForkReal.t.sol</code>).
-            The Robinhood demo runs the identical code against a{" "}
-            <code className="font-mono text-primary">MockAavePool</code> because Aave V3 isn't deployed
-            on Robinhood Chain. The only other deliberate mock is the <em>sacrificial</em> vulnerable
+            <em>live</em> Aave V3 Pool on Arbitrum One (<code className="font-mono text-primary">test/AaveRealFork.t.sol</code>)
+            and unit-tested against a <code className="font-mono text-primary">MockAavePool</code>. It hasn't
+            run on Robinhood itself — Aave V3 isn't deployed there — but it's the same code path proven
+            against real Aave. The only other deliberate mock is the <em>sacrificial</em> vulnerable
             protocol we attack to trigger detection; the detection itself reads real on-chain logs.
           </P>
         </Section>

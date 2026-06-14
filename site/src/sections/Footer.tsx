@@ -28,7 +28,7 @@ export function Footer() {
           </p>
         </div>
 
-        {/* brand + the two pages + socials */}
+        {/* brand + the pages */}
         <div className="mt-12 flex flex-col items-center gap-8 border-t-[3px] border-surface pt-10 md:flex-row md:items-center md:justify-between">
           <a href="#hero" className="flex items-center gap-2.5" aria-label="coincoin home">
             <ShieldLogo size={40} />

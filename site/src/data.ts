@@ -17,7 +17,7 @@ export const DEPLOY_PROOF = {
   explorerLabel: "View on explorer ↗",
 };
 
-// Contacts (footer). X handle pending confirmation from the owner.
+// Contacts (footer + contact page).
 export const CONTACTS = {
   github: "https://github.com/gamween",
   x: "https://x.com/gamween",
@@ -107,9 +107,6 @@ export type ProcTerminal = {
   lines: TermLine[];
 };
 
-// Two genuinely separate OS processes, faithful to the real watcher/scripts and the live
-// Robinhood Chain Testnet (chain 46630) demo addresses. The attacker fires; the guardian,
-// watching independently, detects the same on-chain Drained log and evacuates.
 // The guardian daemon running live on Robinhood Chain Testnet (chain 46630). This is what
 // `pnpm watch` actually logs: it watches the chain itself and evacuates to your vault the
 // moment a real threat is detected — it never holds your key.
@@ -187,10 +184,6 @@ export const STACK_LIVE = [
   "TypeScript",
   "viem",
   "vitest",
-];
-export const STACK_PLANNED = [
-  "Local rules engine (Solidity → Stylus) — next",
-  "GMX V2 position exit — roadmap",
 ];
 export const CHAINS: {
   name: string;

@@ -124,27 +124,10 @@
     -webkit-text-stroke: 2px var(--color-near-black);
     paint-order: stroke fill;
   }
-  .text-stroke-thick {
-    -webkit-text-stroke: 3px var(--color-near-black);
-    paint-order: stroke fill;
-  }
-  /* Pixel-brick wall texture fallback (until brick image art is dropped in). */
-  .bg-bricks {
-    background-color: #07142e;
-    background-image:
-      linear-gradient(rgba(62, 181, 243, 0.06) 2px, transparent 2px),
-      linear-gradient(90deg, rgba(4, 6, 7, 0.5) 2px, transparent 2px),
-      linear-gradient(90deg, rgba(4, 6, 7, 0.5) 2px, transparent 2px);
-    background-size: 100% 40px, 80px 40px, 80px 40px;
-    background-position: 0 0, 0 0, 40px 20px;
-  }
   .glow-green {
     box-shadow: 0 0 24px rgba(39, 201, 63, 0.65);
   }
   .glow-red {
     box-shadow: 0 0 24px rgba(255, 59, 59, 0.55);
-  }
-  .glow-blue {
-    box-shadow: 0 0 18px rgba(62, 181, 243, 0.45);
   }
 }

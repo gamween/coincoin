@@ -4,8 +4,16 @@
 - **Author**: Sofiane (+ Claude)
 - **Event**: Arbitrum Open House London — Buildathon online (submission **June 14, 2026**), Founder House IRL London July 10-12
 - **Targeted tracks**: Open / General · Security · (bonus) Robinhood Chain
-- **Status**: design validated, spec in progress → implementation plan
+- **Status**: original design vision (see banner) — shipped scope is narrower
 - **Repo**: https://github.com/gamween/coincoin
+
+> ⚠️ **This document is the original design vision (June 10), not the shipped scope.**
+> **Built today:** the EIP-7702 `GuardianModule` (ERC-20 sweep, approval revocation, `exitAaveV3`
+> DeFi-position exit, frozen vault), `SafeVault`, and a TypeScript watcher doing real on-chain
+> detection → exit → evacuate, live on Robinhood Chain. **Not built (roadmap):** `PreAuthRegistry`,
+> the Stylus/Solidity `RulesEngine` + per-tx hook, the ERC-7579/Safe path, GMX V2, ZeroDev, the real
+> Defimon WS feed, and the Next.js dashboard. The present tense below describes the *intended* product;
+> see the repo **README → Status** for what actually runs.
 
 > 🦆 **coincoin** — the onchain firewall that shouts "coin coin !" when someone tries to drain you, and moves your funds to safety on its own. The canary in the coal mine, self-custody edition, on Arbitrum.
 

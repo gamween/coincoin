@@ -1,4 +1,4 @@
-# Secrets — JAMAIS commité
+# Secrets — never commit
 .env
 .env.local
 .env.*.local
@@ -18,9 +18,9 @@ target/
 cache/
 broadcast/
 
-# Worktrees locaux
+# Local worktrees
 .worktrees/
 
-# Divers
+# Misc
 .DS_Store
 *.log

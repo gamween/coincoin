@@ -71,7 +71,7 @@ async function main() {
   await runWatcher({
     source: new ChainThreatSource({ fetcher, protocols: [cfg.proto], signal: controller.signal }),
     accounts: [account],
-    keeper: new KeeperClient(keeperWallet, ORBIT_TX_GAS),
+    keeper: new KeeperClient(keeperWallet, ORBIT_TX_GAS, pub),
   });
   console.log("[coincoin] watcher stopped.");
 }

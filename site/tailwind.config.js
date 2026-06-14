@@ -58,9 +58,6 @@ export default {
         "bevel-sm": "4px 4px 0 #040607",
         bevel: "8px 8px 0 #040607",
         "bevel-lg": "14px 14px 0 #040607",
-        "green-glow": "0 0 24px rgba(39, 201, 63, 0.65)",
-        "red-glow": "0 0 24px rgba(255, 59, 59, 0.55)",
-        "blue-glow": "0 0 18px rgba(62, 181, 243, 0.45)",
       },
       spacing: {
         1: "4px",
@@ -80,18 +77,6 @@ export default {
         "brand-gradient": "linear-gradient(180deg, #0B1B3A 0%, #032B73 48%, #078BEB 100%)",
       },
       keyframes: {
-        "fade-up": {
-          "0%": { opacity: "0", transform: "translateY(24px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        bob: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-8px)" },
-        },
-        "pulse-red": {
-          "0%, 100%": { boxShadow: "0 0 24px rgba(255,59,59,0.55)" },
-          "50%": { boxShadow: "0 0 44px rgba(255,59,59,0.95)" },
-        },
         blink: {
           "0%, 49%": { opacity: "1" },
           "50%, 100%": { opacity: "0" },
@@ -102,9 +87,6 @@ export default {
         },
       },
       animation: {
-        "fade-up": "fade-up 0.7s cubic-bezier(0.16,1,0.3,1) both",
-        bob: "bob 3s ease-in-out infinite",
-        "pulse-red": "pulse-red 1.2s ease-in-out infinite",
         blink: "blink 1s step-end infinite",
         marquee: "marquee 32s linear infinite",
       },

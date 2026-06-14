@@ -2,7 +2,8 @@
 
 The landing / presentation site for **coincoin**, the self-custodial onchain firewall
 ([repo root README](../README.md)). Long-scroll one-pager that explains the project, shows the
-EIP-7702 "flip", walks through the live CLI demo, and links to the code.
+EIP-7702 "flip", walks through how to run the CLI, and links to the code. Plus standalone
+Docs / Contact / License pages.
 
 Built with **Vite + React + TypeScript + Tailwind**. The theme is the brand kit
 ([`docs/brand/BRAND.md`](../docs/brand/BRAND.md)) — comic/brutalist, night-blue gradient, the
@@ -19,12 +20,11 @@ pnpm preview   # serve the built dist/
 
 ## Assets
 
-The three campaign illustrations (`public/coincoin-illustration.png`, `eip-7702-flip.png`,
-`how-it-works.png`) ship in `public/` and are used directly. Logo, favicon, the standalone duck
-states (`duck-alert/calm/hero.png`), the social card (`og-image.png`), and textures are slots:
-the site ships sensible placeholders/fallbacks and renders fully without them. Generate the final
-art from [`docs/brand/site-image-prompts.md`](../docs/brand/site-image-prompts.md) and drop the
-files into `public/` — they're picked up by filename, no code change needed.
+Brand art lives in `public/`: the campaign illustration (`coincoin-illustration.png` — also the
+hero and the OG/Twitter card, see `index.html`), the extracted cutouts used by the hero and the
+section index (`hero-*.png`, `duck-*.png`, `flip-*.png`), the pipeline icons (`icons/`), the
+stamps (`pow-/boom-/speed-*.png`), and the brick texture (`bg-brick-tile.png`). New art is picked
+up by filename — no code change needed. Source prompts: [`docs/brand/site-image-prompts.md`](../docs/brand/site-image-prompts.md).
 
 ## Deploy
 

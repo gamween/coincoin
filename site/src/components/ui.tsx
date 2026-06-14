@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/* ── Shield-medal logo (the canonical mark, BRAND §7). SVG placeholder until art lands. ── */
+/* ── Shield-medal logo (the canonical mark, BRAND §7), rendered site-wide as inline SVG. ── */
 export function ShieldLogo({ size = 44, className = "" }: { size?: number; className?: string }) {
   return (
     <svg viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden="true">
@@ -33,7 +33,7 @@ export function Wordmark({ className = "" }: { className?: string }) {
 }
 
 /* ── Pills / badges ── */
-type Tone = "brand" | "action" | "threat" | "safe" | "info" | "tech" | "planned";
+type Tone = "brand" | "action" | "threat" | "safe" | "info" | "tech";
 const pillTone: Record<Tone, string> = {
   brand: "border-border-soft bg-surface/60 text-text-primary",
   action: "border-border bg-primary text-text-inverse",
@@ -41,7 +41,6 @@ const pillTone: Record<Tone, string> = {
   safe: "border-border bg-success text-text-inverse",
   info: "border-info bg-surface text-info",
   tech: "border-info bg-surface text-text-primary",
-  planned: "border-dashed border-info bg-transparent text-text-muted",
 };
 export function Pill({ tone = "brand", children, className = "" }: { tone?: Tone; children: ReactNode; className?: string }) {
   return <span className={`pill ${pillTone[tone]} ${className}`}>{children}</span>;
@@ -85,23 +84,12 @@ export function SectionHeading({
   );
 }
 
-/* ── Pixel-brick section divider ── */
-export function BrickDivider() {
-  return (
-    <div aria-hidden="true" className="relative h-10 w-full overflow-hidden">
-      <div className="bg-bricks absolute inset-0 opacity-50" />
-      <div className="absolute inset-x-0 top-0 h-[3px] bg-border" />
-      <div className="absolute inset-x-0 bottom-0 h-[3px] bg-border" />
-    </div>
-  );
-}
-
 /* ── Comic arrow chevron between pipeline nodes ── */
-export function Chevron({ className = "", down = false }: { className?: string; down?: boolean }) {
+export function Chevron({ className = "" }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 40 24"
-      className={`${className} ${down ? "rotate-90" : ""}`}
+      className={className}
       width="40"
       height="24"
       aria-hidden="true"

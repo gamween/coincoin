@@ -44,3 +44,27 @@ describe("KeeperClient.exitAaveV3", () => {
     );
   });
 });
+
+describe("KeeperClient receipt confirmation", () => {
+  const victim = "0x1111111111111111111111111111111111111111" as const;
+  const tokens = ["0xcccc000000000000000000000000000000000000"] as `0x${string}`[];
+
+  it("waits for the receipt and resolves when the tx succeeds", async () => {
+    const sendTransaction = vi.fn().mockResolvedValue("0xhash");
+    const waitForTransactionReceipt = vi.fn().mockResolvedValue({ status: "success" });
+    const keeper = new KeeperClient({ sendTransaction } as any, undefined, { waitForTransactionReceipt });
+
+    const hash = await keeper.evacuate(victim, tokens);
+
+    expect(hash).toBe("0xhash");
+    expect(waitForTransactionReceipt).toHaveBeenCalledWith({ hash: "0xhash" });
+  });
+
+  it("throws when the rescue tx reverts (so a logged success means it landed)", async () => {
+    const sendTransaction = vi.fn().mockResolvedValue("0xhash");
+    const waitForTransactionReceipt = vi.fn().mockResolvedValue({ status: "reverted" });
+    const keeper = new KeeperClient({ sendTransaction } as any, undefined, { waitForTransactionReceipt });
+
+    await expect(keeper.evacuate(victim, tokens)).rejects.toThrow(/reverted/);
+  });
+});
