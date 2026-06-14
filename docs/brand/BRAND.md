@@ -381,3 +381,6 @@ Series of visuals produced for the buildathon X thread (one per day). All in 16:
 | [`coincoin-illustration.png`](coincoin-illustration.png) | Duck raising the alarm "COIN COIN !" in front of the vault, thief fleeing | Day 1: what it is |
 | [`eip-7702-flip.png`](eip-7702-flip.png) | EIP-7702 split: drainer (EOA → SWEEPER) vs coincoin (EOA → GUARDIAN → VAULT), "90%+ ARE SWEEPERS" badge | Day 2, tweet 1: flipping the primitive |
 | [`how-it-works.png`](how-it-works.png) | ALERTS → KEEPER → EOA/GUARDIAN → VAULT pipeline, "ONLY YOUR VAULT" and "REVOCABLE" badges | Day 2, tweet 2: the mechanism and the guarantee |
+| [`response-window.png`](response-window.png) | "THE RESPONSE WINDOW" timeline, FIRST TX → 4 MIN / 5 DAYS → FULL DRAIN, duck with a stopwatch inside the window | Day 3, tweet 1: the non-atomic window thesis |
+| [`on-autopilot.png`](on-autopilot.png) | "ON AUTOPILOT": keeper bird scans the chain, a DRAINED block fires, duck sweeps the EOA into a frozen SAFEVAULT | Day 3, tweet 2: the automatic detect → evacuate loop |
+| [`out-before-the-drain.png`](out-before-the-drain.png) | "OUT BEFORE THE DRAIN": duck pulls funds out of an AAVE V3 pool, away from the thief, into YOUR VAULT, "ONLY YOUR VAULT" badge | Day 3, tweet 3: the DeFi position exit (Harpie blind spot) |
