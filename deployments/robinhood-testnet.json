@@ -3,17 +3,19 @@
   "network": "robinhood-chain-testnet",
   "rpc": "https://rpc.testnet.chain.robinhood.com/rpc",
   "contracts": {
-    "GuardianModule": "0x6671b4B73b79c284A710B00ef777d8E65f55200F"
+    "GuardianModule": "0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77",
+    "RulesEngineV1": "0xc20A9d7D38B07a9C74A1fD87A2e25CA1973Cbc52"
   },
   "demo": {
-    "_comment": "Live end-to-end detection->evacuation scenario (pnpm onboard/watch/exploit).",
-    "SafeVault": "0xF60c3Dc4557ff81C68605Cdf9A9b23d31e38Fe7A",
-    "MockERC20": "0x759E3Febe2F4034cBfA61A70A4349a1C201c22ac",
-    "MockVulnerableProtocol": "0x177B7B97f1bF4aaDEF8a0aEF4145CCDC1408c1Db",
-    "victim": "0xFD0AFe0E91CBb9EBEB181060441a54E19300Ea89"
+    "_comment": "Live end-to-end detection->evacuation + DeFi-exit scenario (pnpm onboard/watch/exploit). MockAavePool holds a deposited position credited to the victim (exitAaveV3 target).",
+    "SafeVault": "0x49be3DC48fC0540346A064fCC6Fc94FBaE62f479",
+    "MockERC20": "0xC32C2eB815F1413ee2c7A68d2EFf3760d828841E",
+    "MockVulnerableProtocol": "0x6e8086CF791754b93bAf04F039b9f72e2bCF80Db",
+    "MockAavePool": "0xaf57676673B71CED42767841F1317A20484052BE",
+    "victim": "0xfa142e801447fc359E54e8E797357aA7cBf23368"
   },
-  "deployedAt": "2026-06-12",
+  "deployedAt": "2026-06-14",
   "deployer": "0xdae8992a9b5Fe850bE63781d1c2e65a3e496F728",
-  "explorer": "https://explorer.testnet.chain.robinhood.com/address/0x6671b4B73b79c284A710B00ef777d8E65f55200F",
-  "note": "Robinhood Chain testnet (Arbitrum Orbit). LIVE here: EIP-7702 delegation + ERC-20 sweep + on-chain detection->evacuation (the core loop). This deployed GuardianModule PREDATES the frozen-vault, signed-policy, exitAaveV3 and firewall features — redeploy (Deploy + DeployRules + SetupDemo, then re-onboard) to run those live here too, and add the new GuardianModule + RulesEngineV1 + MockAavePool addresses. The DeFi exit is fork-verified against real Aave V3 on Arbitrum One (Aave isn't deployed on this chain)."
+  "explorer": "https://explorer.testnet.chain.robinhood.com/address/0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77",
+  "note": "Robinhood Chain testnet (Arbitrum Orbit). This GuardianModule is the CURRENT build: EIP-7702 delegation + self-config, ERC-20 sweep, approval revocation, on-chain detection->evacuation, frozen vault, signed multi-keeper policy (configureWithSig), exitAaveV3 (DeFi exit), and the local firewall (execute + RulesEngineV1). The DeFi exit is also fork-verified against real Aave V3 on Arbitrum One (Aave isn't deployed on this chain; MockAavePool stands in here). Supersedes the earlier build 0x6671b4B73b79c284A710B00ef777d8E65f55200F (delegation + sweep + revoke only)."
 }

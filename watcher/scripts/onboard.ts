@@ -49,7 +49,13 @@ async function main() {
     authorizationList: [auth],
     gas: ORBIT_TX_GAS,
   } as any);
-  await pub.waitForTransactionReceipt({ hash: tx });
+  const receipt = await pub.waitForTransactionReceipt({ hash: tx });
+  if (receipt.status !== "success") {
+    throw new Error(
+      `[onboard] tx reverted (status=${receipt.status}) tx=${tx} — ` +
+        `check the GuardianModule impl/vault and that the account isn't locked to a different vault`,
+    );
+  }
   console.log(`[onboard] ✅ delegated + configured (vault=${cfg.vault}, keeper=${keeper.address}) tx=${tx}`);
 }
 

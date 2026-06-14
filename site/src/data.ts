@@ -12,16 +12,16 @@ export const LICENSE = "MIT";
 // on the chain's own block explorer.
 export const DEPLOY_PROOF = {
   contract: "GuardianModule",
-  address: "0x6671b4B73b79c284A710B00ef777d8E65f55200F",
+  address: "0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77",
   network: "Robinhood Chain Testnet",
-  explorer: "https://explorer.testnet.chain.robinhood.com/address/0x6671b4B73b79c284A710B00ef777d8E65f55200F",
+  explorer: "https://explorer.testnet.chain.robinhood.com/address/0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77",
   explorerLabel: "View on explorer ↗",
 };
 
 // Contacts (footer + contact page).
 export const CONTACTS = {
   github: "https://github.com/gamween",
-  x: "https://x.com/gamween",
+  x: "https://x.com/dvb_fianso",
   telegram: "https://t.me/dvb_fianso",
 };
 export const OWNER_NAME = "Sofiane";

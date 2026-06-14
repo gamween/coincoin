@@ -25,7 +25,7 @@ We turn the attackers' weapon against them: the same EIP-7702 delegation they us
 
 ## Stack
 
-Solidity + OpenZeppelin + Foundry · EIP-7702 guardian + Aave V3 exit · TypeScript watcher (viem). The EIP-7702 guardian, ERC-20 sweep and on-chain detection loop run **live on Robinhood Chain testnet** (Arbitrum Orbit, chain 46630).
+Solidity + OpenZeppelin + Foundry · EIP-7702 guardian + Aave V3 exit · TypeScript watcher (viem). The **full** EIP-7702 guardian (sweep, frozen vault, signed policy, Aave exit), the `RulesEngine` firewall and the on-chain detection → rescue loop run **live on Robinhood Chain testnet** (Arbitrum Orbit, chain 46630).
 
 ## Docs
 
@@ -43,7 +43,7 @@ Brand kit (design system in UI tokens: palette, fonts, components, mascot): [`do
 - ✅ **Local firewall** (proactive layer) — calls routed through `execute()` are scored by a stateless `RulesEngine` and **reverted at the account level** for an unlimited `approve` / `increaseAllowance` / EIP-2612 `permit` / blanket `setApprovalForAll` to an *untrusted* spender. Stylus-ready. **Limits:** only protects calls routed through `execute`; covers those four vectors — not Permit2, multicall, or direct transfers.
 - ✅ `SafeVault` (owner-only withdrawal) + watcher (**real on-chain detection** → exit → evacuate, receipt-confirmed) + a dashboard dApp (`site` → `/app`).
 
-**Live on Robinhood Chain testnet (chain 46630) right now:** the **core loop** — EIP-7702 delegation, ERC-20 sweep, and the real on-chain **detection → evacuation** — runs live (the GuardianModule deployed there predates the features above). **To run the frozen vault, signed policy, DeFi exit and firewall live on Robinhood too, redeploy the current contracts** — see [`watcher/README.md` → Deployment](watcher/README.md) (one `forge script` set + `pnpm onboard`).
+**Live on Robinhood Chain testnet (chain 46630) right now:** the **full GuardianModule** — EIP-7702 delegation + self-config, ERC-20 sweep, approval revocation, **frozen vault**, **signed multi-keeper policy**, **`exitAaveV3` DeFi exit** and the **local firewall** (`RulesEngineV1`) — is deployed, and the end-to-end **detection → Aave exit → evacuation** loop has been run on-chain: funds at rest *and* a deposited DeFi position rescued to the user's own vault in one keeper-driven sequence (no human in the loop). Addresses in [`deployments/robinhood-testnet.json`](deployments/robinhood-testnet.json) — GuardianModule [`0xd0d3…3b77`](https://explorer.testnet.chain.robinhood.com/address/0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77), RulesEngineV1 `0xc20A…bc52`. Aave V3 isn't deployed on this chain, so the live exit runs against a `MockAavePool`; the exit code is additionally **fork-verified against the real Aave V3 Pool on Arbitrum One**.
 
 - 🔭 Roadmap: policy asset/protocol scoping · broader rules (Permit2 / multicall / transfer heuristics) · GMX V2 exit · Stylus rules engine.
 

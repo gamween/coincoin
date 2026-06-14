@@ -7,9 +7,9 @@ export const EXPLORER = robinhood.blockExplorers.default.url;
 /// reads the guardian view functions at the connected address — not at the impl address.
 export const ADDR = {
   /// GuardianModule implementation (the 7702 delegate target).
-  guardianImpl: "0x6671b4B73b79c284A710B00ef777d8E65f55200F",
+  guardianImpl: "0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77",
   /// Demo dUSD token used in the end-to-end scenario.
-  token: "0x759E3Febe2F4034cBfA61A70A4349a1C201c22ac",
+  token: "0xC32C2eB815F1413ee2c7A68d2EFf3760d828841E",
   /// RulesEngineV1 — deploy on Robinhood (script/DeployRules.s.sol) and set its address as
   /// VITE_RULES_ENGINE to enable the firewall controls. Empty = the Enable button stays off.
   rulesEngine: ((import.meta.env.VITE_RULES_ENGINE as string | undefined) ?? "") as `0x${string}` | "",
