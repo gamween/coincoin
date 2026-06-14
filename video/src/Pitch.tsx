@@ -1,5 +1,6 @@
 import { AbsoluteFill, Series, Audio, staticFile } from "remotion";
 import { GRADIENT } from "./theme";
+import { MUSIC_VOLUME } from "./audio";
 import { Scene01Hook } from "./scenes/pitch/Scene01Hook";
 import { Scene02Gap } from "./scenes/pitch/Scene02Gap";
 import { Scene03Enter } from "./scenes/pitch/Scene03Enter";
@@ -8,7 +9,7 @@ import { Scene05Proof } from "./scenes/pitch/Scene05Proof";
 import { Scene06Close } from "./scenes/pitch/Scene06Close";
 import type { SceneProps } from "./scenes/types";
 
-export type RenderScene = { id: string; frames: number; hasAudio: boolean };
+export type RenderScene = { id: string; audio: string; frames: number; hasAudio: boolean };
 export type CompProps = { scenes: RenderScene[]; music: boolean };
 
 const COMPONENTS: React.FC<SceneProps>[] = [
@@ -27,11 +28,11 @@ export const Pitch: React.FC<CompProps> = ({ scenes, music }) => (
         const Comp = COMPONENTS[i];
         return (
           <Series.Sequence key={s.id} durationInFrames={s.frames}>
-            <Comp durationInFrames={s.frames} audio={`audio/pitch/${s.id}.mp3`} hasAudio={s.hasAudio} />
+            <Comp durationInFrames={s.frames} audio={s.audio} hasAudio={s.hasAudio} />
           </Series.Sequence>
         );
       })}
     </Series>
-    {music ? <Audio src={staticFile("audio/music.mp3")} volume={0.1} /> : null}
+    {music ? <Audio src={staticFile("audio/music.mp3")} volume={MUSIC_VOLUME} /> : null}
   </AbsoluteFill>
 );

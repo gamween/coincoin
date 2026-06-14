@@ -5,6 +5,7 @@ import { BrickBackground } from "../../components/BrickBackground";
 import { Duck } from "../../components/Duck";
 import { Terminal } from "../../components/Terminal";
 import { SceneAudio } from "../../components/SceneAudio";
+import { Sfx } from "../../components/Sfx";
 import { useEntrance, popIn, useExitFade } from "../../lib/anim";
 import { VICTIM_SHORT, TX_EXIT, TX_EVAC } from "../../content";
 import type { SceneProps } from "../types";
@@ -24,6 +25,8 @@ export const Scene04Rescue: React.FC<SceneProps> = ({ durationInFrames, audio, h
   return (
     <AbsoluteFill style={{ opacity: exit }}>
       <SceneAudio src={audio} has={hasAudio} />
+      <Sfx name="pop" at={COINCOIN_AT} volume={0.45} />
+      <Sfx name="chime" at={EVAC_AT} volume={0.45} />
       <BrickBackground tint={COLORS.success} tintOpacity={0.06} />
 
       <AbsoluteFill style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 60, padding: "0 110px" }}>

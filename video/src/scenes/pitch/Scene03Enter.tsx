@@ -5,6 +5,7 @@ import { BrickBackground } from "../../components/BrickBackground";
 import { Duck } from "../../components/Duck";
 import { Wordmark } from "../../components/Wordmark";
 import { SceneAudio } from "../../components/SceneAudio";
+import { Sfx } from "../../components/Sfx";
 import { useEntrance, popIn, riseIn, useExitFade } from "../../lib/anim";
 import type { SceneProps } from "../types";
 
@@ -18,6 +19,8 @@ export const Scene03Enter: React.FC<SceneProps> = ({ durationInFrames, audio, ha
   return (
     <AbsoluteFill style={{ opacity: exit }}>
       <SceneAudio src={audio} has={hasAudio} />
+      <Sfx name="whoosh" at={2} volume={0.2} />
+      <Sfx name="pop" at={16} volume={0.45} />
       <BrickBackground tint={COLORS.success} tintOpacity={0.05} />
 
       <AbsoluteFill style={{ flexDirection: "row", alignItems: "center", padding: "0 120px", gap: 40 }}>

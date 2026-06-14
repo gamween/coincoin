@@ -4,6 +4,7 @@ import { DISPLAY, BODY } from "../../fonts";
 import { BrickBackground } from "../../components/BrickBackground";
 import { Stamp } from "../../components/Stamp";
 import { SceneAudio } from "../../components/SceneAudio";
+import { Sfx } from "../../components/Sfx";
 import { useEntrance, popIn, riseIn, useExitFade } from "../../lib/anim";
 import type { SceneProps } from "../types";
 
@@ -19,6 +20,8 @@ export const Scene01Hook: React.FC<SceneProps> = ({ durationInFrames, audio, has
   return (
     <AbsoluteFill style={{ opacity: exit }}>
       <SceneAudio src={audio} has={hasAudio} />
+      <Sfx name="boom" at={18} volume={0.45} />
+      <Sfx name="whoosh" at={26} volume={0.3} />
       <BrickBackground tint={COLORS.danger} tintOpacity={redPulse} />
 
       {/* chest + sparks */}

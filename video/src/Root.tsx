@@ -11,16 +11,23 @@ const makeCalc =
   async (): Promise<{ durationInFrames: number; props: CompProps }> => {
     const scenes = await Promise.all(
       defs.map(async (d) => {
+        // Accept both zero-padded (01.mp3) and bare (1.mp3) fish.audio exports.
+        const candidates = [`audio/${dir}/${d.id}.mp3`, `audio/${dir}/${parseInt(d.id, 10)}.mp3`];
         let seconds = d.min;
         let hasAudio = false;
-        try {
-          const voice = await getAudioDurationInSeconds(staticFile(`audio/${dir}/${d.id}.mp3`));
-          seconds = Math.max(d.min, voice + PAD);
-          hasAudio = true;
-        } catch {
-          // no voiceover yet → fall back to the scene's min length
+        let audio = candidates[0];
+        for (const c of candidates) {
+          try {
+            const voice = await getAudioDurationInSeconds(staticFile(c));
+            seconds = Math.max(d.min, voice + PAD);
+            audio = c;
+            hasAudio = true;
+            break;
+          } catch {
+            // try the next naming variant
+          }
         }
-        return { id: d.id, frames: Math.ceil(seconds * FPS), hasAudio };
+        return { id: d.id, audio, frames: Math.ceil(seconds * FPS), hasAudio };
       }),
     );
 
@@ -36,8 +43,8 @@ const makeCalc =
     return { durationInFrames, props: { scenes, music } };
   };
 
-const fallback = (defs: SceneDef[]): CompProps => ({
-  scenes: defs.map((d) => ({ id: d.id, frames: Math.ceil(d.min * FPS), hasAudio: false })),
+const fallback = (dir: "pitch" | "demo", defs: SceneDef[]): CompProps => ({
+  scenes: defs.map((d) => ({ id: d.id, audio: `audio/${dir}/${d.id}.mp3`, frames: Math.ceil(d.min * FPS), hasAudio: false })),
   music: false,
 });
 
@@ -52,7 +59,7 @@ export const RemotionRoot: React.FC = () => (
       fps={FPS}
       width={WIDTH}
       height={HEIGHT}
-      defaultProps={fallback(PITCH)}
+      defaultProps={fallback("pitch", PITCH)}
       calculateMetadata={makeCalc("pitch", PITCH)}
     />
     <Composition
@@ -62,7 +69,7 @@ export const RemotionRoot: React.FC = () => (
       fps={FPS}
       width={WIDTH}
       height={HEIGHT}
-      defaultProps={fallback(DEMO)}
+      defaultProps={fallback("demo", DEMO)}
       calculateMetadata={makeCalc("demo", DEMO)}
     />
   </>

@@ -4,6 +4,7 @@ import { BrickBackground } from "../../components/BrickBackground";
 import { Terminal } from "../../components/Terminal";
 import { Stamp } from "../../components/Stamp";
 import { SceneAudio } from "../../components/SceneAudio";
+import { Sfx } from "../../components/Sfx";
 import { useEntrance, popIn, useExitFade } from "../../lib/anim";
 import type { SceneProps } from "../types";
 
@@ -21,6 +22,8 @@ export const Scene03Attack: React.FC<SceneProps> = ({ durationInFrames, audio, h
   return (
     <AbsoluteFill style={{ opacity: exit }}>
       <SceneAudio src={audio} has={hasAudio} />
+      <Sfx name="boom" at={DRAIN_AT} volume={0.45} />
+      <Sfx name="alert" at={DRAIN_AT + 2} volume={0.4} />
       <BrickBackground tint={COLORS.danger} tintOpacity={0.08} />
 
       <AbsoluteFill style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 60, padding: "0 110px" }}>

@@ -4,6 +4,7 @@ import { BODY } from "../../fonts";
 import { BrickBackground } from "../../components/BrickBackground";
 import { Headline } from "../../components/Headline";
 import { SceneAudio } from "../../components/SceneAudio";
+import { Sfx } from "../../components/Sfx";
 import { useEntrance, riseIn, useExitFade } from "../../lib/anim";
 import type { SceneProps } from "../types";
 
@@ -17,6 +18,8 @@ export const Scene02Gap: React.FC<SceneProps> = ({ durationInFrames, audio, hasA
   return (
     <AbsoluteFill style={{ opacity: exit }}>
       <SceneAudio src={audio} has={hasAudio} />
+      <Sfx name="whoosh" at={28} volume={0.22} />
+      <Sfx name="pop" at={72} volume={0.3} />
       <BrickBackground />
 
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", gap: 60, padding: "0 140px" }}>

@@ -7,6 +7,7 @@ import { Wordmark } from "../../components/Wordmark";
 import { Terminal } from "../../components/Terminal";
 import { Pill } from "../../components/Pill";
 import { SceneAudio } from "../../components/SceneAudio";
+import { Sfx } from "../../components/Sfx";
 import { useEntrance, riseIn, useExitFade } from "../../lib/anim";
 import { REPO_URL } from "../../content";
 import type { SceneProps } from "../types";
@@ -19,6 +20,8 @@ export const Scene06Close: React.FC<SceneProps> = ({ durationInFrames, audio, ha
   return (
     <AbsoluteFill style={{ opacity: exit }}>
       <SceneAudio src={audio} has={hasAudio} />
+      <Sfx name="pop" at={38} volume={0.4} />
+      <Sfx name="chime" at={48} volume={0.35} />
       <BrickBackground tint={COLORS.success} tintOpacity={0.05} />
 
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", gap: 36 }}>

@@ -5,6 +5,7 @@ import { Duck } from "../../components/Duck";
 import { Terminal } from "../../components/Terminal";
 import { Pill } from "../../components/Pill";
 import { SceneAudio } from "../../components/SceneAudio";
+import { Sfx } from "../../components/Sfx";
 import { useEntrance, riseIn, useExitFade } from "../../lib/anim";
 import type { SceneProps } from "../types";
 
@@ -15,6 +16,7 @@ export const Scene02Watch: React.FC<SceneProps> = ({ durationInFrames, audio, ha
   return (
     <AbsoluteFill style={{ opacity: exit }}>
       <SceneAudio src={audio} has={hasAudio} />
+      <Sfx name="pop" at={24} volume={0.22} />
       <BrickBackground tint={COLORS.info} tintOpacity={0.06} />
 
       <AbsoluteFill style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 70, padding: "0 120px" }}>

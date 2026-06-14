@@ -6,6 +6,7 @@ import { Headline } from "../../components/Headline";
 import { Terminal } from "../../components/Terminal";
 import { Pill } from "../../components/Pill";
 import { SceneAudio } from "../../components/SceneAudio";
+import { Sfx } from "../../components/Sfx";
 import { useEntrance, popIn, riseIn, useExitFade } from "../../lib/anim";
 import { VICTIM_SHORT } from "../../content";
 import type { SceneProps } from "../types";
@@ -18,6 +19,8 @@ export const Scene01Setup: React.FC<SceneProps> = ({ durationInFrames, audio, ha
   return (
     <AbsoluteFill style={{ opacity: exit }}>
       <SceneAudio src={audio} has={hasAudio} />
+      <Sfx name="whoosh" at={14} volume={0.2} />
+      <Sfx name="pop" at={92} volume={0.4} />
       <BrickBackground />
 
       <AbsoluteFill style={{ justifyContent: "flex-start", alignItems: "center", paddingTop: 80, gap: 44 }}>

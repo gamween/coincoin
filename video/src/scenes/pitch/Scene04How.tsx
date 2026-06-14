@@ -5,6 +5,7 @@ import { BrickBackground } from "../../components/BrickBackground";
 import { Headline } from "../../components/Headline";
 import { Pill } from "../../components/Pill";
 import { SceneAudio } from "../../components/SceneAudio";
+import { Sfx } from "../../components/Sfx";
 import { useEntrance, popIn, riseIn, useExitFade } from "../../lib/anim";
 import type { SceneProps } from "../types";
 
@@ -22,6 +23,10 @@ export const Scene04How: React.FC<SceneProps> = ({ durationInFrames, audio, hasA
   return (
     <AbsoluteFill style={{ opacity: exit }}>
       <SceneAudio src={audio} has={hasAudio} />
+      <Sfx name="pop" at={18} volume={0.22} />
+      <Sfx name="pop" at={36} volume={0.22} />
+      <Sfx name="pop" at={54} volume={0.22} />
+      <Sfx name="chime" at={78} volume={0.28} />
       <BrickBackground />
 
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", gap: 70 }}>

@@ -28,7 +28,17 @@ The video renders fine **without** audio (silent cut). To add narration:
 
 Each scene **auto-resizes to its clip's length** (floored at the scene's min so animations always finish) — no manual timing needed. The MP3s are gitignored (generated assets).
 
-Optional background music: drop `public/audio/music.mp3` (played at 10% volume; nothing copyrighted is committed).
+## Music + sound effects
+An original, royalty-free ambient bed (`public/audio/music.mp3`) and a few light SFX
+(`public/audio/sfx/{boom,pop,whoosh,alert,chime}.mp3`) are **synthesized** by
+`tools/gen-audio.mjs` (no deps) and committed. Regenerate with:
+```bash
+node tools/gen-audio.mjs                       # writes tools/_raw/*.wav
+# then convert (Remotion's ffmpeg): for each, e.g.
+npx remotion ffmpeg -y -i tools/_raw/music.wav -codec:a libmp3lame -q:a 4 public/audio/music.mp3
+```
+Mix knobs live in `src/audio.ts` (`MUSIC_VOLUME`, `SFX_GAIN` — set `SFX_GAIN = 0` to mute SFX);
+per-effect placement/volume is in each scene's `<Sfx .../>`. Kept deliberately light.
 
 ## Edit
 - URLs / on-chain shorthands: `src/content.ts` (e.g. `LIVE_URL` if you set a custom Vercel domain).

@@ -1,5 +1,6 @@
 import { AbsoluteFill, Series, Audio, staticFile } from "remotion";
 import { GRADIENT } from "./theme";
+import { MUSIC_VOLUME } from "./audio";
 import { Scene01Setup } from "./scenes/demo/Scene01Setup";
 import { Scene02Watch } from "./scenes/demo/Scene02Watch";
 import { Scene03Attack } from "./scenes/demo/Scene03Attack";
@@ -25,11 +26,11 @@ export const Demo: React.FC<CompProps> = ({ scenes, music }) => (
         const Comp = COMPONENTS[i];
         return (
           <Series.Sequence key={s.id} durationInFrames={s.frames}>
-            <Comp durationInFrames={s.frames} audio={`audio/demo/${s.id}.mp3`} hasAudio={s.hasAudio} />
+            <Comp durationInFrames={s.frames} audio={s.audio} hasAudio={s.hasAudio} />
           </Series.Sequence>
         );
       })}
     </Series>
-    {music ? <Audio src={staticFile("audio/music.mp3")} volume={0.1} /> : null}
+    {music ? <Audio src={staticFile("audio/music.mp3")} volume={MUSIC_VOLUME} /> : null}
   </AbsoluteFill>
 );
