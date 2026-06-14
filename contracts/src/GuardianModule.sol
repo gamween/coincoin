@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IRulesEngine} from "./IRulesEngine.sol";
 
 /// @dev Minimal Aave V3 Pool surface used by the DeFi-position exit. The real Pool
@@ -29,11 +30,35 @@ contract GuardianModule {
     uint16 public blockThreshold; // 0 = firewall off; otherwise block at/above this score
     mapping(address => bool) public trustedSpender;
 
+    // PreAuthRegistry (folded): the policy's keeper set + a replay nonce for signed configs.
+    // Appended after existing storage to keep the EIP-7702 layout append-only.
+    mapping(address => bool) public isKeeper; // authorized keeper set
+    address[] private _keeperList; // tracked so a re-config can clear the old set
+    uint256 public policyNonce; // single-use nonce for configureWithSig
+
+    struct Policy {
+        address safeVault;
+        address[] keepers;
+    }
+
+    bytes32 private constant POLICY_TYPEHASH =
+        keccak256("Policy(address safeVault,address[] keepers,uint256 nonce,uint256 deadline)");
+    bytes32 private constant DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+
     event Configured(address indexed safeVault, address indexed keeper);
+    event PolicyConfigured(address indexed safeVault, uint256 keeperCount, uint256 nonce);
 
     error NotAuthorized();
     error ZeroAddress();
     error VaultLocked();
+    error NoKeepers();
+    error TooManyKeepers();
+    error BadSignature();
+    error Expired();
+    error BadNonce();
+
+    uint256 private constant MAX_KEEPERS = 20;
 
     /// @dev Only the account itself (self-call, including via a 7702 UserOp) can configure.
     modifier onlySelf() {
@@ -41,22 +66,83 @@ contract GuardianModule {
         _;
     }
 
-    /// @notice First call sets the safe vault (the trust anchor) and the keeper.
-    /// @dev The destination vault is FROZEN on first configure: under EIP-7702 "self" is
-    ///      the very EOA whose key the firewall exists to defend, so allowing a later
-    ///      self-call to re-point the vault would let a leaked key redirect funds to an
-    ///      attacker (turning "worst case = annoyance" into theft). Keeper rotation stays
-    ///      open (pass the same safeVault with a new keeper); a different vault reverts.
+    /// @notice Configure with a single keeper (back-compat).
     function configure(address safeVault_, address keeper_) external onlySelf {
-        if (safeVault_ == address(0) || keeper_ == address(0)) revert ZeroAddress();
+        address[] memory ks = new address[](1);
+        ks[0] = keeper_;
+        _applyPolicy(safeVault_, ks);
+    }
+
+    /// @notice Configure a richer policy: the safe vault + a set of authorized keepers.
+    function configurePolicy(Policy calldata p) external onlySelf {
+        _applyPolicy(p.safeVault, p.keepers);
+    }
+
+    /// @notice Apply a policy the account SIGNED off-chain (EIP-712), submitted by anyone —
+    ///         so onboarding can be gasless (a relayer pays). Under EIP-7702 the verifying
+    ///         contract is the EOA itself, so the signer must equal address(this). `nonce` is
+    ///         single-use and `deadline` bounds the window — sign with a SHORT deadline, since a
+    ///         relayer can submit the signature any time before it (incl. the initial vault freeze).
+    function configureWithSig(Policy calldata p, uint256 nonce, uint256 deadline, bytes calldata sig)
+        external
+    {
+        if (block.timestamp > deadline) revert Expired();
+        if (nonce != policyNonce) revert BadNonce();
+        bytes32 structHash = keccak256(
+            abi.encode(POLICY_TYPEHASH, p.safeVault, keccak256(abi.encodePacked(p.keepers)), nonce, deadline)
+        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), structHash));
+        if (ECDSA.recover(digest, sig) != address(this)) revert BadSignature();
+        unchecked {
+            ++policyNonce;
+        }
+        _applyPolicy(p.safeVault, p.keepers);
+    }
+
+    /// @notice The full authorized keeper set.
+    function keepers() external view returns (address[] memory) {
+        return _keeperList;
+    }
+
+    /// @dev Sets the vault (FROZEN on first config — under 7702 "self" is the very EOA the
+    ///      firewall defends, so a re-pointable vault would let a leaked key redirect funds)
+    ///      and replaces the keeper set. The old keepers are revoked.
+    function _applyPolicy(address safeVault_, address[] memory keepers_) internal {
+        if (safeVault_ == address(0)) revert ZeroAddress();
+        if (keepers_.length == 0) revert NoKeepers();
+        if (keepers_.length > MAX_KEEPERS) revert TooManyKeepers();
         if (configured) {
             if (safeVault_ != safeVault) revert VaultLocked();
         } else {
             safeVault = safeVault_;
             configured = true;
         }
-        keeper = keeper_;
-        emit Configured(safeVault_, keeper_);
+        for (uint256 i; i < _keeperList.length; ++i) isKeeper[_keeperList[i]] = false;
+        delete _keeperList;
+        for (uint256 i; i < keepers_.length; ++i) {
+            address k = keepers_[i];
+            if (k == address(0)) revert ZeroAddress();
+            if (!isKeeper[k]) {
+                // dedup: skip a repeated keeper so keepers() and the event count stay accurate
+                isKeeper[k] = true;
+                _keeperList.push(k);
+            }
+        }
+        keeper = keepers_[0];
+        emit Configured(safeVault_, keepers_[0]);
+        emit PolicyConfigured(safeVault_, _keeperList.length, policyNonce);
+    }
+
+    function _domainSeparator() internal view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                DOMAIN_TYPEHASH,
+                keccak256(bytes("coincoin GuardianModule")),
+                keccak256(bytes("1")),
+                block.chainid,
+                address(this)
+            )
+        );
     }
 
     event Evacuated(address indexed token, uint256 amount);
@@ -73,7 +159,7 @@ contract GuardianModule {
     }
 
     modifier onlySelfOrKeeper() {
-        if (msg.sender != address(this) && msg.sender != keeper) revert NotAuthorized();
+        if (msg.sender != address(this) && !isKeeper[msg.sender]) revert NotAuthorized();
         _;
     }
 

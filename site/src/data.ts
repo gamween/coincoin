@@ -135,7 +135,7 @@ export const ARCH_UNITS = [
   {
     name: "GuardianModule.sol",
     tag: "Solidity",
-    body: "The EIP-7702 delegate target, callable only by you or the keeper (onlySelfOrKeeper). evacuateERC20 sweeps at-rest balances; exitAaveV3 unwinds deposited DeFi positions back to you first; revokeApprovals kills dangerous allowances. The vault is frozen on first config — a leaked key can't redirect funds. Revocable anytime.",
+    body: "The EIP-7702 delegate target. A signed policy (safe vault + keeper set) is set directly or via an EIP-712 signature a relayer submits — gasless onboarding. evacuateERC20 sweeps at-rest balances; exitAaveV3 unwinds deposited DeFi positions back to you first; revokeApprovals kills dangerous allowances; execute() runs the local firewall. The vault is frozen on first config — a leaked key can't redirect funds. Revocable anytime.",
   },
   {
     name: "SafeVault.sol",
@@ -187,6 +187,7 @@ export const STACK_LIVE = [
   "OpenZeppelin",
   "Foundry",
   "EIP-7702 guardian",
+  "EIP-712 signed policy",
   "DeFi position exit",
   "Local firewall",
   "TypeScript",

@@ -38,9 +38,10 @@ Brand kit (design system in UI tokens: palette, fonts, components, mascot): [`do
 **Live, end-to-end** on Robinhood Chain testnet (chain 46630, Arbitrum Orbit):
 
 - ✅ `GuardianModule` (EIP-7702 delegate) — bounded keeper, **frozen vault** (a leaked key can't redirect funds), ERC-20 sweep + approval revocation.
+- ✅ **Signed policy (PreAuthRegistry, folded)** — the account sets a policy (safe vault + a multi-keeper set) directly or via an **EIP-712 signature a relayer submits**, so onboarding can be **gasless**. The vault is frozen on first config; rotating the keeper set revokes the old keepers; a leaked keeper key can't change the policy. *(Asset/protocol scoping in the policy is roadmap.)*
 - ✅ `SafeVault` (owner-only withdrawal) + watcher with **real on-chain threat detection** → exit + evacuate, no human in the loop.
 - ✅ **DeFi position auto-exit** — `exitAaveV3` pulls funds *deposited in a protocol* back to the account, then sweeps to your vault (**Harpie's blind spot, covered**). It's **fork-verified against the live Aave V3 Pool on Arbitrum One** (`test/AaveRealFork.t.sol`) and unit-tested against a `MockAavePool`. Not run on Robinhood itself — **Aave V3 isn't deployed there** — but it's the same code path proven against real Aave.
 - ✅ **Local firewall** (proactive layer) — outgoing calls routed through `execute()` are scored by a stateless `RulesEngine` and **reverted at the account level** when they grant spending power to an *untrusted* spender: an unlimited `approve`, `increaseAllowance`, EIP-2612 `permit`, or a blanket NFT `setApprovalForAll`. `IRulesEngine` is Stylus-ready. **Honest limits:** it only protects calls *routed through* `execute` (a direct top-level EOA tx bypasses it), and covers those four approval vectors — **not** Permit2, multicall/batched calls, or direct `transfer`/`transferFrom`.
-- 🔭 Roadmap: signed `PreAuthRegistry` policy · broader rules (Permit2 / multicall / transfer heuristics) · GMX V2 exit · Stylus rules engine.
+- 🔭 Roadmap: policy asset/protocol scoping · broader rules (Permit2 / multicall / transfer heuristics) · GMX V2 exit · Stylus rules engine.
 
 Run it: see [`docs/superpowers/specs`](docs/superpowers/specs) and `watcher/` (`pnpm onboard` → `pnpm watch`). Tests: `forge test` (contracts) · `pnpm test` (watcher).
