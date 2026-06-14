@@ -2,6 +2,7 @@
 // Copy is locked to the brand voice (English UI; "COIN COIN !" is verbatim).
 
 export const GITHUB_URL = "https://github.com/gamween/coincoin";
+export const APP_URL = "/app.html";
 export const DOCS_URL = "/docs.html";
 export const CONTACT_URL = "/contact.html";
 export const LICENSE_URL = "/license.html";
@@ -25,11 +26,12 @@ export const CONTACTS = {
 };
 export const OWNER_NAME = "Sofiane";
 
-// The three standalone pages — shown in the top-left CardNav dropdown and the footer.
+// The standalone pages — shown in the top-left CardNav dropdown and the footer.
 export const NAV_PAGES = [
+  { label: "App", href: APP_URL, blurb: "Open dashboard ↗", bg: "#036bc8" },
   { label: "Docs", href: DOCS_URL, blurb: "Read the docs ↗", bg: "#032b73" },
   { label: "Contact", href: CONTACT_URL, blurb: "Get in touch ↗", bg: "#0351a6" },
-  { label: "License", href: LICENSE_URL, blurb: "MIT terms ↗", bg: "#036bc8" },
+  { label: "License", href: LICENSE_URL, blurb: "MIT terms ↗", bg: "#032b73" },
 ] as const;
 
 // The on-page section index, shown as a FlowingMenu on the landing (replaces the top nav row).

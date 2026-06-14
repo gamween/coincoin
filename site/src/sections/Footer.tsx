@@ -1,7 +1,8 @@
 import { ShieldLogo, Wordmark } from "../components/ui";
-import { DOCS_URL, CONTACT_URL, LICENSE_URL, LICENSE } from "../data";
+import { APP_URL, DOCS_URL, CONTACT_URL, LICENSE_URL, LICENSE } from "../data";
 
 const FOOTER_PAGES = [
+  { label: "App", href: APP_URL },
   { label: "Docs", href: DOCS_URL },
   { label: "Contact", href: CONTACT_URL },
   { label: "License", href: LICENSE_URL },

@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
-import { GITHUB_URL } from "../data";
+import { GITHUB_URL, APP_URL } from "../data";
 import { Pill } from "../components/ui";
 
 export function Hero() {
@@ -49,11 +49,11 @@ export function Hero() {
             your keys.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="btn-comic">
-              View on GitHub
+            <a href={APP_URL} className="btn-comic">
+              Open the app
             </a>
-            <a href="#run" className="btn-ghost">
-              Get started
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="btn-ghost">
+              View on GitHub
             </a>
           </div>
           <div className="mt-8 flex flex-wrap gap-2.5">

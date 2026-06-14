@@ -13,6 +13,7 @@ export default defineConfig({
         docs: resolve(import.meta.dirname, "docs.html"),
         contact: resolve(import.meta.dirname, "contact.html"),
         license: resolve(import.meta.dirname, "license.html"),
+        app: resolve(import.meta.dirname, "app.html"),
       },
     },
   },
