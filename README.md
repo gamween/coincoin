@@ -134,11 +134,11 @@ Reproduce the detection → evacuation loop on Robinhood Chain testnet.
 **Prerequisites:** [Foundry](https://getfoundry.sh), Node ≥ 22, [pnpm](https://pnpm.io), a funded testnet wallet.
 
 ```bash
-git clone https://github.com/gamween/coincoin.git
+git clone --recursive https://github.com/gamween/coincoin.git   # --recursive pulls Foundry deps (submodules)
 cd coincoin
 cp .env.example .env          # RPC + disposable testnet keys — see .env.example
 
-# contracts: build + test
+# contracts: build + test  (already cloned non-recursively? run: git submodule update --init --recursive)
 cd contracts && forge test    # set ARBITRUM_ONE_RPC to also run the live-Aave fork test
                               # deployment runbook: watcher/README.md → Deployment
 
