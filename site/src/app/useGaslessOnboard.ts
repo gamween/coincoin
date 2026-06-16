@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { useConnectorClient, usePublicClient } from "wagmi";
-import { readContract, signTypedData, signAuthorization, waitForTransactionReceipt } from "viem/actions";
+import { readContract, signTypedData, signAuthorization, waitForTransactionReceipt, getTransactionCount } from "viem/actions";
 import { ADDR, factoryAbi } from "./contracts";
 import { robinhood } from "./chain";
 
@@ -53,11 +53,15 @@ export function useGaslessOnboard(onDone?: () => void) {
       // 2) EIP-7702 authorization (wallet-support dependent → CLI fallback)
       let auth;
       try {
+        // EIP-7702 authorization. nonce = the account's CURRENT tx nonce (relayer-sponsored, so no
+        // +1). Fetched explicitly at `latest` for determinism — a wrong nonce is silently skipped
+        // (the type-4 tx still succeeds but the delegation never applies), so this must be exact.
+        const txNonce = await getTransactionCount(publicClient, { address: owner, blockTag: "latest" });
         auth = await signAuthorization(walletClient, {
           account: walletClient.account,
           contractAddress: ADDR.guardianImpl,
           chainId: robinhood.id,
-          nonce: 0,
+          nonce: txNonce,
         });
       } catch {
         setError("This wallet can't sign an EIP-7702 authorization yet. Use the CLI: `pnpm onboard`.");

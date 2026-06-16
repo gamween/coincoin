@@ -6,10 +6,10 @@ import {
   encodeFunctionData,
   parseAbi,
   isAddress,
-  recoverAuthorizationAddress,
   defineChain,
   type SignedAuthorization,
 } from "viem";
+import { verifyAuthorization } from "viem/utils";
 import { privateKeyToAccount } from "viem/accounts";
 
 /// Gasless onboarding relayer. The browser sends the user's two off-chain signatures (an EIP-7702
@@ -86,12 +86,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "safeVault is not the caller's factory vault" });
   }
   // the authorization must have been signed by the owner
+  let validSigner: boolean;
   try {
-    const signer = await recoverAuthorizationAddress({ authorization });
-    if (signer.toLowerCase() !== owner.toLowerCase()) return res.status(400).json({ error: "authorization signer mismatch" });
+    validSigner = await verifyAuthorization({ address: owner, authorization });
   } catch {
-    return res.status(400).json({ error: "unrecoverable authorization" });
+    validSigner = false;
   }
+  if (!validSigner) return res.status(400).json({ error: "authorization not signed by owner" });
 
   // ── relay (pay gas) ──
   const relayer = privateKeyToAccount(relayerKey);
@@ -107,7 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       functionName: "configureWithSig",
       args: [{ safeVault: policy.safeVault, keepers: policy.keepers }, BigInt(nonce), BigInt(deadline), sig],
     });
-    const txHash = await wallet.sendTransaction({ to: owner, data, authorizationList: [authorization], gas: ORBIT_GAS } as never);
+    const txHash = await wallet.sendTransaction({ to: owner, data, authorizationList: [authorization], gas: ORBIT_GAS });
     return res.status(200).json({ ok: true, txHash, vault: expectedVault });
   } catch (e) {
     return res.status(500).json({ error: "relay failed", detail: (e as Error).message });

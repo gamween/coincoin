@@ -61,12 +61,14 @@ async function main() {
     message: { safeVault: vault, keepers: [keeper], nonce: 0n, deadline },
   });
 
-  // EIP-7702 authorization (relayer-sponsored → executor is NOT self; nonce = the EOA's nonce = 0)
+  // EIP-7702 authorization (relayer-sponsored → no +1). Explicit current nonce (latest) for
+  // determinism — a wrong nonce is silently skipped, so it must be exact.
+  const authNonce = await pub.getTransactionCount({ address: user.address, blockTag: "latest" });
   const authorization = await userWallet.signAuthorization({
     account: user,
     contractAddress: cfg.guardianImpl,
     chainId: cfg.chain.id,
-    nonce: 0,
+    nonce: authNonce,
   });
 
   // ── 2) the relayer pays gas ──
@@ -81,7 +83,7 @@ async function main() {
     functionName: "configureWithSig",
     args: [{ safeVault: vault, keepers: [keeper] }, 0n, deadline, sig],
   });
-  const tx = await relayerWallet.sendTransaction({ to: user.address, data, authorizationList: [authorization], gas: ORBIT_TX_GAS } as never);
+  const tx = await relayerWallet.sendTransaction({ to: user.address, data, authorizationList: [authorization], gas: ORBIT_TX_GAS });
   const rcpt = await pub.waitForTransactionReceipt({ hash: tx });
   if (rcpt.status !== "success") throw new Error(`[gasless] configure tx reverted: ${tx}`);
   console.log(`[gasless] relayer submitted delegate+configure (tx ${tx})`);
