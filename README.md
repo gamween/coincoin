@@ -9,7 +9,7 @@
 [![Live demo](https://img.shields.io/badge/live-coincoin--five.vercel.app-000000?style=flat-square)](https://coincoin-five.vercel.app/)
 [![Deployed](https://img.shields.io/badge/deployed-Robinhood%20Chain%20testnet%20(46630)-7af7c0?style=flat-square)](#deployed-addresses)
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.24-363636?style=flat-square&logo=solidity)](contracts/)
-[![Tests](https://img.shields.io/badge/tests-90%20passing-27C93F?style=flat-square)](#testing)
+[![CI](https://img.shields.io/github/actions/workflow/status/gamween/coincoin/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/gamween/coincoin/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-F5D90A?style=flat-square)](LICENSE)
 
 </div>
