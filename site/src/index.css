@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* coincoin brand tokens — docs/brand/BRAND.md */
+/* coincoin brand tokens (mirror of tailwind.config.js) */
 :root {
   --color-background: #0b1b3a;
   --color-surface: #032b73;

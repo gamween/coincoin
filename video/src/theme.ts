@@ -1,4 +1,4 @@
-// Brand tokens — mirror of docs/brand/BRAND.md, as plain TS for Remotion.
+// Brand tokens (colors, shadows, fonts) for the videos — the source of truth for the video look.
 export const COLORS = {
   bg: "#0B1B3A",
   bgBottom: "#078BEB",

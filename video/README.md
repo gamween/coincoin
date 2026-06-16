@@ -5,8 +5,7 @@ Two compositions for the submission, both 1920×1080 @ 30fps:
 - **`Pitch`** (~70s) — problem → solution → how → proof → close.
 - **`Demo`** (~66s) — recreated end-to-end run with the real on-chain data (victim `0xfa14…3368`, vault 0→800, real tx hashes).
 
-Built from the brand kit (`docs/brand/BRAND.md`); storyboards + narration in
-[`docs/superpowers/specs/2026-06-14-coincoin-pitch-demo-videos-design.md`](../docs/superpowers/specs/2026-06-14-coincoin-pitch-demo-videos-design.md).
+Brand tokens live in `src/theme.ts`; scenes in `src/scenes/`. See "Add the voiceover" below for the fish.audio workflow.
 
 ## Run
 ```bash
