@@ -41,11 +41,10 @@ coincoin is an **experimental, unaudited testnet project**. Do not use it with f
 
 | | What | Where |
 |---|---|---|
-| ✅ **Live on-chain** | EIP-7702 delegation + self-config · ERC-20 sweep · approval revocation · **frozen vault** · **signed multi-keeper policy** (EIP-712) · **local firewall** (`RulesEngineV1`) · `exitAaveV3` DeFi exit | Robinhood Chain testnet (46630) |
-| ✅ **Proven end-to-end** | Real **detection → Aave exit → evacuation** run on-chain — funds at rest *and* a deposited position rescued to the user's vault, no human in the loop | Robinhood Chain testnet (46630) |
-| ✅ **Fork-verified** | The `exitAaveV3` code unwinds a real position against the **live Aave V3 Pool** (forked) | Arbitrum One (test fork) |
-| 🟡 **Mocked in the live demo** | Aave V3 isn't deployed on Robinhood Chain, so the live exit runs against a `MockAavePool` stand-in | — |
-| 🔭 **Roadmap** | Production integrations against live Aave V3 / GMX V2 on a network where they're deployed · broader firewall rules · security audit ([full roadmap](#-roadmap)) | — |
+| ✅ **Live on-chain** | EIP-7702 delegation + self-config · ERC-20 sweep · approval revocation · **frozen vault** · **signed multi-keeper policy** (EIP-712) · **local firewall** (`RulesEngineV1`) · the full **detection → evacuation** loop | Robinhood Chain testnet (46630) |
+| ✅ **Proven end-to-end** | A real exploit detected on-chain → funds at rest *and* a deposited DeFi position rescued to the user's vault in one keeper-driven sequence, no human in the loop | Robinhood Chain testnet (46630) |
+| ✅ **Built & verified** | The DeFi-exit engine (`exitAaveV3`) unwinds a real position against the **live Aave V3 Pool** — same code path the guardian runs | Arbitrum One (fork test) |
+| 🔭 **Next up** | **Native Aave V3 / GMX V2 integration** — built and ready; it goes live the moment those protocols are deployed on Robinhood Chain (we're waiting on availability) · broader firewall rules · audit before mainnet ([roadmap](#-roadmap)) | — |
 
 ---
 
@@ -107,7 +106,7 @@ Everything below is live on **Robinhood Chain testnet (chain `46630`)** — [blo
 
 <div align="center"><img src="docs/readme/demo.jpg" alt="COIN COIN! — threat detected, funds evacuated" width="760" /></div>
 
-**End-to-end rescue, run on-chain:** a victim account holding **500 dUSD idle + 300 dUSD deposited in Aave** is drained-adjacent → the watcher detects the exploit, exits the Aave position, and evacuates everything to the vault. Final state: **wallet `0`, vault `800`, Aave position `0`** — one keeper-driven sequence, no human in the loop.
+**End-to-end rescue, run on-chain:** a protected account holding **500 dUSD idle + 300 dUSD supplied to a DeFi lending pool** → the watcher detects the exploit, unwinds the deposited position, and evacuates everything to the vault. Final state: **wallet `0`, vault `800`, position `0`** — one keeper-driven sequence, no human in the loop.
 
 🔗 **[Live site & dashboard →](https://coincoin-five.vercel.app/)** (connect an account at `/app` to inspect its protection status).
 
@@ -172,7 +171,7 @@ coincoin is **non-custodial by construction**, but it is **experimental and unau
 **Known limitations**
 - The firewall only protects calls routed through `execute()`, and covers four approval vectors — **not** Permit2, multicall, or direct transfers (yet — see [roadmap](#-roadmap)).
 - Asset/protocol scoping for policies is not yet implemented.
-- On Robinhood Chain the Aave exit runs against a **mock** (real Aave isn't deployed there).
+- Native Aave V3 / GMX V2 integration is **built and verified** but waits on those protocols being deployed on Robinhood Chain before it can run against the real thing (see [roadmap](#-roadmap)).
 
 **Responsible disclosure:** found an issue? Please reach out privately via [X (@dvb_fianso)](https://x.com/dvb_fianso) or [Telegram](https://t.me/dvb_fianso) before opening a public issue.
 
@@ -197,20 +196,24 @@ cd ../watcher && pnpm test                        # 25 watcher tests (vitest)
 
 ## 🗺️ Roadmap
 
-Shipped vs. planned — honest, no dates.
+Shipped vs. next — honest, no dates.
 
-- [x] EIP-7702 guardian: delegation, frozen vault, bounded keeper, ERC-20 sweep, approval revocation
+**Shipped**
+- [x] EIP-7702 guardian — delegation, frozen vault, bounded keeper, ERC-20 sweep, approval revocation
 - [x] Signed multi-keeper policy (EIP-712 / `configureWithSig`)
-- [x] DeFi-position exit (`exitAaveV3`) — fork-verified against real Aave V3
+- [x] DeFi-position exit engine (`exitAaveV3`) — built & verified against real Aave V3
 - [x] Local firewall (`RulesEngineV1`) — unlimited-approval / `permit` / `setApprovalForAll` rules
 - [x] Real on-chain detection → rescue loop, live on Robinhood Chain testnet
-- [ ] **Production DeFi integrations** on a network where they're live — real Aave V3, GMX V2 exit
-- [ ] Broader firewall coverage — Permit2, multicall, direct-transfer heuristics
-- [ ] Policy asset/protocol scoping
-- [ ] Stylus rules engine
-- [ ] In-browser EIP-7702 onboarding (CLI today)
-- [ ] Real Defimon WebSocket threat feed (detection is on-chain & zero-dependency today)
-- [ ] Security audit
+
+**Next**
+- [ ] **Native Aave V3 integration** — the exit engine is built and verified; it goes live the day Aave V3 is deployed on Robinhood Chain. We're waiting on availability, not writing code.
+- [ ] **GMX V2 position exit** — same pattern, the moment GMX is available on the target chain.
+- [ ] **Broader firewall coverage** — Permit2, multicall, and direct-transfer heuristics (we shipped the four highest-impact approval vectors first).
+- [ ] **Policy asset/protocol scoping** — per-asset and per-protocol rules.
+- [ ] **Stylus rules engine** — move the firewall scorer to Arbitrum Stylus for richer, cheaper rules.
+- [ ] **In-browser EIP-7702 onboarding** — CLI today while 7702 wallet UX matures.
+- [ ] **Real Defimon threat feed** — detection is on-chain and dependency-free today; a live feed widens coverage.
+- [ ] **Security audit** — before any mainnet deployment.
 
 ---
 
