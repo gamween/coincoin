@@ -1,245 +1,212 @@
 <div align="center">
 
-<img src="docs/readme/logo.png" alt="coincoin" width="180" />
+<img src="docs/readme/logo.png" alt="coincoin" width="116" />
 
 # coincoin
 
-### The self-custodial onchain firewall that quacks before you get drained — and moves your funds to safety on its own.
+**An EIP-7702 onchain firewall that detects a live exploit and evacuates your funds — including positions deposited in DeFi — to a vault you control, inside the reaction window non-atomic hacks leave open.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-7af7c0?style=flat-square)](LICENSE)
+[![Live demo](https://img.shields.io/badge/live-coincoin--five.vercel.app-000000?style=flat-square)](https://coincoin-five.vercel.app/)
+[![Deployed](https://img.shields.io/badge/deployed-Robinhood%20Chain%20testnet%20(46630)-7af7c0?style=flat-square)](#deployed-addresses)
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.24-363636?style=flat-square&logo=solidity)](contracts/)
-[![Built with Foundry](https://img.shields.io/badge/Built%20with-Foundry-1e1e1e?style=flat-square)](https://getfoundry.sh)
-[![Tests](https://img.shields.io/badge/tests-90%20passing-27C93F?style=flat-square)](#-testing)
-[![Live](https://img.shields.io/badge/live-Robinhood%20Chain%20(46630)-F5D90A?style=flat-square)](#-live-deployment--proof)
-[![Status](https://img.shields.io/badge/status-experimental%20·%20unaudited-FF3B3B?style=flat-square)](#-security--trust-model)
+[![Tests](https://img.shields.io/badge/tests-90%20passing-27C93F?style=flat-square)](#testing)
+[![License](https://img.shields.io/badge/License-MIT-F5D90A?style=flat-square)](LICENSE)
 
-**[▶ Live demo](https://coincoin-five.vercel.app/)** · **[How it works](#-how-it-works)** · **[Live deployment](#-live-deployment--proof)** · **[Quickstart](#-quickstart)** · **[Security](#-security--trust-model)** · **[Roadmap](#-roadmap)**
-
-<br/>
-
-<img src="docs/readme/hero.jpg" alt="coincoin detects a live exploit and evacuates funds to a vault the user controls" width="820" />
+[Live demo](https://coincoin-five.vercel.app/) · [How it works](#how-it-works) · [Architecture](#architecture) · [Getting started](#getting-started) · [Deployed addresses](#deployed-addresses)
 
 </div>
 
----
+> [!WARNING]
+> **Experimental, unaudited, testnet only.** This is a research prototype built during a buildathon. Do not use it with funds at risk.
 
-## 🦆 What is coincoin?
+coincoin is a developer-operated guardian for EOAs — a CLI watcher daemon plus a set of EIP-7702 contracts. It targets a specific, technical failure mode: the window during a non-atomic exploit where a wallet is already compromised but the funds are not yet gone, and nothing on the user side acts. It is niche by design.
 
-Most wallet protection stops at the signature. **coincoin protects you *after* a compromise** — and protects the funds you've already deposited in DeFi, not just what's sitting in your wallet.
+## Contents
 
-You delegate your account to a guardian via **EIP-7702**. A watcher reads real on-chain threat signals; the instant a verifiable exploit fires, a **bounded keeper** unwinds your DeFi positions and sweeps every token to a **vault only you can withdraw from** — inside the reaction window that non-atomic hacks leave open. You keep your keys the whole time; the keeper can *only* send to your own vault, and you can revoke in one transaction.
+- [The problem](#the-problem)
+- [How it works](#how-it-works)
+- [Architecture](#architecture)
+- [What's live vs. roadmap](#whats-live-vs-roadmap)
+- [Tech stack](#tech-stack)
+- [Repository structure](#repository-structure)
+- [Getting started](#getting-started)
+- [Deployed addresses](#deployed-addresses)
+- [Security & trust model](#security--trust-model)
+- [Testing](#testing)
+- [Buildathon](#buildathon)
+- [License](#license)
 
-It's the same EIP-7702 primitive attackers use to drain wallets — turned into defense.
+## The problem
 
-> Built for the **[Arbitrum Open House London](https://arbitrum-london.hackquest.io/)** Online Buildathon (May–June 2026), on the **Robinhood Chain** track.
+Wallet security today is almost entirely *pre-signature*: simulate a transaction, flag a bad signature, revoke a stale allowance. None of it helps once a key is compromised, and none of it touches the funds already supplied to a protocol. Two facts define the gap:
 
----
+- **Drainers went post-signature, and onchain.** In 2025, wallet drainers and phishing took **$83.85M from 106,106 victims** ([Scam Sniffer](https://www.scamsniffer.io/)). Attackers now weaponize **EIP-7702 itself** — 90%+ of onchain 7702 delegations are sweepers that drain on the next inbound transfer.
+- **Most protocol exploits are non-atomic.** The interval between the first malicious transaction and the full drain ranges from roughly **4 minutes to 5 days** (Defimon). That interval is a *response window* — and on the user side, nothing reacts inside it.
 
-## ⚠️ Status — honest "live vs. built"
+Pre-signature tools (Blockaid, Revoke.cash) sit at the wrong point in the lifecycle for this. Harpie was the closest prior art — post-compromise protection — but it ran a fragile front-run race against the attacker, never covered deposited positions, and shut down in 2025.
 
-coincoin is an **experimental, unaudited testnet project**. Do not use it with funds you can't lose. Here's exactly what runs where:
+coincoin closes the gap by enforcing at the account level via **EIP-7702** (a primitive that postdates Harpie) and by treating **DeFi positions as first-class**: the assets most protection tools ignore because they aren't sitting in the wallet.
 
-| | What | Where |
-|---|---|---|
-| ✅ **Live on-chain** | EIP-7702 delegation + self-config · ERC-20 sweep · approval revocation · **frozen vault** · **signed multi-keeper policy** (EIP-712) · **local firewall** (`RulesEngineV1`) · the full **detection → evacuation** loop | Robinhood Chain testnet (46630) |
-| ✅ **Proven end-to-end** | A real exploit detected on-chain → funds at rest *and* a deposited DeFi position rescued to the user's vault in one keeper-driven sequence, no human in the loop | Robinhood Chain testnet (46630) |
-| ✅ **Built & verified** | The DeFi-exit engine (`exitAaveV3`) unwinds a real position against the **live Aave V3 Pool** — same code path the guardian runs | Arbitrum One (fork test) |
-| 🔭 **Next up** | **Native Aave V3 / GMX V2 integration** — built and ready; it goes live the moment those protocols are deployed on Robinhood Chain (we're waiting on availability) · broader firewall rules · audit before mainnet ([roadmap](#-roadmap)) | — |
+## How it works
 
----
+Four parts. The product is the watcher daemon and the contracts; there is no required UI.
 
-## 🕳️ The problem
+1. **Delegate (once).** An EOA signs an EIP-7702 authorization pointing at `GuardianModule`, and in the same transaction calls `configure()` to set its policy: a **frozen** safe vault (settable once — a leaked key cannot repoint it) and an authorized **keeper** set. Policies can also be installed from an **EIP-712 signature** a relayer submits (`configureWithSig`), for gasless onboarding.
+2. **Watch.** A TypeScript/viem daemon (`ChainThreatSource`) polls `Drained` logs of the monitored protocols directly from chain — no third-party feed, no websocket dependency. It catches up to head in bounded `getLogs` windows.
+3. **React.** On a verified threat, the **keeper** — which is cryptographically bounded to two actions and nothing else — calls `exitAaveV3()` to unwind deposited positions back into the account, then `evacuateERC20()` to sweep every token to the safe vault.
+4. **Firewall (proactive).** Calls routed through `execute()` are scored by a stateless `RulesEngineV1`; an unlimited `approve` / `increaseAllowance` / EIP-2612 `permit` / blanket `setApprovalForAll` to an untrusted spender reverts at the account level before it lands.
 
-<img src="docs/readme/problem.jpg" alt="The non-atomic response window: 4 minutes to 5 days" width="760" />
+> [!NOTE]
+> coincoin is non-custodial by construction. The keeper holds no withdrawal power — it can only move funds *to the vault the owner registered*, and the owner removes the delegation in one transaction (`pnpm revoke`). The keeper never holds the victim's key.
 
-- **$83.85M stolen from 106,106 victims** in 2025 via wallet drainers & phishing ([Scam Sniffer](https://www.scamsniffer.io/)). Attackers now weaponize **EIP-7702 itself** — 90%+ of onchain 7702 delegations are sweepers.
-- On the protocol side, most exploits are **non-atomic**: the gap between the first malicious transaction and the full drain ranges from **4 minutes to 5 days** (Defimon). Nobody tools that window on the *user* side.
-- Pre-signature tools (Blockaid, Revoke.cash) block a *bad signature* — but do nothing **after a compromise**, and nothing **for your DeFi positions**.
+## Architecture
 
-**Harpie** pioneered post-compromise protection but shut down in 2025; it relied on fragile front-run racing and never covered deposited positions. coincoin enforces at the account level (a primitive that arrived *after* Harpie) and covers DeFi — the blind spot.
+```
+   on-chain Drained log
+   ─────────────────────────▶  ┌───────────────────────────────┐
+                               │  watcher  (ChainThreatSource)  │   TS / viem daemon
+                               │  polls getLogs · zero deps     │
+                               └───────────────┬───────────────┘
+                                               │ threat alert
+                                               ▼
+   your EOA ──EIP-7702──▶ GuardianModule  ┌───────────────────────────────┐
+   (delegate + configure)                 │  keeper  (bounded)             │  can ONLY:
+                                          │   1. exitAaveV3()   unwind DeFi │
+                                          │   2. evacuateERC20() sweep      │
+                                          └───────────────┬───────────────┘
+                                                          ▼
+                                          ┌───────────────────────────────┐
+                                          │  SafeVault  (owner-only)       │
+                                          └───────────────────────────────┘
 
----
-
-## 🔭 How it works
-
-<img src="docs/readme/approach.jpg" alt="Turning the EIP-7702 delegation attackers use to drain into defense" width="760" />
-
-```mermaid
-flowchart LR
-    EOA["Your account<br/>(EIP-7702 → GuardianModule)"]
-    W["Watcher<br/>(ChainThreatSource)"]
-    K["Keeper<br/>(bounded)"]
-    AAVE["DeFi positions<br/>(exitAaveV3)"]
-    VAULT["SafeVault<br/>(only you withdraw)"]
-    RE["RulesEngineV1<br/>(firewall)"]
-
-    EOA -. delegates .-> K
-    THREAT["On-chain threat<br/>(Drained log)"] -->|polled| W
-    W -->|alert| K
-    K -->|1 · unwind| AAVE
-    AAVE -->|funds return| EOA
-    K -->|2 · sweep| VAULT
-    EOA -->|proactive: calls via execute| RE
-    RE -->|risk score ≥ threshold| BLOCK["revert ❌"]
+   proactive:  EOA.execute(to, value, data) ─▶ RulesEngineV1.score() ─▶ revert if risk ≥ threshold
 ```
 
-1. **Onboard once.** Your EOA signs an EIP-7702 authorization delegating to `GuardianModule`, and self-configures its policy: the safe vault (frozen on first set) and an authorized keeper set.
-2. **Watch.** The watcher daemon polls real `Drained` logs on-chain (zero external dependency). Calm until a verifiable threat appears.
-3. **React.** On a threat, the keeper — which **cannot** do anything except evacuate to *your* vault — exits your DeFi positions (`exitAaveV3`), then sweeps every token to the `SafeVault`.
-4. **Firewall (proactive).** Calls routed through `execute()` are scored by the stateless `RulesEngine`; malicious approvals (`approve` / `permit` / `setApprovalForAll` to an untrusted spender) revert at the account level before they ever land.
+- **`GuardianModule`** — the EIP-7702 delegate. Holds the policy (frozen vault, keeper set, signed-policy nonce), the sweep/exit logic, and the firewall hook. State lives at each protected EOA, not at the implementation address.
+- **`SafeVault`** — owner-only withdrawal destination, deployed per user.
+- **`RulesEngineV1`** — stateless risk scorer the firewall calls; designed to be swappable (Stylus is on the roadmap).
+- **watcher** — the off-chain operator: detection source, exposure registry, keeper client, and orchestrator, with an end-to-end runner.
 
-<div align="center"><img src="docs/readme/how-it-works.jpg" alt="coincoin architecture" width="720" /></div>
+## What's live vs. roadmap
 
----
+Deployed and exercised on **Robinhood Chain testnet (chain 46630)** unless noted.
 
-## 🛰️ Live deployment & proof
-
-Everything below is live on **Robinhood Chain testnet (chain `46630`)** — [block explorer](https://explorer.testnet.chain.robinhood.com/). Full records in [`deployments/robinhood-testnet.json`](deployments/robinhood-testnet.json).
-
-| Contract | Address |
+| Status | Capability |
 |---|---|
-| **GuardianModule** (EIP-7702 guardian) | [`0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77`](https://explorer.testnet.chain.robinhood.com/address/0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77) |
-| **RulesEngineV1** (firewall) | [`0xc20A9d7D38B07a9C74A1fD87A2e25CA1973Cbc52`](https://explorer.testnet.chain.robinhood.com/address/0xc20A9d7D38B07a9C74A1fD87A2e25CA1973Cbc52) |
-| **SafeVault** (demo) | [`0x49be3DC48fC0540346A064fCC6Fc94FBaE62f479`](https://explorer.testnet.chain.robinhood.com/address/0x49be3DC48fC0540346A064fCC6Fc94FBaE62f479) |
+| ✅ | EIP-7702 delegation + self-config · ERC-20 sweep · approval revocation |
+| ✅ | Frozen vault · signed multi-keeper policy (EIP-712 `configureWithSig`) |
+| ✅ | Local firewall (`RulesEngineV1`) — unlimited-approval / `permit` / `setApprovalForAll` rules |
+| ✅ | Real on-chain detection → rescue loop, run end-to-end (funds at rest **and** a deposited DeFi position rescued in one keeper-driven sequence) |
+| ✅ | DeFi-exit engine (`exitAaveV3`) — built and verified against the **live Aave V3 Pool** via an Arbitrum One fork test |
+| 🛣️ | **Native Aave V3 integration** — built and ready; goes live the day Aave V3 is deployed on Robinhood Chain. Waiting on availability, not on code. |
+| 🛣️ | **GMX V2 position exit** — same pattern, once GMX is available on the target chain |
+| 🛣️ | Broader firewall coverage — Permit2, multicall, direct-transfer heuristics |
+| 🛣️ | Policy asset/protocol scoping · Stylus rules engine · in-browser 7702 onboarding · security audit |
 
-> The `GuardianModule` was also initially deployed (and **Arbiscan-verified**) on Arbitrum Sepolia at [`0x6671…200F`](https://sepolia.arbiscan.io/address/0x6671b4B73b79c284A710B00ef777d8E65f55200F).
+> [!NOTE]
+> Aave V3 and GMX V2 are not deployed on Robinhood Chain testnet, so the live end-to-end run exercises the exit engine against an Aave-V3-shaped lending pool. The exit code itself is verified against the real Aave V3 Pool in the fork test (`AaveRealFork.t.sol`) — it ships against the real protocol the moment one is available on the chain coincoin runs on.
 
-<div align="center"><img src="docs/readme/demo.jpg" alt="COIN COIN! — threat detected, funds evacuated" width="760" /></div>
+## Tech stack
 
-**End-to-end rescue, run on-chain:** a protected account holding **500 dUSD idle + 300 dUSD supplied to a DeFi lending pool** → the watcher detects the exploit, unwinds the deposited position, and evacuates everything to the vault. Final state: **wallet `0`, vault `800`, position `0`** — one keeper-driven sequence, no human in the loop.
+| Layer | Stack |
+|---|---|
+| Contracts | Solidity 0.8.24, Foundry, OpenZeppelin, EIP-7702, EIP-712 |
+| Watcher | TypeScript, viem, Vitest |
+| Chain | Arbitrum Orbit (Robinhood Chain testnet), RPC via Alchemy |
+| Frontend | React 19, Vite, Tailwind (landing + `/app` dashboard) |
 
-🔗 **[Live site & dashboard →](https://coincoin-five.vercel.app/)** (connect an account at `/app` to inspect its protection status).
-
----
-
-## 🚀 Quickstart
-
-Reproduce the detection → evacuation demo end-to-end on Robinhood Chain testnet.
-
-**Prerequisites:** [Foundry](https://getfoundry.sh), Node ≥ 22, [pnpm](https://pnpm.io), and a funded testnet wallet.
-
-```bash
-# 1. Clone + install
-git clone https://github.com/gamween/coincoin.git
-cd coincoin
-cp .env.example .env          # fill in RPC + disposable testnet keys (see .env.example)
-
-# 2. Contracts — build & test (90 tests)
-cd contracts && forge test    # set ARBITRUM_ONE_RPC to also run the live-Aave fork
-                              # deploy: see watcher/README.md → Deployment
-
-# 3. Watcher — the product (run each in its own terminal)
-cd ../watcher && pnpm install
-pnpm onboard                  # one-time: EIP-7702 delegation + policy config
-pnpm watch                    # 👁️  the guardian, watching real on-chain logs
-pnpm exploit                  # 💥 (separate terminal) replay an exploit → real Drained log
-#                             → watch prints "🦆 COIN COIN !" and evacuates to the vault
-pnpm revoke                   # remove the delegation in one tx (100% non-custodial)
-```
-
-> ⚠️ **Never commit secrets.** `.env` is gitignored — only `.env.example` ships. Use **disposable testnet keys only**.
-
----
-
-## 📁 Repository structure
+## Repository structure
 
 ```
 coincoin/
-├── contracts/      # Foundry — GuardianModule (EIP-7702), RulesEngineV1, SafeVault, mocks, deploy scripts
-├── watcher/        # TypeScript/viem detection→rescue daemon (onboard · watch · exploit · revoke)
-├── site/           # Vite/React/Tailwind landing page + /app dashboard
-├── video/          # Remotion pitch + demo videos (code → MP4)
-├── deployments/    # On-chain address records (robinhood-testnet.json, arbitrum-sepolia.json)
-├── docs/           # Brand kit (BRAND.md), specs, submission guide, README assets
-├── .env.example    # Config template (RPC, disposable keys, demo addresses)
-└── LICENSE         # MIT
+├── contracts/      Foundry — GuardianModule (EIP-7702), RulesEngineV1, SafeVault, mocks, deploy scripts
+├── watcher/        TypeScript/viem detection → rescue daemon (onboard · watch · exploit · revoke)
+├── site/           Vite/React/Tailwind landing + /app dashboard
+├── deployments/    On-chain address records (robinhood-testnet.json, arbitrum-sepolia.json)
+├── docs/           Brand kit, design specs, submission notes
+├── video/          Remotion pitch + demo videos (code → MP4)
+├── .env.example    Config template (RPC, disposable keys, demo addresses)
+└── LICENSE         MIT
 ```
 
----
+## Getting started
 
-## 🔒 Security & trust model
+Reproduce the detection → evacuation loop on Robinhood Chain testnet.
 
-coincoin is **non-custodial by construction**, but it is **experimental and unaudited** — treat it as a research prototype on testnet.
-
-**Trust assumptions & guarantees**
-- **You keep your keys.** The guardian is a delegate, not a custodian.
-- **Frozen vault.** The safe vault is set once and can't be changed; a leaked key cannot redirect your funds elsewhere.
-- **Bounded keeper.** A keeper can *only* trigger evacuation to your registered vault and revoke approvals — nothing else. Rotating the keeper set revokes the old keepers.
-- **Signed policy (EIP-712).** Policies can be set directly or via a signature a relayer submits (gasless onboarding); a leaked keeper key can't change the policy.
-- **Revocable anytime.** One transaction removes the EIP-7702 delegation.
-
-**Known limitations**
-- The firewall only protects calls routed through `execute()`, and covers four approval vectors — **not** Permit2, multicall, or direct transfers (yet — see [roadmap](#-roadmap)).
-- Asset/protocol scoping for policies is not yet implemented.
-- Native Aave V3 / GMX V2 integration is **built and verified** but waits on those protocols being deployed on Robinhood Chain before it can run against the real thing (see [roadmap](#-roadmap)).
-
-**Responsible disclosure:** found an issue? Please reach out privately via [X (@dvb_fianso)](https://x.com/dvb_fianso) or [Telegram](https://t.me/dvb_fianso) before opening a public issue.
-
----
-
-## 🧪 Testing
-
-**90 tests pass** — written test-first with Foundry + Vitest.
-
-<img src="docs/readme/aave-fork.jpg" alt="exitAaveV3 fork-verified against the real Aave V3 Pool on Arbitrum One" width="640" />
+**Prerequisites:** [Foundry](https://getfoundry.sh), Node ≥ 22, [pnpm](https://pnpm.io), a funded testnet wallet.
 
 ```bash
-cd contracts && forge test                       # 64 unit/integration tests
-ARBITRUM_ONE_RPC=<rpc> forge test                # + the real-Aave fork (AaveRealFork.t.sol)
-cd ../watcher && pnpm test                        # 25 watcher tests (vitest)
+git clone https://github.com/gamween/coincoin.git
+cd coincoin
+cp .env.example .env          # RPC + disposable testnet keys — see .env.example
+
+# contracts: build + test
+cd contracts && forge test    # set ARBITRUM_ONE_RPC to also run the live-Aave fork test
+                              # deployment runbook: watcher/README.md → Deployment
+
+# watcher: the product (run each step in its own terminal)
+cd ../watcher && pnpm install
+pnpm onboard                  # one-time: EIP-7702 delegation + policy config
+pnpm watch                    # the guardian, watching real on-chain logs
+pnpm exploit                  # (separate terminal) replay an exploit → real Drained log
+                              # → watch detects it and evacuates to the vault
+pnpm revoke                   # remove the delegation in one tx
 ```
 
-- **`AaveRealFork.t.sol`** exits a real 1 WETH position against the **live Aave V3 Pool on Arbitrum One** (forked) — same code path the guardian runs, proven against real Aave.
-- The watcher suite covers the alert schema, exposure registry, keeper client, and the orchestrator end-to-end.
+> [!WARNING]
+> `.env` is gitignored — only `.env.example` ships. Use **disposable testnet keys only**; never commit secrets.
 
----
+## Deployed addresses
 
-## 🗺️ Roadmap
+Robinhood Chain testnet (chain `46630`) — [explorer](https://explorer.testnet.chain.robinhood.com/). Full records: [`deployments/robinhood-testnet.json`](deployments/robinhood-testnet.json).
 
-Shipped vs. next — honest, no dates.
+| Contract | Address |
+|---|---|
+| `GuardianModule` (EIP-7702 guardian) | [`0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77`](https://explorer.testnet.chain.robinhood.com/address/0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77) |
+| `RulesEngineV1` (firewall) | [`0xc20A9d7D38B07a9C74A1fD87A2e25CA1973Cbc52`](https://explorer.testnet.chain.robinhood.com/address/0xc20A9d7D38B07a9C74A1fD87A2e25CA1973Cbc52) |
+| `SafeVault` (demo) | [`0x49be3DC48fC0540346A064fCC6Fc94FBaE62f479`](https://explorer.testnet.chain.robinhood.com/address/0x49be3DC48fC0540346A064fCC6Fc94FBaE62f479) |
 
-**Shipped**
-- [x] EIP-7702 guardian — delegation, frozen vault, bounded keeper, ERC-20 sweep, approval revocation
-- [x] Signed multi-keeper policy (EIP-712 / `configureWithSig`)
-- [x] DeFi-position exit engine (`exitAaveV3`) — built & verified against real Aave V3
-- [x] Local firewall (`RulesEngineV1`) — unlimited-approval / `permit` / `setApprovalForAll` rules
-- [x] Real on-chain detection → rescue loop, live on Robinhood Chain testnet
+The `GuardianModule` was also initially deployed and **Arbiscan-verified** on Arbitrum Sepolia at [`0x6671…200F`](https://sepolia.arbiscan.io/address/0x6671b4B73b79c284A710B00ef777d8E65f55200F).
 
-**Next**
-- [ ] **Native Aave V3 integration** — the exit engine is built and verified; it goes live the day Aave V3 is deployed on Robinhood Chain. We're waiting on availability, not writing code.
-- [ ] **GMX V2 position exit** — same pattern, the moment GMX is available on the target chain.
-- [ ] **Broader firewall coverage** — Permit2, multicall, and direct-transfer heuristics (we shipped the four highest-impact approval vectors first).
-- [ ] **Policy asset/protocol scoping** — per-asset and per-protocol rules.
-- [ ] **Stylus rules engine** — move the firewall scorer to Arbitrum Stylus for richer, cheaper rules.
-- [ ] **In-browser EIP-7702 onboarding** — CLI today while 7702 wallet UX matures.
-- [ ] **Real Defimon threat feed** — detection is on-chain and dependency-free today; a live feed widens coverage.
-- [ ] **Security audit** — before any mainnet deployment.
+## Security & trust model
 
----
+Non-custodial by construction, but **experimental and unaudited** — a research prototype on testnet.
 
-## 🛠️ Built with
+**Trust assumptions**
 
-`Solidity 0.8.24` · `Foundry` · `OpenZeppelin` · `EIP-7702` · `TypeScript` · `viem` · `Vitest` · `React 19` · `Vite` · `Tailwind` · `Remotion`
+- The owner keeps their key; the guardian is a delegate, not a custodian.
+- The safe vault is **frozen** after first config — a leaked key cannot redirect funds elsewhere.
+- The keeper is **bounded**: it can only trigger evacuation to the registered vault and revoke approvals. Rotating the keeper set revokes the prior keepers; a leaked keeper key cannot change the policy.
+- The delegation is **revocable in one transaction**.
 
-Deployed on **Arbitrum Orbit** (Robinhood Chain testnet) · RPC via **Alchemy**.
+**Known limitations**
 
----
+- The firewall only protects calls routed through `execute()`, and covers four approval vectors — not Permit2, multicall, or direct transfers (yet — see roadmap).
+- Policy asset/protocol scoping is not implemented.
+- Native Aave V3 / GMX V2 integration is built and verified but waits on those protocols being deployed on the chain coincoin runs on.
 
-## 🏛️ Buildathon
+**Responsible disclosure:** report issues privately via [X (@dvb_fianso)](https://x.com/dvb_fianso) or [Telegram](https://t.me/dvb_fianso) before opening a public issue.
 
-Built for the **[Arbitrum Open House London](https://arbitrum-london.hackquest.io/)** — a program by the **Arbitrum Foundation** (online Buildathon, May 25 – June 14 2026, powered by HackQuest), targeting the **Robinhood Chain** track. Sponsor tech used: **Robinhood Chain**, **Alchemy**, **OpenZeppelin**.
+## Testing
 
-Build-in-public thread: [@dvb_fianso on X](https://x.com/dvb_fianso).
+90 tests, written test-first.
 
----
+```bash
+cd contracts && forge test            # 64 unit/integration tests (+1 fork test, gated on ARBITRUM_ONE_RPC)
+ARBITRUM_ONE_RPC=<rpc> forge test     # includes AaveRealFork.t.sol against the live Aave V3 Pool
+cd ../watcher && pnpm test            # 25 watcher tests (vitest)
+```
 
-## 📄 License
+`AaveRealFork.t.sol` exits a real position against the **live Aave V3 Pool on Arbitrum One** (forked) — the same code path the guardian runs. The watcher suite covers the alert schema, exposure registry, keeper client, and the end-to-end orchestrator.
+
+## Buildathon
+
+Built for **[Arbitrum Open House London](https://arbitrum-london.hackquest.io/)** — a program by the Arbitrum Foundation. The Online Buildathon ran May 25 – June 14, 2026 (powered by HackQuest); coincoin targets the **Robinhood Chain** track. Sponsor tech used: Robinhood Chain, Alchemy, OpenZeppelin. Build-in-public log: [@dvb_fianso](https://x.com/dvb_fianso).
+
+## License
 
 [MIT](LICENSE) © Sofiane
 
 <div align="center">
-<br/>
-<a href="https://coincoin-five.vercel.app/">Live demo</a> · <a href="https://github.com/gamween/coincoin">GitHub</a> · <a href="https://x.com/dvb_fianso">X</a> · <a href="https://t.me/dvb_fianso">Telegram</a>
-<br/><br/>
-<sub>🦆 coin coin!</sub>
+<sub><a href="https://coincoin-five.vercel.app/">Live demo</a> · <a href="https://x.com/dvb_fianso">X</a> · <a href="https://t.me/dvb_fianso">Telegram</a></sub>
 </div>
