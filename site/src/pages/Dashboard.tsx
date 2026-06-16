@@ -14,6 +14,7 @@ import { robinhood } from "../app/chain";
 import { ADDR, EXPLORER, erc20Abi, guardianAbi, safeVaultAbi } from "../app/contracts";
 import { fmtUnits, short } from "../app/format";
 import { Pill, PageHeader } from "../components/ui";
+import { useGaslessOnboard } from "../app/useGaslessOnboard";
 
 const REFRESH = { refetchInterval: 8000 } as const;
 
@@ -78,6 +79,7 @@ export function Dashboard() {
 
   // ── Writes ──
   const { writeContractAsync } = useWriteContract();
+  const { onboard, status: onbStatus, error: onbError } = useGaslessOnboard(() => state.refetch());
   const [busy, setBusy] = useState<string | null>(null);
   const [tx, setTx] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -187,10 +189,37 @@ export function Dashboard() {
                 <Row label="Firewall" value={firewallOn ? `ON · block ≥ ${threshold}` : "OFF"} />
               </dl>
               {!configured && (
-                <p className="mt-5 font-body text-body-sm text-text-muted">
-                  This account isn't delegated yet. Onboard once from the CLI:{" "}
-                  <code className="font-mono text-primary">pnpm onboard</code> — then it shows up here.
-                </p>
+                <div className="mt-5">
+                  {isConnected && onRobinhood && isSelf ? (
+                    <>
+                      <button
+                        onClick={() => onboard()}
+                        disabled={onbStatus === "signing" || onbStatus === "relaying"}
+                        className="btn-comic"
+                      >
+                        {onbStatus === "signing"
+                          ? "Sign in your wallet…"
+                          : onbStatus === "relaying"
+                            ? "Onboarding (gasless)…"
+                            : "Protect my wallet — gasless"}
+                      </button>
+                      <p className="mt-3 font-body text-caption text-text-muted">
+                        Two wallet signatures, zero gas — a relayer sponsors the delegation. Or onboard from the CLI:{" "}
+                        <code className="font-mono text-primary">pnpm onboard</code>.
+                      </p>
+                      {onbError && <p className="mt-2 font-body text-body-sm text-danger">{onbError}</p>}
+                    </>
+                  ) : (
+                    <p className="font-body text-body-sm text-text-muted">
+                      {isConnected
+                        ? onRobinhood
+                          ? "Connect the account you want to protect to onboard it gasless, "
+                          : "Switch to Robinhood Chain to onboard, "
+                        : "Connect your wallet to onboard gasless, "}
+                      or use the CLI: <code className="font-mono text-primary">pnpm onboard</code>.
+                    </p>
+                  )}
+                </div>
               )}
             </div>
 

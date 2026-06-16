@@ -3,19 +3,21 @@
   "network": "robinhood-chain-testnet",
   "rpc": "https://rpc.testnet.chain.robinhood.com/rpc",
   "contracts": {
-    "GuardianModule": "0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77",
-    "RulesEngineV1": "0xc20A9d7D38B07a9C74A1fD87A2e25CA1973Cbc52"
+    "GuardianModule": "0x9953BB30cFef2ac842C74417eA6DC661b492E8dA",
+    "RulesEngineV1": "0xc20A9d7D38B07a9C74A1fD87A2e25CA1973Cbc52",
+    "SafeVaultFactory": "0x1ef2B2539fa842A9c7e4EA07790aA6dBc47ec4A5"
   },
   "demo": {
     "_comment": "Live end-to-end detection->evacuation + DeFi-exit scenario (pnpm onboard/watch/exploit). MockAavePool holds a deposited position credited to the victim (exitAaveV3 target).",
-    "SafeVault": "0x49be3DC48fC0540346A064fCC6Fc94FBaE62f479",
-    "MockERC20": "0xC32C2eB815F1413ee2c7A68d2EFf3760d828841E",
-    "MockVulnerableProtocol": "0x6e8086CF791754b93bAf04F039b9f72e2bCF80Db",
-    "MockAavePool": "0xaf57676673B71CED42767841F1317A20484052BE",
-    "victim": "0xfa142e801447fc359E54e8E797357aA7cBf23368"
+    "SafeVault": "0x530921CFFCeCc01B3Ad20E48A8c1707d27204b91",
+    "MockERC20": "0x31052145BBFB8aA9B4e3713a2fD34e57b3A942f3",
+    "MockVulnerableProtocol": "0x43FfEEA2eAea3e2FB504cFF746b77171f86f6Ec0",
+    "MockAavePool": "0x7E8c3a15E45418c4B187505Bb21FBB05015aca93",
+    "victim": "0x46d167056f22BFB13bc2F940ae42b29c514280Cc"
   },
-  "deployedAt": "2026-06-14",
+  "deployedAt": "2026-06-16",
   "deployer": "0xdae8992a9b5Fe850bE63781d1c2e65a3e496F728",
-  "explorer": "https://explorer.testnet.chain.robinhood.com/address/0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77",
-  "note": "Robinhood Chain testnet (Arbitrum Orbit). This GuardianModule is the CURRENT build: EIP-7702 delegation + self-config, ERC-20 sweep, approval revocation, on-chain detection->evacuation, frozen vault, signed multi-keeper policy (configureWithSig), exitAaveV3 (DeFi exit), and the local firewall (execute + RulesEngineV1). The DeFi exit is also fork-verified against real Aave V3 on Arbitrum One (Aave isn't deployed on this chain; MockAavePool stands in here). Supersedes the earlier build 0x6671b4B73b79c284A710B00ef777d8E65f55200F (delegation + sweep + revoke only)."
+  "keeper": "0x627872F35b724222413e7421C9e40A26B2762B9e",
+  "explorer": "https://explorer.testnet.chain.robinhood.com/address/0x9953BB30cFef2ac842C74417eA6DC661b492E8dA",
+  "note": "Robinhood Chain testnet (Arbitrum Orbit). Current GuardianModule build: EIP-7702 delegation + self-config, ERC-20 sweep, approval revocation, on-chain detection->evacuation, frozen vault, signed multi-keeper policy (configureWithSig, EIP-712 standard encoding so a browser wallet's signTypedData verifies), exitAaveV3 (DeFi exit), and the local firewall (execute + RulesEngineV1). SafeVaultFactory deploys a deterministic per-user SafeVault for gasless in-browser onboarding (relayer-sponsored). Supersedes 0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77 (pre-EIP-712-fix)."
 }

@@ -89,7 +89,7 @@ contract GuardianModule {
         if (block.timestamp > deadline) revert Expired();
         if (nonce != policyNonce) revert BadNonce();
         bytes32 structHash = keccak256(
-            abi.encode(POLICY_TYPEHASH, p.safeVault, keccak256(abi.encodePacked(p.keepers)), nonce, deadline)
+            abi.encode(POLICY_TYPEHASH, p.safeVault, _hashKeepers(p.keepers), nonce, deadline)
         );
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", _domainSeparator(), structHash));
         if (ECDSA.recover(digest, sig) != address(this)) revert BadSignature();
@@ -97,6 +97,17 @@ contract GuardianModule {
             ++policyNonce;
         }
         _applyPolicy(p.safeVault, p.keepers);
+    }
+
+    /// @dev EIP-712 hash of the `address[] keepers` field: keccak256 of each address encoded as a
+    ///      32-byte word, concatenated — the standard array encoding, so a wallet's `signTypedData`
+    ///      (e.g. in-browser gasless onboarding) recovers correctly.
+    function _hashKeepers(address[] calldata keepers_) internal pure returns (bytes32) {
+        bytes32[] memory words = new bytes32[](keepers_.length);
+        for (uint256 i; i < keepers_.length; ++i) {
+            words[i] = bytes32(uint256(uint160(keepers_[i])));
+        }
+        return keccak256(abi.encodePacked(words));
     }
 
     /// @notice The full authorized keeper set.

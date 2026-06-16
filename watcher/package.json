@@ -6,6 +6,7 @@
   "scripts": {
     "test": "vitest run",
     "onboard": "tsx scripts/onboard.ts",
+    "onboard:gasless": "tsx scripts/onboard-gasless.ts",
     "watch": "tsx scripts/watch.ts",
     "exploit": "tsx scripts/exploit.ts",
     "revoke": "tsx scripts/revoke.ts"

@@ -7,13 +7,28 @@ export const EXPLORER = robinhood.blockExplorers.default.url;
 /// reads the guardian view functions at the connected address — not at the impl address.
 export const ADDR = {
   /// GuardianModule implementation (the 7702 delegate target).
-  guardianImpl: "0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77",
+  guardianImpl: "0x9953BB30cFef2ac842C74417eA6DC661b492E8dA",
   /// Demo dUSD token used in the end-to-end scenario.
-  token: "0xC32C2eB815F1413ee2c7A68d2EFf3760d828841E",
+  token: "0x31052145BBFB8aA9B4e3713a2fD34e57b3A942f3",
   /// RulesEngineV1 — deploy on Robinhood (script/DeployRules.s.sol) and set its address as
   /// VITE_RULES_ENGINE to enable the firewall controls. Empty = the Enable button stays off.
   rulesEngine: ((import.meta.env.VITE_RULES_ENGINE as string | undefined) ?? "") as `0x${string}` | "",
+  /// SafeVaultFactory — deterministic per-user SafeVault, for gasless in-browser onboarding.
+  factory: ((import.meta.env.VITE_VAULT_FACTORY as string | undefined) ??
+    "0x1ef2B2539fa842A9c7e4EA07790aA6dBc47ec4A5") as `0x${string}`,
+  /// Canonical coincoin keeper the gasless onboarding policy authorizes.
+  keeper: "0x627872F35b724222413e7421C9e40A26B2762B9e" as `0x${string}`,
 } as const;
+
+export const factoryAbi = [
+  {
+    type: "function",
+    name: "vaultOf",
+    stateMutability: "view",
+    inputs: [{ name: "owner", type: "address" }],
+    outputs: [{ type: "address" }],
+  },
+] as const;
 
 export const guardianAbi = [
   { type: "function", name: "configured", stateMutability: "view", inputs: [], outputs: [{ type: "bool" }] },

@@ -9,7 +9,7 @@
 [![Live demo](https://img.shields.io/badge/live-coincoin--five.vercel.app-000000?style=flat-square)](https://coincoin-five.vercel.app/)
 [![Deployed](https://img.shields.io/badge/deployed-Robinhood%20Chain%20testnet%20(46630)-7af7c0?style=flat-square)](#deployed-addresses)
 [![Solidity](https://img.shields.io/badge/Solidity-0.8.24-363636?style=flat-square&logo=solidity)](contracts/)
-[![Tests](https://img.shields.io/badge/tests-90%20passing-27C93F?style=flat-square)](#testing)
+[![CI](https://img.shields.io/github/actions/workflow/status/gamween/coincoin/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/gamween/coincoin/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-F5D90A?style=flat-square)](LICENSE)
 
 </div>
@@ -49,7 +49,7 @@ coincoin closes the gap by enforcing at the account level via **EIP-7702** (a pr
 
 Four parts. The product is the watcher daemon and the contracts; there is no required UI.
 
-1. **Delegate (once).** An EOA signs an EIP-7702 authorization pointing at `GuardianModule`, and in the same transaction calls `configure()` to set its policy: a **frozen** safe vault (settable once — a leaked key cannot repoint it) and an authorized **keeper** set. Policies can also be installed from an **EIP-712 signature** a relayer submits (`configureWithSig`), for gasless onboarding.
+1. **Delegate (once).** An EOA signs an EIP-7702 authorization pointing at `GuardianModule`, and in the same transaction calls `configure()` to set its policy: a **frozen** safe vault (settable once — a leaked key cannot repoint it) and an authorized **keeper** set. Policies can also be installed from an **EIP-712 signature** a relayer submits (`configureWithSig`) — this powers the **one-click, gasless onboarding** in the `/app` dashboard (the wallet just signs; a relayer pays).
 2. **Watch.** A TypeScript/viem daemon (`ChainThreatSource`) polls `Drained` logs of the monitored protocols directly from chain — no third-party feed, no websocket dependency. It catches up to head in bounded `getLogs` windows.
 3. **React.** On a verified threat, the **keeper** — which is cryptographically bounded to two actions and nothing else — calls `exitAaveV3()` to unwind deposited positions back into the account, then `evacuateERC20()` to sweep every token to the safe vault.
 4. **Firewall (proactive).** Calls routed through `execute()` are scored by a stateless `RulesEngineV1`; an unlimited `approve` / `increaseAllowance` / EIP-2612 `permit` / blanket `setApprovalForAll` to an untrusted spender reverts at the account level before it lands.
@@ -93,13 +93,14 @@ Deployed and exercised on **Robinhood Chain testnet (chain 46630)** unless noted
 |---|---|
 | ✅ | EIP-7702 delegation + self-config · ERC-20 sweep · approval revocation |
 | ✅ | Frozen vault · signed multi-keeper policy (EIP-712 `configureWithSig`) |
+| ✅ | **Gasless in-browser onboarding** — the wallet signs (EIP-712 policy + EIP-7702 authorization); a relayer (`site/api`) deploys the user's deterministic `SafeVaultFactory` vault and sponsors the delegate+configure tx (zero gas for the user) |
 | ✅ | Local firewall (`RulesEngineV1`) — unlimited-approval / `permit` / `setApprovalForAll` rules |
 | ✅ | Real on-chain detection → rescue loop, run end-to-end (funds at rest **and** a deposited DeFi position rescued in one keeper-driven sequence) |
 | ✅ | DeFi-exit engine (`exitAaveV3`) — built and verified against the **live Aave V3 Pool** via an Arbitrum One fork test |
 | 🛣️ | **Native Aave V3 integration** — built and ready; goes live the day Aave V3 is deployed on Robinhood Chain. Waiting on availability, not on code. |
 | 🛣️ | **GMX V2 position exit** — same pattern, once GMX is available on the target chain |
 | 🛣️ | Broader firewall coverage — Permit2, multicall, direct-transfer heuristics |
-| 🛣️ | Policy asset/protocol scoping · Stylus rules engine · in-browser 7702 onboarding · security audit |
+| 🛣️ | Policy asset/protocol scoping · Stylus rules engine · security audit |
 
 > [!NOTE]
 > Aave V3 and GMX V2 are not deployed on Robinhood Chain testnet, so the live end-to-end run exercises the exit engine against an Aave-V3-shaped lending pool. The exit code itself is verified against the real Aave V3 Pool in the fork test (`AaveRealFork.t.sol`) — it ships against the real protocol the moment one is available on the chain coincoin runs on.
@@ -117,11 +118,11 @@ Deployed and exercised on **Robinhood Chain testnet (chain 46630)** unless noted
 
 ```
 coincoin/
-├── contracts/      Foundry — GuardianModule (EIP-7702), RulesEngineV1, SafeVault, mocks, deploy scripts
+├── contracts/      Foundry — GuardianModule (EIP-7702), RulesEngineV1, SafeVault(+Factory), mocks, scripts
 ├── watcher/        TypeScript/viem detection → rescue daemon (onboard · watch · exploit · revoke)
-├── site/           Vite/React/Tailwind landing + /app dashboard
+├── site/           Vite/React/Tailwind landing + /app dashboard + api/ (gasless onboarding relayer)
 ├── deployments/    On-chain address records (robinhood-testnet.json, arbitrum-sepolia.json)
-├── docs/           Brand kit, design specs, submission notes
+├── docs/readme/    README images
 ├── video/          Remotion pitch + demo videos (code → MP4)
 ├── .env.example    Config template (RPC, disposable keys, demo addresses)
 └── LICENSE         MIT
@@ -160,9 +161,10 @@ Robinhood Chain testnet (chain `46630`) — [explorer](https://explorer.testnet.
 
 | Contract | Address |
 |---|---|
-| `GuardianModule` (EIP-7702 guardian) | [`0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77`](https://explorer.testnet.chain.robinhood.com/address/0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77) |
+| `GuardianModule` (EIP-7702 guardian) | [`0x9953BB30cFef2ac842C74417eA6DC661b492E8dA`](https://explorer.testnet.chain.robinhood.com/address/0x9953BB30cFef2ac842C74417eA6DC661b492E8dA) |
 | `RulesEngineV1` (firewall) | [`0xc20A9d7D38B07a9C74A1fD87A2e25CA1973Cbc52`](https://explorer.testnet.chain.robinhood.com/address/0xc20A9d7D38B07a9C74A1fD87A2e25CA1973Cbc52) |
-| `SafeVault` (demo) | [`0x49be3DC48fC0540346A064fCC6Fc94FBaE62f479`](https://explorer.testnet.chain.robinhood.com/address/0x49be3DC48fC0540346A064fCC6Fc94FBaE62f479) |
+| `SafeVaultFactory` (deterministic per-user vault) | [`0x1ef2B2539fa842A9c7e4EA07790aA6dBc47ec4A5`](https://explorer.testnet.chain.robinhood.com/address/0x1ef2B2539fa842A9c7e4EA07790aA6dBc47ec4A5) |
+| `SafeVault` (demo) | [`0x530921CFFCeCc01B3Ad20E48A8c1707d27204b91`](https://explorer.testnet.chain.robinhood.com/address/0x530921CFFCeCc01B3Ad20E48A8c1707d27204b91) |
 
 The `GuardianModule` was also initially deployed and **Arbiscan-verified** on Arbitrum Sepolia at [`0x6671…200F`](https://sepolia.arbiscan.io/address/0x6671b4B73b79c284A710B00ef777d8E65f55200F).
 
@@ -187,15 +189,15 @@ Non-custodial by construction, but **experimental and unaudited** — a research
 
 ## Testing
 
-90 tests, written test-first.
+95 tests, written test-first.
 
 ```bash
-cd contracts && forge test            # 64 unit/integration tests (+1 fork test, gated on ARBITRUM_ONE_RPC)
+cd contracts && forge test            # 69 unit/integration tests (+1 fork test, gated on ARBITRUM_ONE_RPC)
 ARBITRUM_ONE_RPC=<rpc> forge test     # includes AaveRealFork.t.sol against the live Aave V3 Pool
 cd ../watcher && pnpm test            # 25 watcher tests (vitest)
 ```
 
-`AaveRealFork.t.sol` exits a real position against the **live Aave V3 Pool on Arbitrum One** (forked) — the same code path the guardian runs. The watcher suite covers the alert schema, exposure registry, keeper client, and the end-to-end orchestrator.
+`AaveRealFork.t.sol` exits a real position against the **live Aave V3 Pool on Arbitrum One** (forked) — the same code path the guardian runs. The watcher suite covers the alert schema, exposure registry, keeper client, and the end-to-end orchestrator. The gasless onboarding path is proven end-to-end on testnet by `pnpm onboard:gasless` (a fresh, unfunded EOA signs; a relayer sponsors the delegate+configure tx).
 
 ## Buildathon
 
@@ -206,5 +208,5 @@ Built for **[Arbitrum Open House London](https://arbitrum-london.hackquest.io/)*
 [MIT](LICENSE) © 2026 coincoin
 
 <div align="center">
-<sub>Built for ETHGlobal New York 2026 · Hedera — Tokenization track</sub>
+<sub>Built for Arbitrum Open House London 2026 · Robinhood Chain track</sub>
 </div>

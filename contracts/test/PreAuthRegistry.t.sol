@@ -139,7 +139,10 @@ contract PreAuthSigTest is Test {
         bytes32 domainSep = keccak256(
             abi.encode(DOMAIN_TYPEHASH, keccak256(bytes("coincoin GuardianModule")), keccak256(bytes("1")), block.chainid, user)
         );
-        bytes32 structHash = keccak256(abi.encode(POLICY_TYPEHASH, v, keccak256(abi.encodePacked(ks)), nonce, deadline));
+        bytes32[] memory words = new bytes32[](ks.length);
+        for (uint256 i; i < ks.length; ++i) words[i] = bytes32(uint256(uint160(ks[i])));
+        bytes32 keepersHash = keccak256(abi.encodePacked(words)); // standard EIP-712 address[] hash
+        bytes32 structHash = keccak256(abi.encode(POLICY_TYPEHASH, v, keepersHash, nonce, deadline));
         return keccak256(abi.encodePacked("\x19\x01", domainSep, structHash));
     }
 

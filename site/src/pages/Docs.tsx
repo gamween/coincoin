@@ -138,6 +138,9 @@ forge script script/Deploy.s.sol:DeployGuardian \\
 # local-firewall scorer (RulesEngineV1)
 forge script script/DeployRules.s.sol:DeployRules \\
   --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast --skip-simulation
+# SafeVaultFactory (deterministic per-user vault — gasless onboarding)
+forge script script/DeployFactory.s.sol:DeployFactory \\
+  --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast --skip-simulation
 # demo set: token + SafeVault + MockAavePool (+ throwaway protocol for local testing)
 forge script script/SetupDemo.s.sol:SetupDemo \\
   --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast --skip-simulation`}</Code>
@@ -145,11 +148,13 @@ forge script script/SetupDemo.s.sol:SetupDemo \\
             Copy the printed addresses into <code className="font-mono text-primary">.env</code>:
             <code className="ml-1 font-mono text-primary">GUARDIAN_IMPL</code>,
             <code className="ml-1 font-mono text-primary">RULES_ENGINE</code>,
+            <code className="ml-1 font-mono text-primary">VAULT_FACTORY</code>,
             <code className="ml-1 font-mono text-primary">DEMO_TOKEN</code>,
             <code className="ml-1 font-mono text-primary">DEMO_PROTO</code>,
             <code className="ml-1 font-mono text-primary">DEMO_VAULT</code>,
             <code className="ml-1 font-mono text-primary">DEMO_AAVE_POOL</code> (and
-            <code className="ml-1 font-mono text-primary">VITE_RULES_ENGINE</code> in <code className="font-mono text-primary">site/.env</code>).
+            <code className="ml-1 font-mono text-primary">VITE_RULES_ENGINE</code> /
+            <code className="ml-1 font-mono text-primary">VITE_VAULT_FACTORY</code> in <code className="font-mono text-primary">site/.env</code>).
           </P>
 
           <H3>3 · Connect and run</H3>
@@ -159,13 +164,18 @@ forge script script/SetupDemo.s.sol:SetupDemo \\
             ))}
           </div>
           <P>
-            Run <code className="font-mono text-primary">pnpm onboard</code> once to connect, then
+            Prefer no CLI? The <a href="/app.html" className="font-mono text-primary">/app</a> dashboard onboards your
+            connected wallet <strong>gasless</strong> in one click: you sign an EIP-712 policy and an EIP-7702
+            authorization, and a relayer sponsors the delegate+configure transaction.
+          </P>
+          <P>
+            Or run <code className="font-mono text-primary">pnpm onboard</code> once to connect, then
             leave <code className="font-mono text-primary">pnpm watch</code> running. The guardian
             catches a real on-chain <code className="font-mono text-primary">Drained</code> log itself
             and evacuates to your vault — no human in the loop:
           </P>
-          <Code>{`🦆 COIN COIN ! threat detected → evacuating 0xfa14…3368
-→ evacuated to your SafeVault 0x49be…f479 (EIP-7702 guardian context)
+          <Code>{`🦆 COIN COIN ! threat detected → evacuating 0x46d1…80Cc
+→ evacuated to your SafeVault 0x5309…4b91 (EIP-7702 guardian context)
 ✓ funds safe in your own vault. Daemon still watching.`}</Code>
           <P>
             Want to see it react on your own machine? <code className="font-mono text-primary">pnpm exploit</code>{" "}
