@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Section, SectionHeading, Pill, ShieldLogo, Wordmark } from "../components/ui";
+import { Section, SectionHeading, Pill, CommandCard, ShieldLogo, Wordmark } from "../components/ui";
 import { Footer } from "../sections/Footer";
 import { PIPELINE, GUARANTEES, COMMANDS, ARCH_UNITS, CHAINS, PROBLEM_BULLETS, GITHUB_URL } from "../data";
 
@@ -157,14 +157,7 @@ forge script script/SetupDemo.s.sol:SetupDemo \\
           <H3>3 · Connect and run</H3>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             {COMMANDS.map((c, i) => (
-              <div key={c.cmd} className="comic-card h-full p-5">
-                <Pill tone={i === 1 ? "action" : "brand"} className="mb-3">{c.badge}</Pill>
-                <code className="block font-mono text-body font-bold text-primary">
-                  <span aria-hidden="true">$ </span>
-                  {c.cmd}
-                </code>
-                <p className="mt-3 font-body text-body-sm text-text-muted">{c.body}</p>
-              </div>
+              <CommandCard key={c.cmd} item={c} tone={i === 1 ? "action" : "brand"} />
             ))}
           </div>
           <P>
@@ -173,8 +166,8 @@ forge script script/SetupDemo.s.sol:SetupDemo \\
             catches a real on-chain <code className="font-mono text-primary">Drained</code> log itself
             and evacuates to your vault — no human in the loop:
           </P>
-          <Code>{`🦆 COIN COIN ! threat detected → evacuating 0xFD0A…Ea89
-→ evacuated to your SafeVault 0xF60c…Fe7A (EIP-7702 guardian context)
+          <Code>{`🦆 COIN COIN ! threat detected → evacuating 0xfa14…3368
+→ evacuated to your SafeVault 0x49be…f479 (EIP-7702 guardian context)
 ✓ funds safe in your own vault. Daemon still watching.`}</Code>
           <P>
             Want to see it react on your own machine? <code className="font-mono text-primary">pnpm exploit</code>{" "}

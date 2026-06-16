@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { GUARDIAN_IMPL } from "../src/config";
+import { ROBINHOOD_TESTNET } from "../src/config";
 
 describe("smoke", () => {
-  it("exposes the deployed guardian impl address", () => {
-    expect(GUARDIAN_IMPL).toMatch(/^0x[0-9a-fA-F]{40}$/);
+  it("exposes the Robinhood Chain testnet config", () => {
+    expect(ROBINHOOD_TESTNET.id).toBe(46630);
   });
 });

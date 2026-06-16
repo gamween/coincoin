@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { resolveChainConfig, GUARDIAN_IMPL, ROBINHOOD_TESTNET, arbitrumSepolia } from "../src/config";
+import { resolveChainConfig, ROBINHOOD_TESTNET, arbitrumSepolia } from "../src/config";
 
 const base = {
   ROBINHOOD_TESTNET_RPC: "https://rh.example/rpc",
   ARBITRUM_SEPOLIA_RPC: "https://arb.example/rpc",
+  GUARDIAN_IMPL: "0x9876000000000000000000000000000000000000",
   DEMO_TOKEN: "0xcccc000000000000000000000000000000000000",
   DEMO_PROTO: "0xaaaa000000000000000000000000000000000000",
   DEMO_VAULT: "0x9999999999999999999999999999999999999999",
@@ -16,7 +17,7 @@ describe("resolveChainConfig", () => {
     expect(cfg.chain.id).toBe(ROBINHOOD_TESTNET.id);
     expect(cfg.rpcUrl).toBe("https://rh.example/rpc");
     expect(cfg.proto).toBe("0xaaaa000000000000000000000000000000000000");
-    expect(cfg.guardianImpl).toBe(GUARDIAN_IMPL); // fallback constante
+    expect(cfg.guardianImpl).toBe("0x9876000000000000000000000000000000000000");
   });
 
   it("selects Arbitrum Sepolia when CHAIN=arbitrumSepolia", () => {
@@ -26,7 +27,7 @@ describe("resolveChainConfig", () => {
     expect(cfg.rpcUrl).toBe("https://arb.example/rpc");
   });
 
-  it("uses GUARDIAN_IMPL override when provided", () => {
+  it("resolves GUARDIAN_IMPL from env", () => {
     const cfg = resolveChainConfig({ ...base, GUARDIAN_IMPL: "0x1234000000000000000000000000000000000000" });
     expect(cfg.guardianImpl).toBe("0x1234000000000000000000000000000000000000");
   });

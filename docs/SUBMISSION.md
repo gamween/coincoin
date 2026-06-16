@@ -59,7 +59,7 @@ Policy asset/protocol scoping · broader rules (Permit2 / multicall / direct-tra
 - [x] MIT `LICENSE`
 - [x] Problem statement + sources (README, `/docs.html`)
 - [x] Robinhood Chain track positioning
-- [ ] **Demo video** (record per the script above — biggest remaining item)
-- [ ] **Deploy the site** (`cd site && pnpm build`, host `dist/` on Vercel/Netlify) → put the live URL + `/app` + repo on the HackQuest entry
+- [x] **Demo + pitch videos** — produced with Remotion (`video/`), narration via fish.audio
+- [x] **Site deployed** — live at https://coincoin-five.vercel.app/ (dashboard at `/app`)
 - [x] **Redeploy** the latest contracts to Robinhood — done 2026-06-14; firewall / DeFi exit / signed policy / frozen vault all live + end-to-end rescue verified on-chain
 - [x] Confirm the X handle on the site (`site/src/data.ts` `CONTACTS.x` → `https://x.com/dvb_fianso`)

@@ -46,6 +46,22 @@ export function Pill({ tone = "brand", children, className = "" }: { tone?: Tone
   return <span className={`pill ${pillTone[tone]} ${className}`}>{children}</span>;
 }
 
+/* ── Command card: a $-prefixed CLI command with a tone pill + description ── */
+export function CommandCard({ item, tone }: { item: { cmd: string; badge: string; body: string }; tone: Tone }) {
+  return (
+    <div className="comic-card h-full p-5">
+      <Pill tone={tone} className="mb-3">
+        {item.badge}
+      </Pill>
+      <code className="block font-mono text-body font-bold text-primary">
+        <span aria-hidden="true">$ </span>
+        {item.cmd}
+      </code>
+      <p className="mt-3 font-body text-body-sm text-text-muted">{item.body}</p>
+    </div>
+  );
+}
+
 /* ── Section shell ── uniform background; depth comes from the framed cards, not bg bands. */
 export function Section({ id, children, className = "" }: { id?: string; children: ReactNode; className?: string }) {
   return (
@@ -61,16 +77,14 @@ export function SectionHeading({
   eyebrowTone = "info",
   title,
   subtitle,
-  align = "left",
 }: {
   eyebrow?: string;
   eyebrowTone?: Tone;
   title: ReactNode;
   subtitle?: ReactNode;
-  align?: "left" | "center";
 }) {
   return (
-    <div className={align === "center" ? "mx-auto max-w-3xl text-center" : "max-w-3xl"}>
+    <div className="max-w-3xl">
       {eyebrow && (
         <Pill tone={eyebrowTone} className="mb-5">
           {eyebrow}

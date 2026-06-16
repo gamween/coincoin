@@ -1,4 +1,4 @@
-import { Section, SectionHeading, Pill } from "../components/ui";
+import { Section, SectionHeading, CommandCard } from "../components/ui";
 import { Reveal } from "../components/Reveal";
 import { RunTerminal } from "../components/RunTerminal";
 import { COMMANDS, GUARDIAN_TERMINAL, GITHUB_URL, DOCS_URL } from "../data";
@@ -18,16 +18,7 @@ export function Run() {
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         {SETUP.map((c, i) => (
           <Reveal key={c.cmd} delay={i * 0.08}>
-            <div className="comic-card h-full p-5">
-              <Pill tone={i === 0 ? "brand" : "action"} className="mb-3">
-                {c.badge}
-              </Pill>
-              <code className="block font-mono text-body font-bold text-primary">
-                <span aria-hidden="true">$ </span>
-                {c.cmd}
-              </code>
-              <p className="mt-3 font-body text-body-sm text-text-muted">{c.body}</p>
-            </div>
+            <CommandCard item={c} tone={i === 0 ? "brand" : "action"} />
           </Reveal>
         ))}
       </div>

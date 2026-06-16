@@ -20,7 +20,7 @@ export interface DrainedLog {
   address: string;
   transactionHash: string;
   blockNumber: bigint;
-  args: { attacker: string; amount: bigint };
+  args: { attacker: string };
 }
 
 /// Transforms a real on-chain exploit log into a Defimon-shaped alert.

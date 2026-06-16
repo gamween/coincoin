@@ -43,7 +43,6 @@ async function main() {
             blockNumber: l.blockNumber as bigint,
             args: {
               attacker: l.args.attacker as `0x${string}`,
-              amount: l.args.amount as bigint,
             },
           }),
         );
