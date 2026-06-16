@@ -11,8 +11,8 @@ export const LICENSE = "MIT";
 // On-chain proof: the GuardianModule deployed on Robinhood Chain Testnet (chain 46630),
 // on the chain's own block explorer.
 export const DEPLOY_PROOF = {
-  address: "0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77",
-  explorer: "https://explorer.testnet.chain.robinhood.com/address/0xd0d301Aeaa7AA5Ced16C927030f131c9Cb083b77",
+  address: "0x9953BB30cFef2ac842C74417eA6DC661b492E8dA",
+  explorer: "https://explorer.testnet.chain.robinhood.com/address/0x9953BB30cFef2ac842C74417eA6DC661b492E8dA",
 };
 
 // Contacts (footer + contact page).
@@ -121,9 +121,9 @@ export const GUARDIAN_TERMINAL: ProcTerminal = {
     { text: "→ scanning on-chain threat logs in bounded windows (≤10 blocks, RPC cap)…", tone: "muted" },
     { text: "→ caught up to head · idle, polling every few seconds…", tone: "muted" },
     { text: "→ threat detected on-chain → CRITICAL drain alert decoded", tone: "warn" },
-    { text: "[coincoin] 🦆 COIN COIN ! threat detected → evacuating 0xfa14…3368", tone: "danger" },
+    { text: "[coincoin] 🦆 COIN COIN ! threat detected → evacuating 0x46d1…80Cc", tone: "danger" },
     { text: "→ keeper signs evacuateERC20([dUSD]) → your EOA (EIP-7702 guardian context)", tone: "normal" },
-    { text: "[coincoin] ✅ evacuated to your SafeVault 0x49be…f479 — confirmed on-chain", tone: "success" },
+    { text: "[coincoin] ✅ evacuated to your SafeVault 0x5309…4b91 — confirmed on-chain", tone: "success" },
     { text: "→ funds safe in your own vault · daemon still watching. (Ctrl-C to stop)", tone: "success" },
   ],
 };
