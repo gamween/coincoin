@@ -32,6 +32,30 @@ export function Wordmark({ className = "" }: { className?: string }) {
   return <span className={`display lowercase text-primary ${className}`}>coincoin</span>;
 }
 
+/* ── Sticky page header: logo + "/ breadcrumb" + right-side actions (children) ── */
+export function PageHeader({
+  breadcrumb,
+  maxWidthClass = "max-w-[1180px]",
+  children,
+}: {
+  breadcrumb: string;
+  maxWidthClass?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <header className="sticky top-0 z-50 border-b-[3px] border-border bg-surface/95 shadow-bevel-sm backdrop-blur">
+      <nav className={`mx-auto flex ${maxWidthClass} items-center gap-4 px-5 py-3 sm:px-8`}>
+        <a href="/" className="flex items-center gap-2.5" aria-label="coincoin home">
+          <ShieldLogo size={36} />
+          <Wordmark className="text-[20px]" />
+          <span className="font-mono text-caption uppercase tracking-[0.1em] text-text-muted">/ {breadcrumb}</span>
+        </a>
+        <div className="ml-auto flex items-center gap-3">{children}</div>
+      </nav>
+    </header>
+  );
+}
+
 /* ── Pills / badges ── */
 type Tone = "brand" | "action" | "threat" | "safe" | "info" | "tech";
 const pillTone: Record<Tone, string> = {
@@ -44,6 +68,22 @@ const pillTone: Record<Tone, string> = {
 };
 export function Pill({ tone = "brand", children, className = "" }: { tone?: Tone; children: ReactNode; className?: string }) {
   return <span className={`pill ${pillTone[tone]} ${className}`}>{children}</span>;
+}
+
+/* ── Command card: a $-prefixed CLI command with a tone pill + description ── */
+export function CommandCard({ item, tone }: { item: { cmd: string; badge: string; body: string }; tone: Tone }) {
+  return (
+    <div className="comic-card h-full p-5">
+      <Pill tone={tone} className="mb-3">
+        {item.badge}
+      </Pill>
+      <code className="block font-mono text-body font-bold text-primary">
+        <span aria-hidden="true">$ </span>
+        {item.cmd}
+      </code>
+      <p className="mt-3 font-body text-body-sm text-text-muted">{item.body}</p>
+    </div>
+  );
 }
 
 /* ── Section shell ── uniform background; depth comes from the framed cards, not bg bands. */
@@ -61,16 +101,14 @@ export function SectionHeading({
   eyebrowTone = "info",
   title,
   subtitle,
-  align = "left",
 }: {
   eyebrow?: string;
   eyebrowTone?: Tone;
   title: ReactNode;
   subtitle?: ReactNode;
-  align?: "left" | "center";
 }) {
   return (
-    <div className={align === "center" ? "mx-auto max-w-3xl text-center" : "max-w-3xl"}>
+    <div className="max-w-3xl">
       {eyebrow && (
         <Pill tone={eyebrowTone} className="mb-5">
           {eyebrow}

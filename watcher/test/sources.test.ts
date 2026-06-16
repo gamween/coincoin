@@ -27,7 +27,7 @@ describe("decodeExploitLog", () => {
       address: "0xAAAA000000000000000000000000000000000000",
       transactionHash: "0xdead",
       blockNumber: 42n,
-      args: { attacker: "0xBBBB000000000000000000000000000000000000", amount: 1000n },
+      args: { attacker: "0xBBBB000000000000000000000000000000000000" },
     });
     expect(alert.exploit_address).toBe("0xaaaa000000000000000000000000000000000000");
     expect(alert.attacker_address).toBe("0xbbbb000000000000000000000000000000000000");
@@ -41,7 +41,7 @@ describe("ChainThreatSource", () => {
     address: "0xAAAA000000000000000000000000000000000000",
     transactionHash: "0xdead",
     blockNumber: 42n,
-    args: { attacker: "0xBBBB000000000000000000000000000000000000", amount: 1000n },
+    args: { attacker: "0xBBBB000000000000000000000000000000000000" },
   };
 
   it("emits a decoded alert for each Drained log, then stops on abort", async () => {

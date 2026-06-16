@@ -5,9 +5,9 @@ The landing / presentation site for **coincoin**, the self-custodial onchain fir
 EIP-7702 "flip", walks through how to run the CLI, and links to the code. Plus standalone
 Docs / Contact / License pages.
 
-Built with **Vite + React + TypeScript + Tailwind**. The theme is the brand kit
-([`docs/brand/BRAND.md`](../docs/brand/BRAND.md)) — comic/brutalist, night-blue gradient, the
-yellow duck `#F5D90A`, Bungee + IBM Plex Sans/Mono, hard bevel shadows.
+Built with **Vite + React + TypeScript + Tailwind**. The theme (in `tailwind.config.js`) is
+comic/brutalist — night-blue gradient, the yellow duck `#F5D90A`, Bungee + IBM Plex Sans/Mono,
+hard bevel shadows.
 
 ## Develop
 
@@ -24,7 +24,7 @@ Brand art lives in `public/`: the campaign illustration (`coincoin-illustration.
 hero and the OG/Twitter card, see `index.html`), the extracted cutouts used by the hero and the
 section index (`hero-*.png`, `duck-*.png`, `flip-*.png`), the pipeline icons (`icons/`), the
 stamps (`pow-/boom-/speed-*.png`), and the brick texture (`bg-brick-tile.png`). New art is picked
-up by filename — no code change needed. Source prompts: [`docs/brand/site-image-prompts.md`](../docs/brand/site-image-prompts.md).
+up by filename — no code change needed.
 
 ## Deploy
 

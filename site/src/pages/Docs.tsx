@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Section, SectionHeading, Pill, ShieldLogo, Wordmark } from "../components/ui";
+import { Section, SectionHeading, Pill, CommandCard, PageHeader } from "../components/ui";
 import { Footer } from "../sections/Footer";
 import { PIPELINE, GUARANTEES, COMMANDS, ARCH_UNITS, CHAINS, PROBLEM_BULLETS, GITHUB_URL } from "../data";
 
@@ -22,23 +22,14 @@ function P({ children }: { children: ReactNode }) {
 export function Docs() {
   return (
     <>
-      <header className="sticky top-0 z-50 border-b-[3px] border-border bg-surface/95 shadow-bevel-sm backdrop-blur">
-        <nav className="mx-auto flex max-w-[1180px] items-center gap-4 px-5 py-3 sm:px-8">
-          <a href="/" className="flex items-center gap-2.5" aria-label="coincoin home">
-            <ShieldLogo size={36} />
-            <Wordmark className="text-[20px]" />
-            <span className="font-mono text-caption uppercase tracking-[0.1em] text-text-muted">/ docs</span>
-          </a>
-          <div className="ml-auto flex items-center gap-3">
-            <a href="/" className="font-body text-body-sm font-medium text-text-primary hover:text-info">
-              ← Back to site
-            </a>
-            <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5">
-              GitHub
-            </a>
-          </div>
-        </nav>
-      </header>
+      <PageHeader breadcrumb="docs">
+        <a href="/" className="font-body text-body-sm font-medium text-text-primary hover:text-info">
+          ← Back to site
+        </a>
+        <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5">
+          GitHub
+        </a>
+      </PageHeader>
 
       <main className="relative z-10">
         <Section className="pt-16">
@@ -139,32 +130,32 @@ export function Docs() {
           </P>
 
           <H3>2 · Deploy the contracts</H3>
-          <Code>{`cd contracts && set -a && source ../.env && set +a
-# shared GuardianModule implementation
+          <Code>{`# unset CHAIN — foundry auto-loads .env and would read CHAIN as its --chain flag
+cd contracts && set -a && source ../.env && set +a && unset CHAIN
+# GuardianModule implementation
 forge script script/Deploy.s.sol:DeployGuardian \\
-  --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast --gas-estimate-multiplier 800 --slow
-# your set: token + SafeVault (+ a throwaway protocol for local testing)
+  --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast --skip-simulation
+# local-firewall scorer (RulesEngineV1)
+forge script script/DeployRules.s.sol:DeployRules \\
+  --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast --skip-simulation
+# demo set: token + SafeVault + MockAavePool (+ throwaway protocol for local testing)
 forge script script/SetupDemo.s.sol:SetupDemo \\
-  --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast --gas-estimate-multiplier 800 --slow`}</Code>
+  --rpc-url "$ROBINHOOD_TESTNET_RPC" --broadcast --skip-simulation`}</Code>
           <P>
             Copy the printed addresses into <code className="font-mono text-primary">.env</code>:
             <code className="ml-1 font-mono text-primary">GUARDIAN_IMPL</code>,
+            <code className="ml-1 font-mono text-primary">RULES_ENGINE</code>,
             <code className="ml-1 font-mono text-primary">DEMO_TOKEN</code>,
             <code className="ml-1 font-mono text-primary">DEMO_PROTO</code>,
-            <code className="ml-1 font-mono text-primary">DEMO_VAULT</code>.
+            <code className="ml-1 font-mono text-primary">DEMO_VAULT</code>,
+            <code className="ml-1 font-mono text-primary">DEMO_AAVE_POOL</code> (and
+            <code className="ml-1 font-mono text-primary">VITE_RULES_ENGINE</code> in <code className="font-mono text-primary">site/.env</code>).
           </P>
 
           <H3>3 · Connect and run</H3>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             {COMMANDS.map((c, i) => (
-              <div key={c.cmd} className="comic-card h-full p-5">
-                <Pill tone={i === 1 ? "action" : "brand"} className="mb-3">{c.badge}</Pill>
-                <code className="block font-mono text-body font-bold text-primary">
-                  <span aria-hidden="true">$ </span>
-                  {c.cmd}
-                </code>
-                <p className="mt-3 font-body text-body-sm text-text-muted">{c.body}</p>
-              </div>
+              <CommandCard key={c.cmd} item={c} tone={i === 1 ? "action" : "brand"} />
             ))}
           </div>
           <P>
@@ -173,8 +164,8 @@ forge script script/SetupDemo.s.sol:SetupDemo \\
             catches a real on-chain <code className="font-mono text-primary">Drained</code> log itself
             and evacuates to your vault — no human in the loop:
           </P>
-          <Code>{`🦆 COIN COIN ! threat detected → evacuating 0xFD0A…Ea89
-→ evacuated to your SafeVault 0xF60c…Fe7A (EIP-7702 guardian context)
+          <Code>{`🦆 COIN COIN ! threat detected → evacuating 0xfa14…3368
+→ evacuated to your SafeVault 0x49be…f479 (EIP-7702 guardian context)
 ✓ funds safe in your own vault. Daemon still watching.`}</Code>
           <P>
             Want to see it react on your own machine? <code className="font-mono text-primary">pnpm exploit</code>{" "}

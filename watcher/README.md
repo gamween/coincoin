@@ -40,8 +40,7 @@ address (step 3) and update `site/src/app/contracts.ts` (`guardianImpl` + `token
 > ⚠️ **Re-onboarding onto a new build needs a fresh victim.** EIP-7702 storage persists across
 > re-delegation, so an EOA already onboarded to an older GuardianModule keeps its `safeVault`,
 > and the new build's frozen-vault guard then reverts `configure` with `VaultLocked`. Onboard a
-> never-delegated EOA (`cast wallet new`, fund it, re-run `SetupDemo` for it). See
-> `docs/SUBMISSION.md` for the full note.
+> never-delegated EOA (`cast wallet new`, fund it, re-run `SetupDemo` for it).
 
 ## End-to-end demo (multi-terminal)
 

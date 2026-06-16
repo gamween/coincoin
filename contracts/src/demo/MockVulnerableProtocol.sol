@@ -8,7 +8,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 ///         where users have deposited funds, then gets drained (a real exploit).
 contract MockVulnerableProtocol {
     IERC20 public immutable token;
-    mapping(address => uint256) public deposits;
 
     event Drained(address indexed attacker, uint256 amount);
 
@@ -18,7 +17,6 @@ contract MockVulnerableProtocol {
 
     function deposit(uint256 amount) external {
         token.transferFrom(msg.sender, address(this), amount);
-        deposits[msg.sender] += amount;
     }
 
     /// @dev INTENTIONAL BUG: no auth, drains the whole contract to msg.sender.

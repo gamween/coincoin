@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-// Theme tokens = the coincoin brand kit (docs/brand/BRAND.md, source of truth).
+// Theme tokens — the coincoin brand kit (this config is the source of truth for the design system).
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
