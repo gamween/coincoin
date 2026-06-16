@@ -12,8 +12,6 @@
 [![Tests](https://img.shields.io/badge/tests-90%20passing-27C93F?style=flat-square)](#testing)
 [![License](https://img.shields.io/badge/License-MIT-F5D90A?style=flat-square)](LICENSE)
 
-[Live demo](https://coincoin-five.vercel.app/) · [How it works](#how-it-works) · [Architecture](#architecture) · [Getting started](#getting-started) · [Deployed addresses](#deployed-addresses)
-
 </div>
 
 > [!WARNING]
