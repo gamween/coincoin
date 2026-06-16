@@ -203,8 +203,8 @@ Built for **[Arbitrum Open House London](https://arbitrum-london.hackquest.io/)*
 
 ## License
 
-[MIT](LICENSE) © Sofiane
+[MIT](LICENSE) © 2026 coincoin
 
 <div align="center">
-<sub><a href="https://coincoin-five.vercel.app/">Live demo</a> · <a href="https://x.com/dvb_fianso">X</a> · <a href="https://t.me/dvb_fianso">Telegram</a></sub>
+Built for ETHGlobal New York 2026 · Hedera — Tokenization track
 </div>
