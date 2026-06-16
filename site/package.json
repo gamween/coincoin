@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "typecheck:api": "tsc -p tsconfig.api.json",
+    "typecheck:api": "tsc -p api/tsconfig.json",
     "lint": "eslint .",
     "preview": "vite preview"
   },
