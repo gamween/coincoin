@@ -1,4 +1,4 @@
-import { Section, Pill, ShieldLogo, Wordmark } from "../components/ui";
+import { Section, Pill, PageHeader } from "../components/ui";
 import { SocialLink, Avatar } from "../components/social";
 import { Footer } from "../sections/Footer";
 import { GITHUB_URL, DOCS_URL, CONTACTS, OWNER_NAME } from "../data";
@@ -6,23 +6,14 @@ import { GITHUB_URL, DOCS_URL, CONTACTS, OWNER_NAME } from "../data";
 export function Contact() {
   return (
     <>
-      <header className="sticky top-0 z-50 border-b-[3px] border-border bg-surface/95 shadow-bevel-sm backdrop-blur">
-        <nav className="mx-auto flex max-w-[1180px] items-center gap-4 px-5 py-3 sm:px-8">
-          <a href="/" className="flex items-center gap-2.5" aria-label="coincoin home">
-            <ShieldLogo size={36} />
-            <Wordmark className="text-[20px]" />
-            <span className="font-mono text-caption uppercase tracking-[0.1em] text-text-muted">/ contact</span>
-          </a>
-          <div className="ml-auto flex items-center gap-3">
-            <a href="/" className="font-body text-body-sm font-medium text-text-primary hover:text-info">
-              ← Back to site
-            </a>
-            <a href={DOCS_URL} className="btn-ghost !px-5 !py-2.5">
-              Docs
-            </a>
-          </div>
-        </nav>
-      </header>
+      <PageHeader breadcrumb="contact">
+        <a href="/" className="font-body text-body-sm font-medium text-text-primary hover:text-info">
+          ← Back to site
+        </a>
+        <a href={DOCS_URL} className="btn-ghost !px-5 !py-2.5">
+          Docs
+        </a>
+      </PageHeader>
 
       <main className="relative z-10">
         <Section className="pt-16">

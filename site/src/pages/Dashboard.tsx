@@ -13,7 +13,7 @@ import { isAddress, zeroAddress, type Address } from "viem";
 import { robinhood } from "../app/chain";
 import { ADDR, EXPLORER, erc20Abi, guardianAbi, safeVaultAbi } from "../app/contracts";
 import { fmtUnits, short } from "../app/format";
-import { Pill, ShieldLogo, Wordmark } from "../components/ui";
+import { Pill, PageHeader } from "../components/ui";
 
 const REFRESH = { refetchInterval: 8000 } as const;
 
@@ -130,31 +130,22 @@ export function Dashboard() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b-[3px] border-border bg-surface/95 shadow-bevel-sm backdrop-blur">
-        <nav className="mx-auto flex max-w-[1100px] items-center gap-4 px-5 py-3 sm:px-8">
-          <a href="/" className="flex items-center gap-2.5" aria-label="coincoin home">
-            <ShieldLogo size={36} />
-            <Wordmark className="text-[20px]" />
-            <span className="font-mono text-caption uppercase tracking-[0.1em] text-text-muted">/ app</span>
-          </a>
-          <div className="ml-auto flex items-center gap-3">
-            {isConnected && !onRobinhood && (
-              <button onClick={() => switchChain({ chainId: robinhood.id })} className="btn-ghost !px-4 !py-2 !text-[13px]">
-                Switch to Robinhood
-              </button>
-            )}
-            {isConnected ? (
-              <button onClick={() => disconnect()} className="btn-ghost !px-4 !py-2 !text-[13px]">
-                {short(address)} · Disconnect
-              </button>
-            ) : (
-              <button onClick={() => injected && connect({ connector: injected })} disabled={connecting} className="btn-comic !px-5 !py-2.5">
-                {connecting ? "Connecting…" : "Connect wallet"}
-              </button>
-            )}
-          </div>
-        </nav>
-      </header>
+      <PageHeader breadcrumb="app" maxWidthClass="max-w-[1100px]">
+        {isConnected && !onRobinhood && (
+          <button onClick={() => switchChain({ chainId: robinhood.id })} className="btn-ghost !px-4 !py-2 !text-[13px]">
+            Switch to Robinhood
+          </button>
+        )}
+        {isConnected ? (
+          <button onClick={() => disconnect()} className="btn-ghost !px-4 !py-2 !text-[13px]">
+            {short(address)} · Disconnect
+          </button>
+        ) : (
+          <button onClick={() => injected && connect({ connector: injected })} disabled={connecting} className="btn-comic !px-5 !py-2.5">
+            {connecting ? "Connecting…" : "Connect wallet"}
+          </button>
+        )}
+      </PageHeader>
 
       <main className="relative z-10 mx-auto w-full max-w-[1100px] px-5 pb-24 pt-12 sm:px-8">
         <Pill tone="info" className="mb-5">DASHBOARD</Pill>

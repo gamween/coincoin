@@ -32,6 +32,30 @@ export function Wordmark({ className = "" }: { className?: string }) {
   return <span className={`display lowercase text-primary ${className}`}>coincoin</span>;
 }
 
+/* ── Sticky page header: logo + "/ breadcrumb" + right-side actions (children) ── */
+export function PageHeader({
+  breadcrumb,
+  maxWidthClass = "max-w-[1180px]",
+  children,
+}: {
+  breadcrumb: string;
+  maxWidthClass?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <header className="sticky top-0 z-50 border-b-[3px] border-border bg-surface/95 shadow-bevel-sm backdrop-blur">
+      <nav className={`mx-auto flex ${maxWidthClass} items-center gap-4 px-5 py-3 sm:px-8`}>
+        <a href="/" className="flex items-center gap-2.5" aria-label="coincoin home">
+          <ShieldLogo size={36} />
+          <Wordmark className="text-[20px]" />
+          <span className="font-mono text-caption uppercase tracking-[0.1em] text-text-muted">/ {breadcrumb}</span>
+        </a>
+        <div className="ml-auto flex items-center gap-3">{children}</div>
+      </nav>
+    </header>
+  );
+}
+
 /* ── Pills / badges ── */
 type Tone = "brand" | "action" | "threat" | "safe" | "info" | "tech";
 const pillTone: Record<Tone, string> = {
