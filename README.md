@@ -206,5 +206,5 @@ Built for **[Arbitrum Open House London](https://arbitrum-london.hackquest.io/)*
 [MIT](LICENSE) © 2026 coincoin
 
 <div align="center">
-Built for ETHGlobal New York 2026 · Hedera — Tokenization track
+<sub>Built for ETHGlobal New York 2026 · Hedera — Tokenization track</sub>
 </div>
